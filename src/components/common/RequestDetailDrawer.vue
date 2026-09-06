@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Request, RequestStatus } from '../../types/request'
-import DetailDrawer from './DetailDrawer.vue'
-import DetailFieldList from './DetailFieldList.vue'
+import type { Request, RequestStatus } from '@/types/request'
+import DetailDrawer from '@/components/common/DetailDrawer.vue'
+import DetailFieldList from '@/components/common/DetailFieldList.vue'
 
 const props = defineProps<{
   request: Request | null

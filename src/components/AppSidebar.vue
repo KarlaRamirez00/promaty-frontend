@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   mdiAccountGroup,
   mdiAccountMultipleOutline,
@@ -9,24 +10,26 @@ import {
   mdiCashClock,
   mdiCashMultiple,
   mdiClipboardTextOutline,
+  mdiDomain,
   mdiFileDocumentRemoveOutline,
   mdiFilePlusOutline,
   mdiFileSign,
   mdiMedicalBag,
+  mdiOfficeBuildingCogOutline,
   mdiSwapHorizontal,
 } from '@mdi/js'
-import { useSidebarRail } from '../composables/useSidebarRail'
-import PromatyLogo from './PromatyLogo.vue'
+import { useSidebarRail } from '@/composables/useSidebarRail'
+import PromatyLogo from '@/components/PromatyLogo.vue'
 
 const { rail, open, mobile } = useSidebarRail()
+const route = useRoute()
 
 const isRail = computed(() => !mobile.value && rail.value)
 
-const opened = ref(['rrhh'])
-const activeItem = 'Solicitudes'
+const opened = ref(['rrhh', 'mantenedores'])
 
-const items = [
-  { title: 'Solicitudes', icon: mdiClipboardTextOutline },
+const rrhhItems = [
+  { title: 'Solicitudes', icon: mdiClipboardTextOutline, to: '/requests' },
   { title: 'Anexos', icon: mdiFilePlusOutline },
   { title: 'Anticipos', icon: mdiCashClock },
   { title: 'Colaboradores', icon: mdiAccountMultipleOutline },
@@ -40,9 +43,14 @@ const items = [
   { title: 'Traspasos', icon: mdiSwapHorizontal },
 ]
 
+const maintainerItems = [{ title: 'Mandantes', icon: mdiDomain, to: '/clients' }]
+
+function isActive(item: { to?: string }) {
+  return !!item.to && route.path === item.to
+}
+
 function expandFromRail() {
   rail.value = false
-  opened.value = ['rrhh']
 }
 
 function selectItem() {
@@ -66,21 +74,37 @@ function selectItem() {
     <v-list v-if="isRail" density="compact" nav>
       <v-menu open-on-hover :open-on-click="false" location="end">
         <template #activator="{ props }">
-          <v-list-item
-            v-bind="props"
-            :prepend-icon="mdiAccountGroup"
-            @click="expandFromRail"
-          />
+          <v-list-item v-bind="props" :prepend-icon="mdiAccountGroup" @click="expandFromRail" />
         </template>
 
         <v-list density="compact" nav min-width="220">
           <v-list-item
-            v-for="item in items"
+            v-for="item in rrhhItems"
             :key="item.title"
+            :to="item.to"
             :prepend-icon="item.icon"
             :title="item.title"
-            :active="item.title === activeItem"
-            :color="item.title === activeItem ? 'primary' : undefined"
+            :active="isActive(item)"
+            :color="isActive(item) ? 'primary' : undefined"
+            @click="selectItem"
+          />
+        </v-list>
+      </v-menu>
+
+      <v-menu open-on-hover :open-on-click="false" location="end">
+        <template #activator="{ props }">
+          <v-list-item v-bind="props" :prepend-icon="mdiOfficeBuildingCogOutline" @click="expandFromRail" />
+        </template>
+
+        <v-list density="compact" nav min-width="220">
+          <v-list-item
+            v-for="item in maintainerItems"
+            :key="item.title"
+            :to="item.to"
+            :prepend-icon="item.icon"
+            :title="item.title"
+            :active="isActive(item)"
+            :color="isActive(item) ? 'primary' : undefined"
             @click="selectItem"
           />
         </v-list>
@@ -94,13 +118,32 @@ function selectItem() {
         </template>
 
         <v-list-item
-          v-for="item in items"
+          v-for="item in rrhhItems"
           :key="item.title"
+          :to="item.to"
           :prepend-icon="item.icon"
           :title="item.title"
-          :active="item.title === activeItem"
-          :variant="item.title === activeItem ? 'flat' : 'text'"
-          :color="item.title === activeItem ? 'primary' : undefined"
+          :active="isActive(item)"
+          :variant="isActive(item) ? 'flat' : 'text'"
+          :color="isActive(item) ? 'primary' : undefined"
+          @click="selectItem"
+        />
+      </v-list-group>
+
+      <v-list-group value="mantenedores">
+        <template #activator="{ props }">
+          <v-list-item v-bind="props" :prepend-icon="mdiOfficeBuildingCogOutline" title="Mantenedores" />
+        </template>
+
+        <v-list-item
+          v-for="item in maintainerItems"
+          :key="item.title"
+          :to="item.to"
+          :prepend-icon="item.icon"
+          :title="item.title"
+          :active="isActive(item)"
+          :variant="isActive(item) ? 'flat' : 'text'"
+          :color="isActive(item) ? 'primary' : undefined"
           @click="selectItem"
         />
       </v-list-group>

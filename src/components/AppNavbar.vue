@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useDisplay, useTheme } from 'vuetify'
+import { useQueryClient } from '@tanstack/vue-query'
 import {
   mdiBellOutline,
   mdiCogOutline,
   mdiHomeOutline,
+  mdiLogoutVariant,
   mdiMenu,
   mdiMenuClose,
   mdiMenuOpen,
   mdiWeatherNight,
   mdiWeatherSunny,
 } from '@mdi/js'
-import { useSidebarRail } from '../composables/useSidebarRail'
+import { useSidebarRail } from '@/composables/useSidebarRail'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps<{
   breadcrumbs: { title: string; disabled?: boolean }[]
@@ -20,6 +24,9 @@ const props = defineProps<{
 const { rail, open, mobile, toggleRail } = useSidebarRail()
 const { xs } = useDisplay()
 const theme = useTheme()
+const router = useRouter()
+const auth = useAuthStore()
+const queryClient = useQueryClient()
 
 const isDark = computed(() => theme.global.name.value === 'dark')
 
@@ -29,6 +36,12 @@ const currentTitle = computed(
 
 function toggleTheme() {
   theme.change(isDark.value ? 'light' : 'dark')
+}
+
+function logout() {
+  auth.logout()
+  queryClient.clear()
+  router.push({ name: 'login' })
 }
 </script>
 
@@ -93,6 +106,8 @@ function toggleTheme() {
             :title="isDark ? 'Tema claro' : 'Tema oscuro'"
             @click="toggleTheme"
           />
+          <v-divider class="my-1" />
+          <v-list-item :prepend-icon="mdiLogoutVariant" title="Cerrar sesión" @click="logout" />
         </v-list>
       </v-menu>
     </template>
@@ -131,9 +146,19 @@ function toggleTheme() {
         />
       </v-btn>
 
-      <v-avatar color="primary" size="32" class="mr-4">
-        <span class="text-caption text-white">AD</span>
-      </v-avatar>
+      <v-menu location="bottom end">
+        <template #activator="{ props: menuProps }">
+          <v-btn icon variant="text" class="mr-4" aria-label="Cuenta" v-bind="menuProps">
+            <v-avatar color="primary" size="32">
+              <span class="text-caption text-white">AD</span>
+            </v-avatar>
+          </v-btn>
+        </template>
+
+        <v-list density="compact" min-width="200">
+          <v-list-item :prepend-icon="mdiLogoutVariant" title="Cerrar sesión" @click="logout" />
+        </v-list>
+      </v-menu>
     </template>
   </v-app-bar>
 </template>

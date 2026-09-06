@@ -1,4 +1,4 @@
-import type { Request } from '../types/request'
+import type { Request } from '@/types/request'
 
 export const requests: Request[] = [
   { cc: '00849', type: 'Finiquito', project: 'GARCÉS MALLOA ETAPA 5', createdAt: '23/07/2026', requester: 'Javiera Muñoz', status: 'Pendiente aprobación' },

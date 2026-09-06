@@ -4,8 +4,8 @@ import { useTheme } from 'vuetify'
 import { VueDatePicker } from '@vuepic/vue-datepicker'
 import { es } from 'date-fns/locale'
 import { mdiTuneVariant } from '@mdi/js'
-import type { RequestStatus } from '../../types/request'
-import DetailDrawer from './DetailDrawer.vue'
+import type { RequestStatus } from '@/types/request'
+import DetailDrawer from '@/components/common/DetailDrawer.vue'
 
 const theme = useTheme()
 const isDark = computed(() => theme.global.current.value.dark)
@@ -43,7 +43,7 @@ const statusOptions: RequestStatus[] = [
       </div>
     </template>
 
-    <div class="filters-panel d-flex flex-column ga-4">
+    <div class="d-flex flex-column ga-4">
       <div>
         <div class="text-caption text-medium-emphasis mb-1">Estado</div>
         <v-select
@@ -124,11 +124,4 @@ const statusOptions: RequestStatus[] = [
     </template>
   </DetailDrawer>
 </template>
-
-<style>
-/* Sin "scoped": v-dialog teletransporta el contenido del panel. */
-.filters-panel .v-field__clearable > .v-icon {
-  font-size: 18px;
-}
-</style>
 

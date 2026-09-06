@@ -10,13 +10,13 @@ import {
   mdiDotsHorizontal,
   mdiEyeOutline,
 } from '@mdi/js'
-import { requests } from '../data/requests'
-import type { Request, RequestStatus } from '../types/request'
-import ListControls from './common/ListControls.vue'
-import ActiveFilters from './common/ActiveFilters.vue'
-import FiltersDrawer from './common/FiltersDrawer.vue'
-import RequestDetailDrawer from './common/RequestDetailDrawer.vue'
-import IndicatorCard from './common/IndicatorCard.vue'
+import { requests } from '@/data/requests'
+import type { Request, RequestStatus } from '@/types/request'
+import ListControls from '@/components/common/ListControls.vue'
+import ActiveFilters from '@/components/common/ActiveFilters.vue'
+import FiltersDrawer from '@/components/common/FiltersDrawer.vue'
+import RequestDetailDrawer from '@/components/common/RequestDetailDrawer.vue'
+import IndicatorCard from '@/components/common/IndicatorCard.vue'
 
 const { smAndDown } = useDisplay()
 
@@ -178,6 +178,7 @@ const statusColor: Record<RequestStatus, string> = {
     v-if="!smAndDown"
     v-model:page="page"
     v-model:items-per-page="itemsPerPage"
+    :items-per-page-options="[10, 25, 50, 100]"
     :headers="headers"
     :items="filteredRequests"
     :page-text="pageText"
