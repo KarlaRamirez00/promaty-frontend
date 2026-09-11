@@ -7,7 +7,7 @@ import type {
   ApiResponse,
   PageResult,
 } from '@/types/api'
-import { getToken } from '@/lib/authToken'
+import { clearToken, getToken } from '@/lib/authToken'
 
 export class ApiRequestError extends Error {
   readonly status: number
@@ -40,7 +40,22 @@ function normalizeError(error: AxiosError<ApiErrorResponse>): ApiRequestError {
   })
 }
 
-function createClient(baseURL: string): AxiosInstance {
+// 401 = el token dejó de servir (venció, secreto cambió, etc.): cierra la sesión y manda a login.
+// 403 (permiso insuficiente estando autenticado) nunca pasa por acá — ese caso ya lo resuelve el guard de rutas.
+function redirectToLoginOnSessionExpired(client: AxiosInstance): void {
+  client.interceptors.response.use(
+    (response) => response,
+    (error: AxiosError<ApiErrorResponse>) => {
+      if (error.response?.status === 401 && window.location.pathname !== '/login') {
+        clearToken()
+        window.location.href = '/login'
+      }
+      return Promise.reject(error)
+    },
+  )
+}
+
+function createClient(baseURL: string, options: { sessionAware?: boolean } = {}): AxiosInstance {
   const client = axios.create({ baseURL, timeout: 15000 })
 
   client.interceptors.request.use((config) => {
@@ -50,6 +65,12 @@ function createClient(baseURL: string): AxiosInstance {
     }
     return config
   })
+
+  // sessionAware queda fuera de authApi: un 401 ahí es "credenciales inválidas" en el propio
+  // login, no una sesión vencida, y no debe gatillar el redirect.
+  if (options.sessionAware) {
+    redirectToLoginOnSessionExpired(client)
+  }
 
   client.interceptors.response.use(
     (response) => response,
@@ -68,8 +89,8 @@ const API_BASE_URL = {
 }
 
 export const authApi = createClient(API_BASE_URL.auth)
-export const userApi = createClient(API_BASE_URL.user)
-export const rrhhApi = createClient(API_BASE_URL.rrhh)
+export const userApi = createClient(API_BASE_URL.user, { sessionAware: true })
+export const rrhhApi = createClient(API_BASE_URL.rrhh, { sessionAware: true })
 
 export function unwrap<T>(response: AxiosResponse<ApiResponse<T>>): T {
   return response.data.data
