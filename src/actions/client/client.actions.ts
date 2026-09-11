@@ -1,4 +1,3 @@
-import { ApiRequestError } from '@/lib/http'
 import {
   createClientApi,
   getClientApi,
@@ -14,42 +13,23 @@ import {
 import { useGetDetail, useGetTable } from '@/utils/useGet'
 import { useMutateAction, useMutateForm } from '@/utils/useMutation'
 import type { ClientForm, ClientQueryParams } from '@/models/client/client.models'
-import { useClientsStore } from '@/stores/clients'
-
-function reportError(store: ReturnType<typeof useClientsStore>, error: unknown) {
-  store.errorBack = error instanceof ApiRequestError ? error : null
-}
 
 export function getClientListAction(params: ClientQueryParams) {
-  const store = useClientsStore()
-  return useGetTable(listClientsApi, params, mapperClientList, undefined, (error) =>
-    reportError(store, error),
-  )
+  return useGetTable(listClientsApi, params, mapperClientList)
 }
 
 export function getClientDetailAction(id: number) {
-  const store = useClientsStore()
-  return useGetDetail(getClientApi, id, mapperClientDetail, (error) => reportError(store, error))
+  return useGetDetail(getClientApi, id, mapperClientDetail)
 }
 
 export function createClientAction(form: ClientForm) {
-  const store = useClientsStore()
-  return useMutateForm(createClientApi, form, mapperClientFormToPayload, (error) =>
-    reportError(store, error),
-  )
+  return useMutateForm(createClientApi, form, mapperClientFormToPayload)
 }
 
 export function updateClientAction(form: ClientForm) {
-  const store = useClientsStore()
-  return useMutateForm(
-    (payload) => updateClientApi(form.id as number, payload),
-    form,
-    mapperClientFormToPayload,
-    (error) => reportError(store, error),
-  )
+  return useMutateForm((payload) => updateClientApi(form.id as number, payload), form, mapperClientFormToPayload)
 }
 
 export function toggleClientActiveAction(id: number) {
-  const store = useClientsStore()
-  return useMutateAction(toggleClientActiveApi, id, (error) => reportError(store, error))
+  return useMutateAction(toggleClientActiveApi, id)
 }
