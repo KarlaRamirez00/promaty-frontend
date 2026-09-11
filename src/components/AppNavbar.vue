@@ -16,6 +16,7 @@ import {
 } from '@mdi/js'
 import { useSidebarRail } from '@/composables/useSidebarRail'
 import { useAuthStore } from '@/stores/auth'
+import { ROUTE } from '@/router/route-names'
 
 const props = defineProps<{
   breadcrumbs: { title: string; disabled?: boolean }[]
@@ -41,7 +42,7 @@ function toggleTheme() {
 function logout() {
   auth.logout()
   queryClient.clear()
-  router.push({ name: 'login' })
+  router.push({ name: ROUTE.LOGIN })
 }
 </script>
 
