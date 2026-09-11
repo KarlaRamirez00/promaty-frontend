@@ -5,6 +5,7 @@ export interface ClientListItem {
   name: string
   active: boolean
   status: Badge
+  actions: string[]
 }
 
 export interface Client {
@@ -14,6 +15,7 @@ export interface Client {
   status: Badge
   createdAt: string
   updatedAt: string
+  actions: string[]
 }
 
 export interface ClientForm {

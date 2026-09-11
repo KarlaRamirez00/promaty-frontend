@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
@@ -12,8 +13,17 @@ import {
 } from '@/actions/client/client.actions'
 import { useClientsStore } from '@/stores/clients'
 import { useMessage } from '@/composables/useMessage'
+import { usePermissions } from '@/composables/usePermissions'
+import { ACTION } from '@/constants/actions.constants'
 import messages from '@/messages'
-import type { ClientForm, ClientListItem } from '@/models/client/client.models'
+import {
+  clientQueryToRoute,
+  parseClientQuery,
+  type ClientForm,
+  type ClientListItem,
+  type ClientQueryParams,
+  type ClientSort,
+} from '@/models/client/client.models'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
 import ClientFiltersDrawer from '@/components/ClientFiltersDrawer.vue'
@@ -24,49 +34,83 @@ import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
 const { smAndDown } = useDisplay()
+const route = useRoute()
+const router = useRouter()
 const store = useClientsStore()
 const queryClient = useQueryClient()
 const { toastSaved, toastToggled, toastFailed } = useMessage()
+const { hasPermission } = usePermissions()
+const canCreate = computed(() => hasPermission('create'))
+const canUpdate = computed(() => hasPermission('update'))
+const canToggleActive = computed(() => hasPermission('active'))
 
-const searchInput = ref(store.filters.search)
+const query = computed<ClientQueryParams>(() => parseClientQuery(route.query))
+
+// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
+let pendingQuery: ClientQueryParams | null = null
+
+function patchQuery(patch: Partial<ClientQueryParams>) {
+  const next: ClientQueryParams = { ...(pendingQuery ?? query.value), ...patch }
+  if (!('page' in patch)) next.page = 1
+  pendingQuery = next
+  void router.replace({ query: clientQueryToRoute(next) }).finally(() => {
+    pendingQuery = null
+  })
+}
+
+const searchInput = ref(query.value.search)
 let debounceTimer: ReturnType<typeof setTimeout>
 watch(searchInput, (value) => {
   clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => {
-    store.filters.search = value
-    store.page = 1
-  }, 350)
+  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
 })
-
-const filtersOpen = ref(false)
 watch(
-  () => store.filters.active,
-  () => {
-    store.page = 1
+  () => query.value.search,
+  (value) => {
+    if (value !== searchInput.value.trim()) searchInput.value = value
   },
 )
 
-const activeFilters = computed(() => {
-  if (store.filters.active === null) return []
-  return [{ key: 'active', label: `Estado: ${store.filters.active ? 'Activos' : 'Inactivos'}` }]
+const filtersOpen = ref(false)
+
+const activeFilter = computed<boolean | null>({
+  get: () => query.value.active,
+  set: (value) => patchQuery({ active: value }),
 })
 
-function removeFilter() {
-  store.filters.active = null
+const activeFilters = computed(() => {
+  if (query.value.active === null) return []
+  return [{ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` }]
+})
+
+function clearActiveFilter() {
+  patchQuery({ active: null })
 }
 
-function clearAllFilters() {
-  store.filters.active = null
+const sort = computed<ClientSort>(() => query.value.sort)
+const sortBy = computed(() => [{ key: sort.value.key, order: sort.value.order }])
+
+function changeSort(value: readonly { key: string; order?: boolean | 'asc' | 'desc' }[]) {
+  const entry = value[0]
+  if (!entry) return
+  patchQuery({ sort: { key: entry.key, order: entry.order === 'desc' ? 'desc' : 'asc' } })
 }
 
-const listQueryKey = computed(() => [
-  'clients',
-  { ...store.filters, page: store.page, size: store.size },
-])
+const pageModel = computed<number>({
+  get: () => query.value.page,
+  set: (value) => patchQuery({ page: value }),
+})
+
+const sizeModel = computed<number>({
+  get: () => query.value.size,
+  set: (value) => patchQuery({ size: value }),
+})
+
+const listQueryKey = computed(() => ['clients', { ...query.value }])
 
 const { data: listResult, isPending, isError } = useQuery({
   queryKey: listQueryKey,
-  queryFn: () => getClientListAction({ ...store.filters, page: store.page, size: store.size }),
+  queryFn: () => getClientListAction({ ...query.value }),
   placeholderData: keepPreviousData,
 })
 
@@ -75,12 +119,12 @@ const totalItems = computed(() => listResult.value?.meta.total ?? 0)
 const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
 
 watch(pageCount, (count) => {
-  if (count >= 1 && store.page > count) store.page = count
+  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
 })
 
 const headers = [
-  { title: 'Nombre', key: 'name' },
-  { title: 'Estado', key: 'active' },
+  { title: 'Nombre', key: 'name', sortable: true },
+  { title: 'Estado', key: 'active', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -171,14 +215,15 @@ function confirmToggleActive() {
     search-placeholder="Buscar por nombre"
     new-label="Nuevo"
     :show-export="false"
+    :show-new="canCreate"
     @filter="filtersOpen = true"
     @new="openCreateForm"
   />
 
   <ActiveFilters
     :filters="activeFilters"
-    @remove-filter="removeFilter"
-    @clear-all="clearAllFilters"
+    @remove-filter="clearActiveFilter"
+    @clear-all="clearActiveFilter"
   />
 
   <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4">
@@ -187,12 +232,16 @@ function confirmToggleActive() {
 
   <v-data-table-server
     v-if="!smAndDown"
-    v-model:page="store.page"
-    v-model:items-per-page="store.size"
+    :page="query.page"
+    :items-per-page="query.size"
     :headers="headers"
     :items="items"
     :items-length="totalItems"
     :loading="isPending"
+    :sort-by="sortBy"
+    :multi-sort="false"
+    must-sort
+    @update:sort-by="changeSort"
   >
     <template #item.name="{ item }">
       <span class="link-cell" @click="viewDetail(item)">{{ item.name }}</span>
@@ -207,6 +256,8 @@ function confirmToggleActive() {
     <template #item.actions="{ item }">
       <ActionsMenu
         :record="item"
+        :has-update-permission="canUpdate"
+        :has-active-permission="canToggleActive"
         @view="viewDetail(item)"
         @edit="openEditForm(item)"
         @toggle="askToggleActive(item)"
@@ -215,8 +266,8 @@ function confirmToggleActive() {
 
     <template #bottom>
       <ListFooter
-        v-model:page="store.page"
-        v-model:size="store.size"
+        v-model:page="pageModel"
+        v-model:size="sizeModel"
         :total="totalItems"
         :page-count="pageCount"
       />
@@ -238,7 +289,13 @@ function confirmToggleActive() {
             <v-btn size="small" variant="tonal" :prepend-icon="mdiEyeOutline" @click="viewDetail(item)">
               Ver detalle
             </v-btn>
-            <v-btn size="small" variant="text" :prepend-icon="mdiPencilOutline" @click="openEditForm(item)">
+            <v-btn
+              v-if="canUpdate && item.actions.includes(ACTION.UPDATE)"
+              size="small"
+              variant="text"
+              :prepend-icon="mdiPencilOutline"
+              @click="openEditForm(item)"
+            >
               Editar
             </v-btn>
           </div>
@@ -251,8 +308,8 @@ function confirmToggleActive() {
     </v-card>
 
     <ListFooter
-      v-model:page="store.page"
-      v-model:size="store.size"
+      v-model:page="pageModel"
+      v-model:size="sizeModel"
       :total="totalItems"
       :page-count="pageCount"
       class="mt-2"
@@ -261,14 +318,16 @@ function confirmToggleActive() {
 
   <ClientFiltersDrawer
     v-model:open="filtersOpen"
-    v-model:active="store.filters.active"
-    @clear="clearAllFilters"
+    v-model:active="activeFilter"
+    @clear="clearActiveFilter"
   />
 
   <ClientDetailDrawer
     v-model:open="store.detailOpen"
     :client="selectedClient ?? null"
     :loading="detailLoading"
+    :has-update-permission="canUpdate"
+    :has-active-permission="canToggleActive"
     @edit="openEditForm"
     @toggle-active="askToggleActive"
   />
@@ -293,5 +352,9 @@ function confirmToggleActive() {
 <style scoped>
 .client-block--divided {
   border-top: thin solid rgba(var(--v-theme-on-surface), 0.12);
+}
+
+:deep(.v-data-table-header__sort-icon) {
+  font-size: 1.125rem;
 }
 </style>
