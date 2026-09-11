@@ -10,6 +10,7 @@ export async function listClientsApi(params: ClientQueryParams): Promise<PageRes
       active: params.active ?? undefined,
       page: params.page - 1,
       size: params.size,
+      sort: `${params.sort.key},${params.sort.order}`,
     },
   })
   return unwrapPage(response)
