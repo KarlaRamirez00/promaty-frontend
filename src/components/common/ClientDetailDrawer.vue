@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Client } from '@/models/client/client.models'
+import { ACTION } from '@/constants/actions.constants'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
 
-const props = defineProps<{
-  client: Client | null
-  loading?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    client: Client | null
+    loading?: boolean
+    hasUpdatePermission?: boolean
+    hasActivePermission?: boolean
+  }>(),
+  {
+    hasUpdatePermission: true,
+    hasActivePermission: true,
+  },
+)
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -25,6 +34,12 @@ const fields = computed(() => {
     { key: 'updatedAt', label: 'Última actualización', value: c.updatedAt },
   ]
 })
+
+// Doble gate: el permiso dice quién puede hacerlo; actions[] dice si este registro lo permite ahora.
+const showEdit = computed(() => props.hasUpdatePermission && (props.client?.actions.includes(ACTION.UPDATE) ?? false))
+const showToggle = computed(
+  () => props.hasActivePermission && (props.client?.actions.includes(ACTION.ACTIVE) ?? false),
+)
 </script>
 
 <template>
@@ -41,8 +56,9 @@ const fields = computed(() => {
     <DetailFieldList v-else-if="client" :items="fields" />
 
     <template v-if="client" #actions>
-      <v-btn variant="tonal" block @click="emit('edit', client)">Editar</v-btn>
+      <v-btn v-if="showEdit" variant="tonal" block @click="emit('edit', client)">Editar</v-btn>
       <v-btn
+        v-if="showToggle"
         variant="text"
         block
         :color="client.active ? 'primary' : 'success'"

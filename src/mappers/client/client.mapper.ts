@@ -13,6 +13,7 @@ export function mapperClientList(items: ClientListRaw[]): ClientListItem[] {
     name: item.name,
     active: item.active,
     status: toStatusBadge(item.active),
+    actions: item.actions,
   }))
 }
 
@@ -24,6 +25,7 @@ export function mapperClientDetail(raw: ClientRaw): Client {
     status: toStatusBadge(raw.active),
     createdAt: formatDate(raw.createdAt),
     updatedAt: formatDate(raw.updatedAt),
+    actions: raw.actions,
   }
 }
 

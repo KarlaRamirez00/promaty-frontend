@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { mdiDotsHorizontal, mdiEyeOutline, mdiPencilOutline, mdiPower } from '@mdi/js'
+import { ACTION } from '@/constants/actions.constants'
 
-const props = defineProps<{
-  record: { active?: boolean }
-}>()
+const props = withDefaults(
+  defineProps<{
+    record: { active?: boolean; actions: string[] }
+    hasUpdatePermission?: boolean
+    hasActivePermission?: boolean
+  }>(),
+  {
+    hasUpdatePermission: true,
+    hasActivePermission: true,
+  },
+)
 
 const emit = defineEmits<{
   view: []
@@ -12,6 +21,14 @@ const emit = defineEmits<{
   toggle: []
 }>()
 
+// Doble gate: el permiso dice quién puede hacerlo; actions[] dice si este registro lo permite ahora.
+const showEdit = computed(() => props.hasUpdatePermission && props.record.actions.includes(ACTION.UPDATE))
+const showToggle = computed(
+  () =>
+    props.hasActivePermission &&
+    props.record.active !== undefined &&
+    props.record.actions.includes(ACTION.ACTIVE),
+)
 const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activar'))
 </script>
 
@@ -23,9 +40,9 @@ const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activa
 
     <v-list class="actions-list" density="compact" nav>
       <v-list-item :prepend-icon="mdiEyeOutline" title="Ver detalle" @click="emit('view')" />
-      <v-list-item :prepend-icon="mdiPencilOutline" title="Editar" @click="emit('edit')" />
+      <v-list-item v-if="showEdit" :prepend-icon="mdiPencilOutline" title="Editar" @click="emit('edit')" />
       <v-list-item
-        v-if="record.active !== undefined"
+        v-if="showToggle"
         :prepend-icon="mdiPower"
         :title="toggleLabel"
         @click="emit('toggle')"
