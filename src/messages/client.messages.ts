@@ -30,4 +30,10 @@ export default {
     title: 'Nuevo mandante',
     message: 'Debes <strong>llenar la información</strong> del mandante.',
   },
+
+  // Validación del formulario de crear/editar
+  rules: {
+    nameRequired: 'El nombre es obligatorio.',
+    nameMaxLength: 'El nombre no puede superar los 120 caracteres.',
+  },
 }

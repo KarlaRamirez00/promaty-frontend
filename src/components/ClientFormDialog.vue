@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { mdiDomain } from '@mdi/js'
-import { ApiRequestError } from '@/lib/http'
 import { createClientForm, type ClientForm } from '@/models/client/client.models'
+import { clientNameRules } from '@/rules/client.rules'
+import { firstError } from '@/rules/validators'
+import { useError } from '@/utils/useError'
+import FormErrorAlert from '@/components/common/FormErrorAlert.vue'
 
 const props = defineProps<{
   client: { id: number; name: string } | null
@@ -14,6 +17,8 @@ const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{
   submit: [form: ClientForm]
 }>()
+
+const { normalizeError } = useError()
 
 const form = ref<ClientForm>(createClientForm())
 const errorMessage = ref('')
@@ -28,20 +33,19 @@ watch(open, (isOpen) => {
 })
 
 function submit() {
-  if (!form.value.name.trim()) {
-    nameErrors.value = ['El nombre es obligatorio.']
+  const error = firstError(form.value.name, clientNameRules)
+  if (error) {
+    nameErrors.value = [error]
     return
   }
+  nameErrors.value = []
   emit('submit', form.value)
 }
 
 function reportError(error: unknown) {
-  if (error instanceof ApiRequestError) {
-    nameErrors.value = error.errorFields?.name ?? []
-    errorMessage.value = nameErrors.value.length ? '' : error.message
-  } else {
-    errorMessage.value = 'No se pudo guardar el mandante.'
-  }
+  const { message, fieldErrors } = normalizeError(error)
+  nameErrors.value = fieldErrors?.name ?? []
+  errorMessage.value = nameErrors.value.length ? '' : message
 }
 
 defineExpose({ reportError })
@@ -56,9 +60,7 @@ defineExpose({ reportError })
       </v-card-title>
 
       <v-card-text>
-        <v-alert v-if="errorMessage" type="error" variant="tonal" density="compact" class="mb-4">
-          {{ errorMessage }}
-        </v-alert>
+        <FormErrorAlert :message="errorMessage" />
 
         <v-text-field
           v-model="form.name"
