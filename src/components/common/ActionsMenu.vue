@@ -30,6 +30,7 @@ const showToggle = computed(
     props.record.actions.includes(ACTION.ACTIVE),
 )
 const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activar'))
+const toggleColor = computed(() => (props.record.active ? 'error' : 'success'))
 </script>
 
 <template>
@@ -39,11 +40,23 @@ const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activa
     </template>
 
     <v-list class="actions-list" density="compact" nav>
-      <v-list-item :prepend-icon="mdiEyeOutline" title="Ver detalle" @click="emit('view')" />
-      <v-list-item v-if="showEdit" :prepend-icon="mdiPencilOutline" title="Editar" @click="emit('edit')" />
+      <v-list-item
+        :prepend-icon="mdiEyeOutline"
+        base-color="info"
+        title="Ver detalle"
+        @click="emit('view')"
+      />
+      <v-list-item
+        v-if="showEdit"
+        :prepend-icon="mdiPencilOutline"
+        base-color="warning"
+        title="Editar"
+        @click="emit('edit')"
+      />
       <v-list-item
         v-if="showToggle"
         :prepend-icon="mdiPower"
+        :base-color="toggleColor"
         :title="toggleLabel"
         @click="emit('toggle')"
       />

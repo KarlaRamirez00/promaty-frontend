@@ -1,13 +1,13 @@
 import { formatDateTime } from '@/utils/formatDate'
 import type { Badge } from '@/types/badge'
-import type { ClientFormPayload, ClientListRaw, ClientRaw } from '@/types/client'
-import type { Client, ClientForm, ClientListItem } from '@/models/client/client.models'
+import type { ProjectTypeFormPayload, ProjectTypeListRaw, ProjectTypeRaw } from '@/types/projectType'
+import type { ProjectType, ProjectTypeForm, ProjectTypeListItem } from '@/models/projectType/projectType.models'
 
 function toStatusBadge(active: boolean): Badge {
   return active ? { label: 'Activo', color: 'success' } : { label: 'Inactivo', color: 'grey' }
 }
 
-export function mapperClientList(items: ClientListRaw[]): ClientListItem[] {
+export function mapperProjectTypeList(items: ProjectTypeListRaw[]): ProjectTypeListItem[] {
   return items.map((item) => ({
     id: item.id,
     name: item.name,
@@ -17,7 +17,7 @@ export function mapperClientList(items: ClientListRaw[]): ClientListItem[] {
   }))
 }
 
-export function mapperClientDetail(raw: ClientRaw): Client {
+export function mapperProjectTypeDetail(raw: ProjectTypeRaw): ProjectType {
   return {
     id: raw.id,
     name: raw.name,
@@ -31,6 +31,6 @@ export function mapperClientDetail(raw: ClientRaw): Client {
   }
 }
 
-export function mapperClientFormToPayload(form: ClientForm): ClientFormPayload {
+export function mapperProjectTypeFormToPayload(form: ProjectTypeForm): ProjectTypeFormPayload {
   return { name: form.name.trim() }
 }

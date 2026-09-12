@@ -2,6 +2,8 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import type { Breadcrumb } from '@/types/navigation'
 import { ROUTE } from '@/router/route-names'
 import { clientRoutes } from '@/router/client.routes'
+import { projectTypeRoutes } from '@/router/projectType.routes'
+import { projectSpecialtyRoutes } from '@/router/projectSpecialty.routes'
 import { requestRoutes } from '@/router/request.routes'
 import { authMiddleware } from '@/middlewares/auth.middleware'
 
@@ -29,6 +31,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/requests' },
   ...requestRoutes,
   ...clientRoutes,
+  ...projectTypeRoutes,
+  ...projectSpecialtyRoutes,
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 

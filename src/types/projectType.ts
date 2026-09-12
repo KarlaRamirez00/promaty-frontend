@@ -1,4 +1,4 @@
-export interface ClientRaw {
+export interface ProjectTypeRaw {
   id: number
   name: string
   active: boolean
@@ -9,13 +9,13 @@ export interface ClientRaw {
   actions: string[]
 }
 
-export interface ClientListRaw {
+export interface ProjectTypeListRaw {
   id: number
   name: string
   active: boolean
   actions: string[]
 }
 
-export interface ClientFormPayload {
+export interface ProjectTypeFormPayload {
   name: string
 }

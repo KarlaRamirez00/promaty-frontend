@@ -31,7 +31,9 @@ const fields = computed(() => {
   return [
     { key: 'name', label: 'Nombre', value: c.name },
     { key: 'createdAt', label: 'Fecha de creación', value: c.createdAt },
+    { key: 'createdBy', label: 'Creado por', value: c.createdBy },
     { key: 'updatedAt', label: 'Última actualización', value: c.updatedAt },
+    { key: 'updatedBy', label: 'Actualizado por', value: c.updatedBy },
   ]
 })
 

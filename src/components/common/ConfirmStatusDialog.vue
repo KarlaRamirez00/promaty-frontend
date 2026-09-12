@@ -45,7 +45,7 @@ const actionColor = computed(() => (props.record?.active ? 'primary' : 'success'
         {{ actionLabel }} {{ entity }}
       </v-card-title>
 
-      <v-card-text>
+      <v-card-text class="text-body-2">
         ¿Seguro que quieres
         <strong>{{ actionLabel.toLowerCase() }}</strong>
         <strong class="text-primary">&nbsp;{{ record?.name }}</strong>?

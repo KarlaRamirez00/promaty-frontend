@@ -16,7 +16,9 @@ import {
   mdiFileSign,
   mdiMedicalBag,
   mdiOfficeBuildingCogOutline,
+  mdiShapeOutline,
   mdiSwapHorizontal,
+  mdiToolboxOutline,
 } from '@mdi/js'
 import { useSidebarRail } from '@/composables/useSidebarRail'
 import PromatyLogo from '@/components/PromatyLogo.vue'
@@ -43,7 +45,11 @@ const rrhhItems = [
   { title: 'Traspasos', icon: mdiSwapHorizontal },
 ]
 
-const maintainerItems = [{ title: 'Mandantes', icon: mdiDomain, to: '/clients' }]
+const maintainerItems = [
+  { title: 'Mandantes', icon: mdiDomain, to: '/clients' },
+  { title: 'Tipos de proyecto', icon: mdiShapeOutline, to: '/project-types' },
+  { title: 'Especialidades', icon: mdiToolboxOutline, to: '/project-specialties' },
+]
 
 function isActive(item: { to?: string }) {
   return !!item.to && route.path === item.to

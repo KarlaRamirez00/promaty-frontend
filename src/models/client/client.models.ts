@@ -15,6 +15,8 @@ export interface Client {
   status: Badge
   createdAt: string
   updatedAt: string
+  createdBy: string
+  updatedBy: string
   actions: string[]
 }
 
