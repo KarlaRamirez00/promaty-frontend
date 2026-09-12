@@ -9,7 +9,7 @@ export interface ApiMeta {
   pagination?: Pagination
 }
 
-export type ApiErrorFields = Record<string, string[]>
+export type ApiErrorFields = Record<string, string>
 
 export interface ApiError {
   status: number

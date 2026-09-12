@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { mdiDomain } from '@mdi/js'
+import { computed, ref, watch } from 'vue'
+import { mdiArrowDownCircleOutline, mdiDomain } from '@mdi/js'
 import { createClientForm, type ClientForm } from '@/models/client/client.models'
 import { clientNameRules } from '@/rules/client.rules'
 import { firstError } from '@/rules/validators'
 import { useError } from '@/utils/useError'
-import FormErrorAlert from '@/components/common/FormErrorAlert.vue'
+import clientMessages from '@/messages/client.messages'
+import type { ApiErrorFields } from '@/types/api'
+import ErrorComponent from '@/components/common/ErrorComponent.vue'
+import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
+import AlertComponent from '@/components/common/AlertComponent.vue'
 
 const props = defineProps<{
   client: { id: number; name: string } | null
@@ -21,31 +25,36 @@ const emit = defineEmits<{
 const { normalizeError } = useError()
 
 const form = ref<ClientForm>(createClientForm())
-const errorMessage = ref('')
-const nameErrors = ref<string[]>([])
+const nameError = ref('')
+const backendErrorFields = ref<ApiErrorFields | null>(null)
+
+const hasValidationError = computed(() => !!nameError.value)
+const alert = computed(() =>
+  hasValidationError.value ? clientMessages.alertError : clientMessages.alertInfo,
+)
 
 watch(open, (isOpen) => {
   if (isOpen) {
     form.value = createClientForm({ id: props.client?.id ?? null, name: props.client?.name ?? '' })
-    errorMessage.value = ''
-    nameErrors.value = []
+    nameError.value = ''
+    backendErrorFields.value = null
   }
 })
 
 function submit() {
   const error = firstError(form.value.name, clientNameRules)
   if (error) {
-    nameErrors.value = [error]
+    nameError.value = error
     return
   }
-  nameErrors.value = []
+  nameError.value = ''
   emit('submit', form.value)
 }
 
 function reportError(error: unknown) {
-  const { message, fieldErrors } = normalizeError(error)
-  nameErrors.value = fieldErrors?.name ?? []
-  errorMessage.value = nameErrors.value.length ? '' : message
+  const { fieldErrors } = normalizeError(error)
+  nameError.value = fieldErrors?.name ?? ''
+  backendErrorFields.value = nameError.value ? null : fieldErrors
 }
 
 defineExpose({ reportError })
@@ -60,17 +69,28 @@ defineExpose({ reportError })
       </v-card-title>
 
       <v-card-text>
-        <FormErrorAlert :message="errorMessage" />
+        <AlertComponent
+          :type="hasValidationError ? 'error' : 'info'"
+          :message="alert.message"
+          :icon="mdiArrowDownCircleOutline"
+        />
+
+        <ErrorComponent :error-fields="backendErrorFields" />
 
         <v-text-field
           v-model="form.name"
           label="Nombre"
+          placeholder="Ingresa nombre del mandante"
+          class="small-placeholder"
           variant="outlined"
           density="comfortable"
-          :error-messages="nameErrors"
+          :error="!!nameError"
+          hide-details
+          persistent-placeholder
           autofocus
           @keyup.enter="submit"
         />
+        <FieldErrorComponent :message="nameError" />
       </v-card-text>
 
       <v-card-actions>
@@ -81,3 +101,9 @@ defineExpose({ reportError })
     </v-card>
   </v-dialog>
 </template>
+
+<style scoped>
+.small-placeholder :deep(input::placeholder) {
+  font-size: 0.8125rem;
+}
+</style>
