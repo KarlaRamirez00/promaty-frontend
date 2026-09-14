@@ -1,57 +1,34 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import {
-  mdiAccountGroup,
-  mdiAccountMultipleOutline,
-  mdiAccountSearchOutline,
-  mdiCalendarAccountOutline,
-  mdiCalendarClockOutline,
-  mdiCashClock,
-  mdiCashMultiple,
-  mdiClipboardTextOutline,
-  mdiDomain,
-  mdiFileDocumentRemoveOutline,
-  mdiFilePlusOutline,
-  mdiFileSign,
-  mdiMedicalBag,
-  mdiOfficeBuildingCogOutline,
-  mdiShapeOutline,
-  mdiSwapHorizontal,
-  mdiToolboxOutline,
-} from '@mdi/js'
 import { useSidebarRail } from '@/composables/useSidebarRail'
+import { usePermissions } from '@/composables/usePermissions'
+import { mainMenu, adminMenu, type MenuItem } from '@/data/menu'
 import PromatyLogo from '@/components/PromatyLogo.vue'
 
 const { rail, open, mobile } = useSidebarRail()
 const route = useRoute()
+const { hasModulePermission } = usePermissions()
 
 const isRail = computed(() => !mobile.value && rail.value)
 
-const opened = ref(['rrhh', 'mantenedores'])
+const opened = ref(['RRHH', 'Mantenedores'])
 
-const rrhhItems = [
-  { title: 'Solicitudes', icon: mdiClipboardTextOutline, to: '/requests' },
-  { title: 'Anexos', icon: mdiFilePlusOutline },
-  { title: 'Anticipos', icon: mdiCashClock },
-  { title: 'Colaboradores', icon: mdiAccountMultipleOutline },
-  { title: 'Contratos', icon: mdiFileSign },
-  { title: 'Control de asistencia', icon: mdiCalendarClockOutline },
-  { title: 'Finiquitos', icon: mdiFileDocumentRemoveOutline },
-  { title: 'Licencias Médicas', icon: mdiMedicalBag },
-  { title: 'Permisos', icon: mdiCalendarAccountOutline },
-  { title: 'Reclutamiento', icon: mdiAccountSearchOutline },
-  { title: 'Sueldos', icon: mdiCashMultiple },
-  { title: 'Traspasos', icon: mdiSwapHorizontal },
-]
+// Un ítem sin module/permission siempre se muestra (grupos contenedores, o módulos aún sin RBAC
+// real como Solicitudes) — ver data/menu/menu.types.ts.
+function isVisible(item: MenuItem): boolean {
+  if (!item.module || !item.permission) return true
+  return hasModulePermission(item.module, item.permission)
+}
 
-const maintainerItems = [
-  { title: 'Mandantes', icon: mdiDomain, to: '/clients' },
-  { title: 'Tipos de proyecto', icon: mdiShapeOutline, to: '/project-types' },
-  { title: 'Especialidades', icon: mdiToolboxOutline, to: '/project-specialties' },
-]
+function visibleSubmenu(item: MenuItem): MenuItem[] {
+  return (item.submenu ?? []).filter(isVisible)
+}
 
-function isActive(item: { to?: string }) {
+const visibleMainMenu = computed(() => mainMenu.filter(isVisible))
+const visibleAdminMenu = computed(() => adminMenu.filter(isVisible))
+
+function isActive(item: MenuItem) {
   return !!item.to && route.path === item.to
 }
 
@@ -78,54 +55,89 @@ function selectItem() {
     </div>
 
     <v-list v-if="isRail" density="compact" nav>
-      <v-menu open-on-hover :open-on-click="false" location="end">
-        <template #activator="{ props }">
-          <v-list-item v-bind="props" :prepend-icon="mdiAccountGroup" @click="expandFromRail" />
-        </template>
+      <template v-for="item in visibleMainMenu" :key="item.title">
+        <v-menu v-if="item.submenu" open-on-hover :open-on-click="false" location="end">
+          <template #activator="{ props }">
+            <v-list-item v-bind="props" :prepend-icon="item.icon" @click="expandFromRail" />
+          </template>
 
-        <v-list density="compact" nav min-width="220">
-          <v-list-item
-            v-for="item in rrhhItems"
-            :key="item.title"
-            :to="item.to"
-            :prepend-icon="item.icon"
-            :title="item.title"
-            :active="isActive(item)"
-            :color="isActive(item) ? 'primary' : undefined"
-            @click="selectItem"
-          />
-        </v-list>
-      </v-menu>
+          <v-list density="compact" nav min-width="220">
+            <v-list-item
+              v-for="sub in visibleSubmenu(item)"
+              :key="sub.title"
+              :to="sub.to"
+              :prepend-icon="sub.icon"
+              :title="sub.title"
+              :active="isActive(sub)"
+              :color="isActive(sub) ? 'primary' : undefined"
+              @click="selectItem"
+            />
+          </v-list>
+        </v-menu>
 
-      <v-menu open-on-hover :open-on-click="false" location="end">
-        <template #activator="{ props }">
-          <v-list-item v-bind="props" :prepend-icon="mdiOfficeBuildingCogOutline" @click="expandFromRail" />
-        </template>
+        <v-list-item
+          v-else
+          :to="item.to"
+          :prepend-icon="item.icon"
+          :active="isActive(item)"
+          :color="isActive(item) ? 'primary' : undefined"
+          @click="selectItem"
+        />
+      </template>
 
-        <v-list density="compact" nav min-width="220">
-          <v-list-item
-            v-for="item in maintainerItems"
-            :key="item.title"
-            :to="item.to"
-            :prepend-icon="item.icon"
-            :title="item.title"
-            :active="isActive(item)"
-            :color="isActive(item) ? 'primary' : undefined"
-            @click="selectItem"
-          />
-        </v-list>
-      </v-menu>
+      <template v-for="item in visibleAdminMenu" :key="item.title">
+        <v-menu v-if="item.submenu" open-on-hover :open-on-click="false" location="end">
+          <template #activator="{ props }">
+            <v-list-item v-bind="props" :prepend-icon="item.icon" @click="expandFromRail" />
+          </template>
+
+          <v-list density="compact" nav min-width="220">
+            <v-list-item
+              v-for="sub in visibleSubmenu(item)"
+              :key="sub.title"
+              :to="sub.to"
+              :prepend-icon="sub.icon"
+              :title="sub.title"
+              :active="isActive(sub)"
+              :color="isActive(sub) ? 'primary' : undefined"
+              @click="selectItem"
+            />
+          </v-list>
+        </v-menu>
+
+        <v-list-item
+          v-else
+          :to="item.to"
+          :prepend-icon="item.icon"
+          :active="isActive(item)"
+          :color="isActive(item) ? 'primary' : undefined"
+          @click="selectItem"
+        />
+      </template>
     </v-list>
 
     <v-list v-else v-model:opened="opened" density="compact" nav>
-      <v-list-group value="rrhh">
-        <template #activator="{ props }">
-          <v-list-item v-bind="props" :prepend-icon="mdiAccountGroup" title="RRHH" />
-        </template>
+      <template v-for="item in visibleMainMenu" :key="item.title">
+        <v-list-group v-if="item.submenu" :value="item.title">
+          <template #activator="{ props }">
+            <v-list-item v-bind="props" :prepend-icon="item.icon" :title="item.title" />
+          </template>
+
+          <v-list-item
+            v-for="sub in visibleSubmenu(item)"
+            :key="sub.title"
+            :to="sub.to"
+            :prepend-icon="sub.icon"
+            :title="sub.title"
+            :active="isActive(sub)"
+            :variant="isActive(sub) ? 'flat' : 'text'"
+            :color="isActive(sub) ? 'primary' : undefined"
+            @click="selectItem"
+          />
+        </v-list-group>
 
         <v-list-item
-          v-for="item in rrhhItems"
-          :key="item.title"
+          v-else
           :to="item.to"
           :prepend-icon="item.icon"
           :title="item.title"
@@ -134,16 +146,29 @@ function selectItem() {
           :color="isActive(item) ? 'primary' : undefined"
           @click="selectItem"
         />
-      </v-list-group>
+      </template>
 
-      <v-list-group value="mantenedores">
-        <template #activator="{ props }">
-          <v-list-item v-bind="props" :prepend-icon="mdiOfficeBuildingCogOutline" title="Mantenedores" />
-        </template>
+      <template v-for="item in visibleAdminMenu" :key="item.title">
+        <v-list-group v-if="item.submenu" :value="item.title">
+          <template #activator="{ props }">
+            <v-list-item v-bind="props" :prepend-icon="item.icon" :title="item.title" />
+          </template>
+
+          <v-list-item
+            v-for="sub in visibleSubmenu(item)"
+            :key="sub.title"
+            :to="sub.to"
+            :prepend-icon="sub.icon"
+            :title="sub.title"
+            :active="isActive(sub)"
+            :variant="isActive(sub) ? 'flat' : 'text'"
+            :color="isActive(sub) ? 'primary' : undefined"
+            @click="selectItem"
+          />
+        </v-list-group>
 
         <v-list-item
-          v-for="item in maintainerItems"
-          :key="item.title"
+          v-else
           :to="item.to"
           :prepend-icon="item.icon"
           :title="item.title"
@@ -152,7 +177,7 @@ function selectItem() {
           :color="isActive(item) ? 'primary' : undefined"
           @click="selectItem"
         />
-      </v-list-group>
+      </template>
     </v-list>
   </v-navigation-drawer>
 </template>
