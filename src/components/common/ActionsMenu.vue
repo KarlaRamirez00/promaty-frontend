@@ -8,10 +8,13 @@ const props = withDefaults(
     record: { active?: boolean; actions: string[] }
     hasUpdatePermission?: boolean
     hasActivePermission?: boolean
+    // false en el slide de detalle: "Ver detalle" no tiene sentido si ya estás viendo el detalle.
+    showView?: boolean
   }>(),
   {
     hasUpdatePermission: true,
     hasActivePermission: true,
+    showView: true,
   },
 )
 
@@ -31,16 +34,21 @@ const showToggle = computed(
 )
 const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activar'))
 const toggleColor = computed(() => (props.record.active ? 'error' : 'success'))
+
+// Fuente única: si ninguna acción aplica para este registro, no se renderiza el botón "..." —
+// un menú sin opciones es un botón muerto (ver Documentacion/.../actions-slide.md).
+const hasAnyAction = computed(() => props.showView || showEdit.value || showToggle.value)
 </script>
 
 <template>
-  <v-menu>
+  <v-menu v-if="hasAnyAction">
     <template #activator="{ props: menuProps }">
       <v-btn :icon="mdiDotsHorizontal" variant="text" size="small" v-bind="menuProps" />
     </template>
 
     <v-list class="actions-list" density="compact" nav>
       <v-list-item
+        v-if="showView"
         :prepend-icon="mdiEyeOutline"
         base-color="info"
         title="Ver detalle"

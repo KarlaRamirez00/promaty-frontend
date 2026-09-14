@@ -1,7 +1,4 @@
-import { maxLength, required, type Validator } from '@/rules/validators'
+import { required, type Validator } from './validators'
 import messages from '@/messages'
 
-export const clientNameRules: Validator[] = [
-  required(messages.client.rules.nameRequired),
-  maxLength(120, messages.client.rules.nameMaxLength),
-]
+export const clientNameRules: Validator[] = [required(messages.client.rules.nameRequired)]

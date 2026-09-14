@@ -1,7 +1,7 @@
 import { rrhhApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
 import type { ClientFormPayload, ClientListRaw, ClientRaw } from '@/types/client'
-import type { ClientQueryParams } from '@/models/client/client.models'
+import type { ClientQueryParams } from '@/models'
 
 export async function listClientsApi(params: ClientQueryParams): Promise<PageResult<ClientListRaw>> {
   const response = await rrhhApi.get<ApiListResponse<ClientListRaw>>('/clients', {

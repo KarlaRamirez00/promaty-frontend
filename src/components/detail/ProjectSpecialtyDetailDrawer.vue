@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ProjectSpecialty } from '@/models/projectSpecialty/projectSpecialty.models'
-import { ACTION } from '@/constants/actions.constants'
+import type { ProjectSpecialty } from '@/models'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
+import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -36,16 +36,6 @@ const fields = computed(() => {
     { key: 'updatedBy', label: 'Actualizado por', value: p.updatedBy },
   ]
 })
-
-// Doble gate: el permiso dice quién puede hacerlo; actions[] dice si este registro lo permite ahora.
-const showEdit = computed(
-  () =>
-    props.hasUpdatePermission && (props.projectSpecialty?.actions.includes(ACTION.UPDATE) ?? false),
-)
-const showToggle = computed(
-  () =>
-    props.hasActivePermission && (props.projectSpecialty?.actions.includes(ACTION.ACTIVE) ?? false),
-)
 </script>
 
 <template>
@@ -62,24 +52,20 @@ const showToggle = computed(
       </v-chip>
     </template>
 
+    <template v-if="projectSpecialty" #menu>
+      <ActionsMenu
+        :record="projectSpecialty"
+        :has-update-permission="hasUpdatePermission"
+        :has-active-permission="hasActivePermission"
+        :show-view="false"
+        @edit="emit('edit', projectSpecialty)"
+        @toggle="emit('toggleActive', projectSpecialty)"
+      />
+    </template>
+
     <div v-if="loading && !projectSpecialty" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
     <DetailFieldList v-else-if="projectSpecialty" :items="fields" />
-
-    <template v-if="projectSpecialty" #actions>
-      <v-btn v-if="showEdit" variant="tonal" block @click="emit('edit', projectSpecialty)">
-        Editar
-      </v-btn>
-      <v-btn
-        v-if="showToggle"
-        variant="text"
-        block
-        :color="projectSpecialty.active ? 'primary' : 'success'"
-        @click="emit('toggleActive', projectSpecialty)"
-      >
-        {{ projectSpecialty.active ? 'Desactivar' : 'Activar' }}
-      </v-btn>
-    </template>
   </DetailDrawer>
 </template>

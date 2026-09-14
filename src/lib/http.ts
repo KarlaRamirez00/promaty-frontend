@@ -80,17 +80,13 @@ function createClient(baseURL: string, options: { sessionAware?: boolean } = {})
   return client
 }
 
-// Punto único donde se compone la base URL de cada servicio: hoy un puerto por servicio, el día
-// que exista gateway-server se cambia acá a `${VITE_API_URL}/api/<servicio>` sin tocar las llamadas.
-const API_BASE_URL = {
-  auth: import.meta.env.VITE_AUTH_API_URL,
-  user: import.meta.env.VITE_USER_API_URL,
-  rrhh: import.meta.env.VITE_RRHH_API_URL,
-}
+// Punto único donde se compone la base URL: gateway-server (2026-09) enruta por path a los 3
+// servicios de negocio y valida el JWT — mismos paths que antes, sin prefijo /api.
+const API_BASE_URL = import.meta.env.VITE_API_URL
 
-export const authApi = createClient(API_BASE_URL.auth)
-export const userApi = createClient(API_BASE_URL.user, { sessionAware: true })
-export const rrhhApi = createClient(API_BASE_URL.rrhh, { sessionAware: true })
+export const authApi = createClient(API_BASE_URL)
+export const userApi = createClient(API_BASE_URL, { sessionAware: true })
+export const rrhhApi = createClient(API_BASE_URL, { sessionAware: true })
 
 export function unwrap<T>(response: AxiosResponse<ApiResponse<T>>): T {
   return response.data.data

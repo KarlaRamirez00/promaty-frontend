@@ -5,7 +5,7 @@ import type {
   ProjectSpecialtyListRaw,
   ProjectSpecialtyRaw,
 } from '@/types/projectSpecialty'
-import type { ProjectSpecialtyQueryParams } from '@/models/projectSpecialty/projectSpecialty.models'
+import type { ProjectSpecialtyQueryParams } from '@/models'
 
 export async function listProjectSpecialtiesApi(
   params: ProjectSpecialtyQueryParams,

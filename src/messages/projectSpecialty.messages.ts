@@ -34,6 +34,5 @@ export default {
   // Validación del formulario de crear/editar
   rules: {
     nameRequired: 'El nombre es obligatorio.',
-    nameMaxLength: 'El nombre no puede superar los 120 caracteres.',
   },
 }

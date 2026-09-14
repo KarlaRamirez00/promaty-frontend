@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ProjectType } from '@/models/projectType/projectType.models'
-import { ACTION } from '@/constants/actions.constants'
+import type { ProjectType } from '@/models'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
+import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -36,14 +36,6 @@ const fields = computed(() => {
     { key: 'updatedBy', label: 'Actualizado por', value: p.updatedBy },
   ]
 })
-
-// Doble gate: el permiso dice quién puede hacerlo; actions[] dice si este registro lo permite ahora.
-const showEdit = computed(
-  () => props.hasUpdatePermission && (props.projectType?.actions.includes(ACTION.UPDATE) ?? false),
-)
-const showToggle = computed(
-  () => props.hasActivePermission && (props.projectType?.actions.includes(ACTION.ACTIVE) ?? false),
-)
 </script>
 
 <template>
@@ -60,22 +52,20 @@ const showToggle = computed(
       </v-chip>
     </template>
 
+    <template v-if="projectType" #menu>
+      <ActionsMenu
+        :record="projectType"
+        :has-update-permission="hasUpdatePermission"
+        :has-active-permission="hasActivePermission"
+        :show-view="false"
+        @edit="emit('edit', projectType)"
+        @toggle="emit('toggleActive', projectType)"
+      />
+    </template>
+
     <div v-if="loading && !projectType" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
     <DetailFieldList v-else-if="projectType" :items="fields" />
-
-    <template v-if="projectType" #actions>
-      <v-btn v-if="showEdit" variant="tonal" block @click="emit('edit', projectType)">Editar</v-btn>
-      <v-btn
-        v-if="showToggle"
-        variant="text"
-        block
-        :color="projectType.active ? 'primary' : 'success'"
-        @click="emit('toggleActive', projectType)"
-      >
-        {{ projectType.active ? 'Desactivar' : 'Activar' }}
-      </v-btn>
-    </template>
   </DetailDrawer>
 </template>

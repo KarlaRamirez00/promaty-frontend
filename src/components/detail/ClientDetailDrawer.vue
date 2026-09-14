@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Client } from '@/models/client/client.models'
-import { ACTION } from '@/constants/actions.constants'
+import type { Client } from '@/models'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
+import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -36,12 +36,6 @@ const fields = computed(() => {
     { key: 'updatedBy', label: 'Actualizado por', value: c.updatedBy },
   ]
 })
-
-// Doble gate: el permiso dice quién puede hacerlo; actions[] dice si este registro lo permite ahora.
-const showEdit = computed(() => props.hasUpdatePermission && (props.client?.actions.includes(ACTION.UPDATE) ?? false))
-const showToggle = computed(
-  () => props.hasActivePermission && (props.client?.actions.includes(ACTION.ACTIVE) ?? false),
-)
 </script>
 
 <template>
@@ -52,22 +46,20 @@ const showToggle = computed(
       </v-chip>
     </template>
 
+    <template v-if="client" #menu>
+      <ActionsMenu
+        :record="client"
+        :has-update-permission="hasUpdatePermission"
+        :has-active-permission="hasActivePermission"
+        :show-view="false"
+        @edit="emit('edit', client)"
+        @toggle="emit('toggleActive', client)"
+      />
+    </template>
+
     <div v-if="loading && !client" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
     <DetailFieldList v-else-if="client" :items="fields" />
-
-    <template v-if="client" #actions>
-      <v-btn v-if="showEdit" variant="tonal" block @click="emit('edit', client)">Editar</v-btn>
-      <v-btn
-        v-if="showToggle"
-        variant="text"
-        block
-        :color="client.active ? 'primary' : 'success'"
-        @click="emit('toggleActive', client)"
-      >
-        {{ client.active ? 'Desactivar' : 'Activar' }}
-      </v-btn>
-    </template>
   </DetailDrawer>
 </template>

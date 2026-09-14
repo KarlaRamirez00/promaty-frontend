@@ -1,7 +1,7 @@
 import { rrhhApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
 import type { ProjectTypeFormPayload, ProjectTypeListRaw, ProjectTypeRaw } from '@/types/projectType'
-import type { ProjectTypeQueryParams } from '@/models/projectType/projectType.models'
+import type { ProjectTypeQueryParams } from '@/models'
 
 export async function listProjectTypesApi(
   params: ProjectTypeQueryParams,

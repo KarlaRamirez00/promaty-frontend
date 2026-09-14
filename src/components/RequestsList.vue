@@ -14,8 +14,8 @@ import { requests } from '@/data/requests'
 import type { Request, RequestStatus } from '@/types/request'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
-import FiltersDrawer from '@/components/common/FiltersDrawer.vue'
-import RequestDetailDrawer from '@/components/common/RequestDetailDrawer.vue'
+import FiltersDrawer, { type FilterField } from '@/components/common/FiltersDrawer.vue'
+import RequestDetailDrawer from '@/components/detail/RequestDetailDrawer.vue'
 import IndicatorCard from '@/components/common/IndicatorCard.vue'
 
 const { smAndDown } = useDisplay()
@@ -91,8 +91,12 @@ const activeFilters = computed(() => {
   if (filterStatus.value) active.push({ key: 'status', label: `Estado: ${filterStatus.value}` })
   if (filterCc.value) active.push({ key: 'cc', label: `Centro de costo: ${filterCc.value}` })
   if (filterRequester.value) active.push({ key: 'requester', label: `Solicitante: ${filterRequester.value}` })
-  if (filterDateFrom.value) active.push({ key: 'dateFrom', label: `Desde: ${filterDateFrom.value}` })
-  if (filterDateTo.value) active.push({ key: 'dateTo', label: `Hasta: ${filterDateTo.value}` })
+  if (filterDateFrom.value && filterDateTo.value) {
+    active.push({
+      key: 'dateRange',
+      label: `Fechas: ${filterDateFrom.value} a ${filterDateTo.value}`,
+    })
+  }
   return active
 })
 
@@ -100,8 +104,10 @@ function removeFilter(key: string) {
   if (key === 'status') filterStatus.value = null
   if (key === 'cc') filterCc.value = null
   if (key === 'requester') filterRequester.value = null
-  if (key === 'dateFrom') filterDateFrom.value = null
-  if (key === 'dateTo') filterDateTo.value = null
+  if (key === 'dateRange') {
+    filterDateFrom.value = null
+    filterDateTo.value = null
+  }
 }
 
 function clearAllFilters() {
@@ -111,6 +117,37 @@ function clearAllFilters() {
   filterDateFrom.value = null
   filterDateTo.value = null
 }
+
+const statusOptions: RequestStatus[] = [
+  'Pendiente aprobación',
+  'Pendiente validación',
+  'Aprobado',
+  'Rechazado',
+]
+
+const filterFields = computed<FilterField[]>(() => [
+  { key: 'status', type: 'select', label: 'Estado', options: statusOptions },
+  { key: 'cc', type: 'select', label: 'Centro de costo', options: ccOptions.value },
+  { key: 'requester', type: 'autocomplete', label: 'Solicitante', options: requesterOptions.value },
+  { key: 'dateRange', type: 'date', label: 'Rango de fechas', range: true },
+])
+
+const filterValues = computed<Record<string, unknown>>({
+  get: () => ({
+    status: filterStatus.value,
+    cc: filterCc.value,
+    requester: filterRequester.value,
+    dateRange: filterDateFrom.value && filterDateTo.value ? [filterDateFrom.value, filterDateTo.value] : null,
+  }),
+  set: (value) => {
+    filterStatus.value = (value.status as RequestStatus | null) ?? null
+    filterCc.value = (value.cc as string | null) ?? null
+    filterRequester.value = (value.requester as string | null) ?? null
+    const range = value.dateRange as [string, string] | null | undefined
+    filterDateFrom.value = range?.[0] ?? null
+    filterDateTo.value = range?.[1] ?? null
+  },
+})
 
 const headers = [
   { title: 'CC', key: 'cc' },
@@ -297,13 +334,8 @@ const statusColor: Record<RequestStatus, string> = {
 
   <FiltersDrawer
     v-model:open="filtersOpen"
-    v-model:status="filterStatus"
-    v-model:cc="filterCc"
-    v-model:requester="filterRequester"
-    v-model:date-from="filterDateFrom"
-    v-model:date-to="filterDateTo"
-    :cc-options="ccOptions"
-    :requester-options="requesterOptions"
+    v-model:values="filterValues"
+    :fields="filterFields"
     @clear="clearAllFilters"
   />
 

@@ -5,7 +5,7 @@ import { mdiAlert, mdiCheckCircle, mdiCloseCircle, mdiInformation } from '@mdi/j
 import AppSidebar from '@/components/AppSidebar.vue'
 import AppNavbar from '@/components/AppNavbar.vue'
 import { provideSidebarRail } from '@/composables/useSidebarRail'
-import { useSnackbarStore, type ToastVariant } from '@/stores/snackbar'
+import { useSnackbarStore, type ToastVariant } from '@/stores'
 
 provideSidebarRail()
 

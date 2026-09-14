@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores'
 import { ApiRequestError } from '@/lib/http'
 import PromatyLogo from '@/components/PromatyLogo.vue'
 

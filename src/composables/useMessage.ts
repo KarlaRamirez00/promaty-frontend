@@ -1,4 +1,4 @@
-import { useSnackbarStore } from '@/stores/snackbar'
+import { useSnackbarStore } from '@/stores'
 
 interface ToastText {
   title: string

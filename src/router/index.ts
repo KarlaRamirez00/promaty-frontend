@@ -4,6 +4,7 @@ import { ROUTE } from '@/router/route-names'
 import { clientRoutes } from '@/router/client.routes'
 import { projectTypeRoutes } from '@/router/projectType.routes'
 import { projectSpecialtyRoutes } from '@/router/projectSpecialty.routes'
+import { projectRoutes } from '@/router/project.routes'
 import { requestRoutes } from '@/router/request.routes'
 import { authMiddleware } from '@/middlewares/auth.middleware'
 
@@ -28,11 +29,16 @@ const routes: RouteRecordRaw[] = [
     name: ROUTE.FORBIDDEN,
     component: () => import('@/views/ForbiddenView.vue'),
   },
-  { path: '/', redirect: '/requests' },
+  {
+    path: '/',
+    name: ROUTE.HOME,
+    component: () => import('@/views/HomeView.vue'),
+  },
   ...requestRoutes,
   ...clientRoutes,
   ...projectTypeRoutes,
   ...projectSpecialtyRoutes,
+  ...projectRoutes,
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 

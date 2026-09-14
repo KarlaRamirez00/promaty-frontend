@@ -15,11 +15,12 @@ import {
   mdiWeatherSunny,
 } from '@mdi/js'
 import { useSidebarRail } from '@/composables/useSidebarRail'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores'
 import { ROUTE } from '@/router/route-names'
+import type { Breadcrumb } from '@/types/navigation'
 
 const props = defineProps<{
-  breadcrumbs: { title: string; disabled?: boolean }[]
+  breadcrumbs: Breadcrumb[]
 }>()
 
 const { rail, open, mobile, toggleRail } = useSidebarRail()
@@ -76,6 +77,7 @@ function logout() {
         density="compact"
         class="ml-1"
         aria-label="Ir al inicio"
+        :to="{ name: ROUTE.HOME }"
       >
         <v-icon :icon="mdiHomeOutline" size="20" color="grey-darken-1" />
       </v-btn>
@@ -115,12 +117,12 @@ function logout() {
 
     <template v-else>
       <v-breadcrumbs density="compact" class="px-4">
-        <v-breadcrumbs-item>
-          <v-icon :icon="mdiHomeOutline" size="20" color="grey-darken-1" />
+        <v-breadcrumbs-item :to="{ name: ROUTE.HOME }">
+          <v-icon :icon="mdiHomeOutline" size="20" class="breadcrumb-home-icon" />
         </v-breadcrumbs-item>
         <template v-for="crumb in breadcrumbs" :key="crumb.title">
           <v-breadcrumbs-divider />
-          <v-breadcrumbs-item :title="crumb.title" :disabled="crumb.disabled" />
+          <v-breadcrumbs-item :title="crumb.title" :to="crumb.to" :disabled="crumb.disabled" />
         </template>
       </v-breadcrumbs>
 
@@ -163,3 +165,33 @@ function logout() {
     </template>
   </v-app-bar>
 </template>
+
+<style scoped>
+/* Fuerza el mismo gris en todos los crumbs (clickeables o no) y solo agrega un hover sutil a los
+   que sí navegan, en vez del color de link/tema por defecto. */
+:deep(.v-breadcrumbs-item),
+:deep(.v-breadcrumbs-item--link),
+:deep(.v-breadcrumbs-divider),
+:deep(.breadcrumb-home-icon) {
+  color: rgba(var(--v-theme-on-surface), 0.6) !important;
+  text-decoration: none;
+}
+
+/* El crumb de la página actual usa disabled: Vuetify le baja la opacidad — se la devolvemos
+   para que se vea igual de gris que el resto, no más clara. */
+:deep(.v-breadcrumbs-item--disabled) {
+  opacity: 1;
+}
+
+:deep(.v-breadcrumbs-item--link) {
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+:deep(.v-breadcrumbs-item--link:hover) {
+  background-color: rgba(var(--v-theme-on-surface), 0.06);
+  color: rgba(var(--v-theme-on-surface), 0.87) !important;
+}
+</style>
