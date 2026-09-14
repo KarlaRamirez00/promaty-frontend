@@ -2,6 +2,7 @@
 export const ACTION = {
   UPDATE: 'UPDATE',
   ACTIVE: 'ACTIVE',
+  STATUS: 'STATUS',
 } as const
 
 export type Action = (typeof ACTION)[keyof typeof ACTION]

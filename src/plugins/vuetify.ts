@@ -20,12 +20,14 @@ export const vuetify = createVuetify({
         colors: {
           primary: '#DC2626',
           secondary: '#F87171',
+          error: '#BA2B2B',
         },
       },
       dark: {
         colors: {
           primary: '#DC2626',
           secondary: '#F87171',
+          error: '#BA2B2B',
         },
       },
     },
