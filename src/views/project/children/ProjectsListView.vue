@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiContentSave, mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
+import { mdiChevronRight, mdiContentSave, mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
 import {
   getClientOptionsAction,
   getProjectDetailAction,
@@ -396,9 +396,21 @@ function openEditForm(item: { id: number }) {
   >
     <template #header>
       <div class="flex-grow-1">
-        <div class="text-h6 font-weight-bold">Detalle de proyecto</div>
-        <div v-if="selectedProject" class="text-body-2 text-medium-emphasis">
-          {{ selectedProject.name }}
+        <div class="d-flex ga-3">
+          <div
+            class="detail-drawer__icon-box flex-shrink-0"
+            role="button"
+            aria-label="Cerrar detalle"
+            @click="closeDetail"
+          >
+            <v-icon :icon="mdiChevronRight" size="20" />
+          </div>
+          <div>
+            <div class="text-h6 font-weight-bold">Detalle de proyecto</div>
+            <div v-if="selectedProject" class="text-body-2 text-medium-emphasis">
+              {{ selectedProject.name }}
+            </div>
+          </div>
         </div>
 
         <div

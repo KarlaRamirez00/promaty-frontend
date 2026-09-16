@@ -68,6 +68,15 @@ const snackbarIcon = computed(() => TOAST_ICON[snackbar.current?.variant ?? 'inf
 </template>
 
 <style>
+/* Escala tipográfica global: Vuetify usa rem para sus clases de texto (text-h4, text-body-2, etc.),
+   así que bajar el font-size base del html reduce todo el texto de forma proporcional sin tocar
+   componente por componente. !important porque Vuetify también define "html { font-size: 1rem }"
+   en su propio CSS, inyectado después del nuestro en dev — sin esto, esa regla gana y el cambio no
+   se ve reflejado. Ir ajustando este valor hasta que se vea bien. */
+html {
+  font-size: 94% !important;
+}
+
 .v-list {
   --v-list-prepend-gap: 16px;
 }

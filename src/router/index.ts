@@ -5,6 +5,7 @@ import { clientRoutes } from '@/router/client.routes'
 import { projectTypeRoutes } from '@/router/projectType.routes'
 import { projectSpecialtyRoutes } from '@/router/projectSpecialty.routes'
 import { projectRoutes } from '@/router/project.routes'
+import { roleRoutes } from '@/router/role.routes'
 import { requestRoutes } from '@/router/request.routes'
 import { authMiddleware } from '@/middlewares/auth.middleware'
 
@@ -39,6 +40,7 @@ const routes: RouteRecordRaw[] = [
   ...projectTypeRoutes,
   ...projectSpecialtyRoutes,
   ...projectRoutes,
+  ...roleRoutes,
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useDisplay } from 'vuetify'
-import { mdiClose } from '@mdi/js'
+import { mdiChevronRight, mdiClose } from '@mdi/js'
 
 const props = withDefaults(
   defineProps<{
@@ -47,9 +47,19 @@ function onClickOutside(event: MouseEvent) {
     <v-card class="detail-drawer__card d-flex flex-column">
       <div class="detail-drawer__header pa-4 flex-shrink-0">
         <slot name="header">
-          <div>
-            <div v-if="resolvedTitle" class="text-h6 font-weight-bold">{{ resolvedTitle }}</div>
-            <slot name="badge" />
+          <div class="d-flex ga-3">
+            <div
+              class="detail-drawer__icon-box flex-shrink-0"
+              role="button"
+              aria-label="Cerrar detalle"
+              @click="open = false"
+            >
+              <v-icon :icon="mdiChevronRight" size="20" />
+            </div>
+            <div>
+              <div v-if="resolvedTitle" class="text-h6 font-weight-bold">{{ resolvedTitle }}</div>
+              <slot name="badge" />
+            </div>
           </div>
         </slot>
         <div class="detail-drawer__header-actions d-flex flex-column align-center">
@@ -102,6 +112,22 @@ function onClickOutside(event: MouseEvent) {
   position: absolute;
   top: 16px;
   right: 16px;
+}
+
+.detail-drawer__card .detail-drawer__icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.detail-drawer__card .detail-drawer__icon-box:hover {
+  background: rgba(var(--v-theme-on-surface), 0.12);
 }
 
 .detail-drawer-transition-enter-active,
