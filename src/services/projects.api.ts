@@ -1,7 +1,7 @@
 import { rrhhApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
 import type { ProjectFormPayload, ProjectListRaw, ProjectRaw } from '@/types/project'
-import type { ProjectQueryParams } from '@/models'
+import type { ProjectQueryParams, ProjectRelationOption, ProjectStatusOption } from '@/models'
 
 export async function listProjectsApi(
   params: ProjectQueryParams,
@@ -39,9 +39,42 @@ export async function updateProjectApi(
   return unwrap(response)
 }
 
-// Contrato confirmado por backend (2026-09-12), aún no desplegado — no conectar a un botón real
-// hasta que Karla avise que está arriba y probado (ver memoria project-status-out-of-form).
 export async function updateProjectStatusApi(id: number, statusId: number): Promise<ProjectRaw> {
   const response = await rrhhApi.patch<ApiResponse<ProjectRaw>>(`/projects/${id}/status`, { statusId })
   return unwrap(response)
+}
+
+// ==========================================
+// Endpoints de Selectores
+// ==========================================
+
+interface RelationRaw {
+  id: number
+  name: string
+}
+
+async function listRelationOptions(path: string): Promise<ProjectRelationOption[]> {
+  const response = await rrhhApi.get<ApiListResponse<RelationRaw>>(path, {
+    params: { active: true, size: 200, sort: 'name,asc', page: 0 },
+  })
+  return response.data.data.map((item) => ({ id: item.id, name: item.name }))
+}
+
+export function listClientOptionsApi(): Promise<ProjectRelationOption[]> {
+  return listRelationOptions('/clients')
+}
+
+export function listProjectTypeOptionsApi(): Promise<ProjectRelationOption[]> {
+  return listRelationOptions('/projectTypes')
+}
+
+export function listProjectSpecialtyOptionsApi(): Promise<ProjectRelationOption[]> {
+  return listRelationOptions('/projectSpecialties')
+}
+
+export async function listProjectStatusOptionsApi(): Promise<ProjectStatusOption[]> {
+  const response = await rrhhApi.get<ApiListResponse<ProjectStatusOption>>('/platformStatuses', {
+    params: { subModule: 'project' },
+  })
+  return response.data.data
 }

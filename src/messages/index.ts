@@ -3,6 +3,7 @@ import projectType from './projectType.messages'
 import projectSpecialty from './projectSpecialty.messages'
 import project from './project.messages'
 import role from './role.messages'
+import user from './user.messages'
 
 export default {
   client,
@@ -10,4 +11,5 @@ export default {
   projectSpecialty,
   project,
   role,
+  user,
 }
