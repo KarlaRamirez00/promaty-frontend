@@ -94,7 +94,7 @@ function submit() {
 </script>
 
 <template>
-  <h1 class="text-h4 font-weight-bold mb-4">
+  <h1 class="text-h5 font-weight-bold mb-4">
     {{ isEditing ? 'Editar tipo de proyecto' : 'Nuevo tipo de proyecto' }}
   </h1>
 
@@ -112,7 +112,6 @@ function submit() {
     v-model="form.name"
     label="Nombre"
     placeholder="Ingresa nombre del tipo de proyecto"
-    class="small-placeholder"
     variant="outlined"
     density="comfortable"
     :error="!!nameError"
@@ -138,9 +137,3 @@ function submit() {
     </v-btn>
   </div>
 </template>
-
-<style scoped>
-.small-placeholder :deep(input::placeholder) {
-  font-size: 0.8125rem;
-}
-</style>

@@ -5,6 +5,7 @@ import { mdiEye, mdiEyeOff } from '@mdi/js'
 import { useAuthStore } from '@/stores'
 import { ApiRequestError } from '@/lib/http'
 import PromatyLogo from '@/components/PromatyLogo.vue'
+import AlertComponent from '@/components/common/AlertComponent.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -66,15 +67,7 @@ async function submit() {
         Ingresa tus credenciales para continuar.
       </p>
 
-      <v-alert
-        v-if="errorMessage"
-        type="error"
-        variant="tonal"
-        density="compact"
-        class="mb-4"
-      >
-        {{ errorMessage }}
-      </v-alert>
+      <AlertComponent v-if="errorMessage" type="error" :message="errorMessage" />
 
       <v-form @submit.prevent="submit">
         <v-text-field

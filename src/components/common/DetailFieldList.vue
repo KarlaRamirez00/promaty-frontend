@@ -31,7 +31,7 @@ defineProps<{
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 8px;
+  padding: 8px 8px;
 }
 
 .detail-field-list__row + .detail-field-list__row {

@@ -14,7 +14,6 @@ export const roleRoutes: RouteRecordRaw[] = [
           module: 'role',
           permission: 'read',
           breadcrumbs: [
-            { title: 'Administración' },
             { title: 'Roles', disabled: true },
           ],
         },
@@ -27,7 +26,6 @@ export const roleRoutes: RouteRecordRaw[] = [
           module: 'role',
           permission: 'create',
           breadcrumbs: [
-            { title: 'Administración' },
             { title: 'Roles', to: { name: ROUTE.ROLE_LIST } },
             { title: 'Nuevo rol', disabled: true },
           ],
@@ -42,7 +40,6 @@ export const roleRoutes: RouteRecordRaw[] = [
           module: 'role',
           permission: 'update',
           breadcrumbs: [
-            { title: 'Administración' },
             { title: 'Roles', to: { name: ROUTE.ROLE_LIST } },
             { title: 'Editar rol', disabled: true },
           ],

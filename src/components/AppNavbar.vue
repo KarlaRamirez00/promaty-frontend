@@ -32,9 +32,20 @@ const queryClient = useQueryClient()
 
 const isDark = computed(() => theme.global.name.value === 'dark')
 
+const userInitials = computed(() => {
+  const name = auth.userName?.trim()
+  if (!name) return ''
+  const [first, second] = name.split(/\s+/)
+  return `${first?.[0] ?? ''}${second?.[0] ?? ''}`.toUpperCase()
+})
+
 const currentTitle = computed(
   () => props.breadcrumbs[props.breadcrumbs.length - 1]?.title ?? '',
 )
+
+// Un crumb sin `to` y sin `disabled: true` no lleva a ninguna vista real ni es la página
+// actual — no aporta nada clickeable, se descarta aunque una ruta lo declare por error.
+const visibleBreadcrumbs = computed(() => props.breadcrumbs.filter((crumb) => crumb.to || crumb.disabled))
 
 function toggleTheme() {
   theme.change(isDark.value ? 'light' : 'dark')
@@ -96,12 +107,24 @@ function logout() {
             v-bind="menuProps"
           >
             <v-avatar color="primary" size="32">
-              <span class="text-caption text-white">AD</span>
+              <span class="text-caption text-white">{{ userInitials }}</span>
             </v-avatar>
           </v-btn>
         </template>
 
-        <v-list density="compact" min-width="200">
+        <v-list density="compact" min-width="220">
+          <v-list-item>
+            <template #prepend>
+              <v-avatar color="primary" size="40">
+                <span class="text-body-2 text-white">{{ userInitials }}</span>
+              </v-avatar>
+            </template>
+            <v-list-item-title class="font-weight-bold">{{ auth.userName }}</v-list-item-title>
+            <v-chip v-if="auth.role" size="x-small" variant="tonal" class="mt-1">
+              {{ auth.role }}
+            </v-chip>
+          </v-list-item>
+          <v-divider class="my-1" />
           <v-list-item :prepend-icon="mdiBellOutline" title="Notificaciones" />
           <v-list-item :prepend-icon="mdiCogOutline" title="Configuración" />
           <v-list-item
@@ -120,7 +143,7 @@ function logout() {
         <v-breadcrumbs-item :to="{ name: ROUTE.HOME }">
           <v-icon :icon="mdiHomeOutline" size="20" class="breadcrumb-home-icon" />
         </v-breadcrumbs-item>
-        <template v-for="crumb in breadcrumbs" :key="crumb.title">
+        <template v-for="crumb in visibleBreadcrumbs" :key="crumb.title">
           <v-breadcrumbs-divider />
           <v-breadcrumbs-item :title="crumb.title" :to="crumb.to" :disabled="crumb.disabled" />
         </template>
@@ -153,12 +176,24 @@ function logout() {
         <template #activator="{ props: menuProps }">
           <v-btn icon variant="text" class="mr-4" aria-label="Cuenta" v-bind="menuProps">
             <v-avatar color="primary" size="32">
-              <span class="text-caption text-white">AD</span>
+              <span class="text-caption text-white">{{ userInitials }}</span>
             </v-avatar>
           </v-btn>
         </template>
 
-        <v-list density="compact" min-width="200">
+        <v-list density="compact" min-width="220">
+          <v-list-item>
+            <template #prepend>
+              <v-avatar color="primary" size="40">
+                <span class="text-body-2 text-white">{{ userInitials }}</span>
+              </v-avatar>
+            </template>
+            <v-list-item-title class="font-weight-bold">{{ auth.userName }}</v-list-item-title>
+            <v-chip v-if="auth.role" size="x-small" variant="tonal" class="mt-1">
+              {{ auth.role }}
+            </v-chip>
+          </v-list-item>
+          <v-divider class="my-1" />
           <v-list-item :prepend-icon="mdiLogoutVariant" title="Cerrar sesión" @click="logout" />
         </v-list>
       </v-menu>
@@ -175,6 +210,10 @@ function logout() {
 :deep(.breadcrumb-home-icon) {
   color: rgba(var(--v-theme-on-surface), 0.6) !important;
   text-decoration: none;
+}
+
+:deep(.v-breadcrumbs-item) {
+  font-size: 0.875rem;
 }
 
 /* El crumb de la página actual usa disabled: Vuetify le baja la opacidad — se la devolvemos

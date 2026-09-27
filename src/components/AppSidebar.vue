@@ -181,3 +181,9 @@ function selectItem() {
     </v-list>
   </v-navigation-drawer>
 </template>
+
+<style scoped>
+:deep(.v-list-group__items .v-list-item) {
+  padding-inline-start: 38px !important;
+}
+</style>

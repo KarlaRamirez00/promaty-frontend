@@ -14,7 +14,6 @@ export const projectSpecialtyRoutes: RouteRecordRaw[] = [
           module: 'projectSpecialty',
           permission: 'read',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Especialidades', disabled: true },
           ],
         },
@@ -27,7 +26,6 @@ export const projectSpecialtyRoutes: RouteRecordRaw[] = [
           module: 'projectSpecialty',
           permission: 'create',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Especialidades', to: { name: ROUTE.PROJECT_SPECIALTY_LIST } },
             { title: 'Nueva especialidad', disabled: true },
           ],
@@ -42,7 +40,6 @@ export const projectSpecialtyRoutes: RouteRecordRaw[] = [
           module: 'projectSpecialty',
           permission: 'update',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Especialidades', to: { name: ROUTE.PROJECT_SPECIALTY_LIST } },
             { title: 'Editar especialidad', disabled: true },
           ],

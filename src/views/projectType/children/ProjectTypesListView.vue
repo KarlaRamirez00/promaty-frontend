@@ -215,7 +215,7 @@ function confirmToggleActive() {
 
 <template>
   <div class="mb-6">
-    <h1 class="text-h4 font-weight-bold">Tipos de proyecto</h1>
+    <h1 class="text-h5 font-weight-bold">Lista de tipos de proyecto</h1>
     <p class="text-body-2 text-medium-emphasis mt-1">
       Mantenedor de tipos de proyecto utilizados en la asignación de proyectos.
     </p>
@@ -237,7 +237,7 @@ function confirmToggleActive() {
     @clear-all="clearActiveFilter"
   />
 
-  <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4">
+  <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4 text-caption">
     No se pudo cargar la lista de tipos de proyecto.
   </v-alert>
 

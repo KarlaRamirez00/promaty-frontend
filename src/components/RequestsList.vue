@@ -37,6 +37,13 @@ function parseCreatedAt(value: string): Date {
   return new Date(year, month - 1, day)
 }
 
+// new Date("yyyy-mm-dd") interpreta el string como UTC medianoche: en un huso horario detrás de
+// UTC (ej. Chile) el Date resultante cae en el día anterior al convertirlo a hora local.
+function parseFilterDate(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 const filtersOpen = ref(false)
 const filterStatus = ref<RequestStatus | null>(null)
 const filterCc = ref<string | null>(null)
@@ -49,8 +56,8 @@ const requesterOptions = computed(() => [...new Set(requests.map((r) => r.reques
 
 const filteredRequests = computed(() => {
   const query = search.value.trim().toLowerCase()
-  const from = filterDateFrom.value ? new Date(filterDateFrom.value) : null
-  const to = filterDateTo.value ? new Date(filterDateTo.value) : null
+  const from = filterDateFrom.value ? parseFilterDate(filterDateFrom.value) : null
+  const to = filterDateTo.value ? parseFilterDate(filterDateTo.value) : null
 
   return requests.filter((r) => {
     if (filterStatus.value && r.status !== filterStatus.value) return false

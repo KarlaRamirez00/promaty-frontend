@@ -11,7 +11,7 @@ const messages = computed(() => Object.values(props.errorFields ?? {}))
 </script>
 
 <template>
-  <v-alert v-if="messages.length" type="error" variant="tonal" density="compact" class="mb-4">
+  <v-alert v-if="messages.length" type="error" variant="tonal" density="compact" class="mb-4 text-caption">
     <div class="d-flex align-center ga-2 font-weight-medium mb-1">
       <v-icon :icon="mdiAlert" size="18" />
       Errores encontrados

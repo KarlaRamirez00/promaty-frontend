@@ -140,7 +140,7 @@ function submit() {
 </script>
 
 <template>
-  <h1 class="text-h4 font-weight-bold mb-4">
+  <h1 class="text-h5 font-weight-bold mb-4">
     {{ isEditing ? 'Editar rol' : 'Nuevo rol' }}
   </h1>
 

@@ -117,6 +117,7 @@ function onClickOutside(event: MouseEvent) {
 .detail-drawer__card .detail-drawer__icon-box {
   width: 40px;
   height: 40px;
+  margin-left: -2px;
   border-radius: 10px;
   background: rgba(var(--v-theme-on-surface), 0.06);
   display: flex;

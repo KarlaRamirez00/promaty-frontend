@@ -234,7 +234,7 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
 
 <template>
   <div class="mb-6">
-    <h1 class="text-h4 font-weight-bold">Roles</h1>
+    <h1 class="text-h5 font-weight-bold">Lista de roles</h1>
     <p class="text-body-2 text-medium-emphasis mt-1">
       Roles y permisos disponibles para los usuarios del sistema.
     </p>
@@ -256,7 +256,7 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
     @clear-all="clearActiveFilter"
   />
 
-  <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4">
+  <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4 text-caption">
     No se pudo cargar la lista de roles.
   </v-alert>
 

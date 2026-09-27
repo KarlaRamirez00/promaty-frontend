@@ -33,8 +33,6 @@ export function updateProjectAction(form: ProjectForm) {
   )
 }
 
-// Contrato confirmado por backend (2026-09-12), aún no desplegado — no invocar desde un botón
-// real hasta que Karla avise que el endpoint está arriba (ver memoria project-status-out-of-form).
 export function updateProjectStatusAction(id: number, statusId: number) {
   return useMutateAction(
     (payload: { id: number; statusId: number }) => updateProjectStatusApi(payload.id, payload.statusId),

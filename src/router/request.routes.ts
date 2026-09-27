@@ -8,7 +8,6 @@ export const requestRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/RequestsView.vue'),
     meta: {
       breadcrumbs: [
-        { title: 'Solicitudes de RRHH' },
         { title: 'Lista de solicitudes', disabled: true },
       ],
     },

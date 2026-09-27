@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useTheme } from 'vuetify'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
-import { es } from 'date-fns/locale'
-import { mdiCalendarBlankOutline, mdiClose } from '@mdi/js'
-
-// Renderiza el input vía #dp-input como un v-text-field para que se vea igual al resto del
-// formulario, dejando que la librería resuelva la apertura del calendario (sin @click propio).
+import { VDateInput } from 'vuetify/labs/VDateInput'
 
 export type DateFieldValue = string | string[] | null
 
@@ -19,6 +13,7 @@ const props = withDefaults(
     error?: boolean
     clearable?: boolean
     hideDetails?: boolean
+    minDate?: string | null
   }>(),
   {
     placeholder: 'Seleccionar',
@@ -27,67 +22,76 @@ const props = withDefaults(
     error: false,
     clearable: false,
     hideDetails: false,
+    minDate: null,
   },
 )
 
 const model = defineModel<DateFieldValue>({ default: null })
 
-const theme = useTheme()
-const isDark = computed(() => theme.global.current.value.dark)
-
-const modelType = computed(() => (props.monthPicker ? 'yyyy-MM' : 'yyyy-MM-dd'))
-const displayFormat = computed(() => (props.monthPicker ? 'MM/yyyy' : 'dd/MM/yyyy'))
-
-function clear(event: MouseEvent) {
-  event.stopPropagation()
-  model.value = null
+// VDateInput no acepta un patrón tipo "dd/MM/yyyy" en display-format — solo nombres de preset
+// del adaptador de fechas de Vuetify (ej. "keyboardDate"). Un string no reconocido cae a su
+// default ({ timeZone: 'UTC', timeZoneName: 'short' }), mostrando algo como "4/2/2027, UTC".
+// Se arma el texto directamente, sin depender de esos presets.
+function pad(value: number): string {
+  return String(value).padStart(2, '0')
 }
+
+const displayFormat = computed(() => (value: unknown) => {
+  const date = value as Date
+  return props.monthPicker
+    ? `${pad(date.getMonth() + 1)}/${date.getFullYear()}`
+    : `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`
+})
+const viewMode = computed(() => (props.monthPicker ? 'months' : 'month'))
+const multiple = computed(() => (props.range ? 'range' : false))
+
+// El modelo público del componente sigue en string ISO (yyyy-MM-dd) para no propagar el tipo
+// Date de VDateInput al resto de la app — se convierte solo en este límite.
+function toDate(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function toIsoString(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const internalValue = computed<Date | Date[] | null>({
+  get() {
+    if (!model.value) return props.range ? [] : null
+    return Array.isArray(model.value) ? model.value.map(toDate) : toDate(model.value)
+  },
+  set(value) {
+    if (!value || (Array.isArray(value) && !value.length)) {
+      model.value = null
+      return
+    }
+    model.value = Array.isArray(value) ? value.map(toIsoString) : toIsoString(value)
+  },
+})
+
+const minDateValue = computed(() => (props.minDate ? toDate(props.minDate) : undefined))
 </script>
 
 <template>
-  <VueDatePicker
-    v-model="model"
-    :range="range"
-    :month-picker="monthPicker"
-    :model-type="modelType"
-    :format="displayFormat"
-    :locale="es"
-    :week-start="1"
-    six-weeks
-    :time-config="{ enableTimePicker: false }"
-    :dark="isDark"
-    teleport="body"
-    auto-apply
-  >
-    <template #dp-input="{ value }">
-      <v-text-field
-        :model-value="value"
-        :label="label"
-        :placeholder="placeholder"
-        variant="outlined"
-        density="comfortable"
-        readonly
-        persistent-placeholder
-        :error="error"
-        :hide-details="hideDetails"
-        :append-inner-icon="clearable && model ? mdiClose : mdiCalendarBlankOutline"
-        @click:append-inner="clearable && model ? clear($event) : undefined"
-      />
-    </template>
-  </VueDatePicker>
+  <VDateInput
+    v-model="internalValue"
+    :label="label"
+    :placeholder="placeholder"
+    :multiple="multiple"
+    :view-mode="viewMode"
+    :display-format="displayFormat"
+    :min="minDateValue"
+    :error="error"
+    :clearable="clearable"
+    :hide-details="hideDetails"
+    variant="outlined"
+    density="comfortable"
+    persistent-placeholder
+    hide-actions
+    prepend-icon=""
+  />
 </template>
-
-<style scoped>
-/* La librería envuelve el slot en sus propios contenedores para adjuntar el click de apertura —
-   display: contents los saca del flujo de caja sin perder ese click delegado. */
-:deep(.dp--main),
-:deep(.dp--input-wrap) {
-  display: contents;
-}
-
-/* .dp--input-wrap trae box-sizing: unset (resuelve a content-box), lo que rompe la herencia
-   border-box que Vuetify espera en su jerarquía interna y sumaba padding extra a la altura. */
-:deep(.dp--input-wrap) {
-  box-sizing: border-box;
-}
-</style>

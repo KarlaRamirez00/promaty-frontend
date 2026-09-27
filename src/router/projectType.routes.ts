@@ -14,7 +14,6 @@ export const projectTypeRoutes: RouteRecordRaw[] = [
           module: 'projectType',
           permission: 'read',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Tipos de proyecto', disabled: true },
           ],
         },
@@ -27,7 +26,6 @@ export const projectTypeRoutes: RouteRecordRaw[] = [
           module: 'projectType',
           permission: 'create',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Tipos de proyecto', to: { name: ROUTE.PROJECT_TYPE_LIST } },
             { title: 'Nuevo tipo de proyecto', disabled: true },
           ],
@@ -42,7 +40,6 @@ export const projectTypeRoutes: RouteRecordRaw[] = [
           module: 'projectType',
           permission: 'update',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Tipos de proyecto', to: { name: ROUTE.PROJECT_TYPE_LIST } },
             { title: 'Editar tipo de proyecto', disabled: true },
           ],

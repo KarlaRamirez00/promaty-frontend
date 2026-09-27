@@ -85,8 +85,34 @@ html {
   font-variant-numeric: tabular-nums slashed-zero;
 }
 
+.v-data-table .v-table__wrapper > table > thead > tr {
+  background: rgba(var(--v-theme-on-surface), 0.04);
+}
+
 .v-field__clearable > .v-icon {
   font-size: 18px;
+}
+
+.v-field input::placeholder {
+  font-size: 0.8125rem;
+}
+
+.v-field__input {
+  font-size: 0.875rem;
+}
+
+.v-list-item-title {
+  font-size: 0.875rem;
+}
+
+.v-list-item--density-default.v-list-item--one-line {
+  min-height: 40px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.v-btn {
+  font-size: 0.8125rem !important;
 }
 
 .link-cell {

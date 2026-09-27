@@ -14,7 +14,6 @@ export const clientRoutes: RouteRecordRaw[] = [
           module: 'client',
           permission: 'read',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Mandantes', disabled: true },
           ],
         },
@@ -27,7 +26,6 @@ export const clientRoutes: RouteRecordRaw[] = [
           module: 'client',
           permission: 'create',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Mandantes', to: { name: ROUTE.CLIENT_LIST } },
             { title: 'Nuevo mandante', disabled: true },
           ],
@@ -42,7 +40,6 @@ export const clientRoutes: RouteRecordRaw[] = [
           module: 'client',
           permission: 'update',
           breadcrumbs: [
-            { title: 'Mantenedores' },
             { title: 'Mandantes', to: { name: ROUTE.CLIENT_LIST } },
             { title: 'Editar mandante', disabled: true },
           ],
