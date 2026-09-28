@@ -9,9 +9,21 @@ function claimsFromToken(token: string | null): JwtClaims | null {
   return token ? decodeJwt(token) : null
 }
 
+// exp del JWT viene en segundos desde epoch (estándar), Date.now() en milisegundos.
+function isExpired(claims: JwtClaims | null): boolean {
+  return !claims || claims.exp * 1000 <= Date.now()
+}
+
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(getToken())
-  const claims = ref<JwtClaims | null>(claimsFromToken(token.value))
+  // Un token vencido guardado de una sesión anterior se descarta al arrancar — sin esto,
+  // isAuthenticated quedaba en true (el token seguía ahí) y la app mostraba Home con una sesión
+  // muerta hasta que la primera llamada real al backend respondía 401 y recién ahí redirigía.
+  const initialToken = getToken()
+  const initialClaims = claimsFromToken(initialToken)
+  if (initialToken && isExpired(initialClaims)) clearToken()
+
+  const token = ref<string | null>(isExpired(initialClaims) ? null : initialToken)
+  const claims = ref<JwtClaims | null>(isExpired(initialClaims) ? null : initialClaims)
 
   const isAuthenticated = computed(() => token.value !== null)
   const role = computed(() => claims.value?.role ?? null)

@@ -5,10 +5,12 @@ withDefaults(
   defineProps<{
     searchPlaceholder: string
     newLabel?: string
+    showFilter?: boolean
     showExport?: boolean
     showNew?: boolean
   }>(),
   {
+    showFilter: true,
     showExport: true,
     showNew: true,
   },
@@ -31,6 +33,7 @@ const BORDER_STYLE = 'border-color: rgba(var(--v-theme-on-surface), 0.33)'
 <template>
   <div class="d-flex flex-wrap align-center ga-3 mb-3">
     <v-btn
+      v-if="showFilter"
       variant="outlined"
       density="compact"
       :height="CONTROL_HEIGHT"

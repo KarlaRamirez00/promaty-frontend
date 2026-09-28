@@ -41,3 +41,20 @@ export function formatDateTime(value: string | null | undefined, fallback = 'Sin
   const time = `${toTwoDigits(date.getHours())}:${toTwoDigits(date.getMinutes())} h`
   return `${dateTimeFormatter.format(date)}, ${time}`
 }
+
+// Formatea un RUT chileno para mostrarlo en pantalla: "123456785" o "12345678-5" → "12.345.678-5".
+// Solo aplica a identificationType === "RUT" — un pasaporte no tiene este formato (cada país define
+// el suyo, sin estructura fija que se pueda formatear de forma genérica).
+export function formatRut(value: string): string {
+  const clean = value.replaceAll('.', '').trim()
+  const [body, dv] = clean.includes('-') ? clean.split('-') : [clean.slice(0, -1), clean.slice(-1)]
+  if (!body || !dv) return value
+
+  const reversed = body.split('').reverse()
+  const grouped = reversed.reduce((acc, digit, index) => {
+    const withDot = index > 0 && index % 3 === 0 ? `${digit}.` : digit
+    return withDot + acc
+  }, '')
+
+  return `${grouped}-${dv.toUpperCase()}`
+}
