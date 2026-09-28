@@ -1,5 +1,10 @@
-import type { StaffCreatePayload, StaffFormPayload, StaffListRaw, StaffRaw } from '@/types/staff'
-import type { IdentificationType } from '@/types/staff'
+import type {
+  IdentificationType,
+  StaffCreatePayload,
+  StaffFormPayload,
+  StaffListRaw,
+  StaffRaw,
+} from '@/types/staff'
 import type { Staff, StaffForm, StaffListItem } from '@/models'
 import { formatDateTime, formatRut } from '@/utils'
 
