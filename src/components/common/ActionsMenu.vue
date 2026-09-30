@@ -76,4 +76,13 @@ const hasAnyAction = computed(() => props.showView || showEdit.value || showTogg
 .actions-list {
   border-radius: 12px;
 }
+
+.actions-list :deep(.v-list-item) {
+  cursor: pointer;
+  user-select: none;
+}
+
+.actions-list :deep(.v-list-item__overlay) {
+  background-color: rgb(var(--v-theme-on-surface));
+}
 </style>
