@@ -152,6 +152,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.firstName"
+        v-input-mask="'onlyLetters'"
         label="Nombre"
         placeholder="Ingresa el nombre"
         variant="outlined"
@@ -169,6 +170,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.lastName"
+        v-input-mask="'onlyLetters'"
         label="Apellido"
         placeholder="Ingresa el apellido"
         variant="outlined"
@@ -185,6 +187,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.email"
+        v-input-mask="'email'"
         label="Correo"
         placeholder="Ingresa el correo"
         type="email"
@@ -200,6 +203,8 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.phoneNumber"
+        v-input-mask="'phone'"
+        maxlength="9"
         label="Teléfono (opcional)"
         placeholder="Ingresa el teléfono"
         variant="outlined"

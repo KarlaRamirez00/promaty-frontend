@@ -110,6 +110,7 @@ function submit() {
 
   <v-text-field
     v-model="form.name"
+    v-input-mask="'freeText'"
     label="Nombre"
     placeholder="Ingresa nombre del mandante"
     variant="outlined"

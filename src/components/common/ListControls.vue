@@ -48,6 +48,7 @@ const BORDER_STYLE = 'border-color: rgba(var(--v-theme-on-surface), 0.33)'
 
     <v-text-field
       v-model="search"
+      v-input-mask="'freeText'"
       :placeholder="searchPlaceholder"
       :aria-label="searchPlaceholder"
       variant="outlined"

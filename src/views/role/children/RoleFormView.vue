@@ -158,6 +158,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.name"
+        v-input-mask="'freeText'"
         label="Nombre"
         placeholder="Ingresa nombre del rol"
         variant="outlined"
@@ -175,6 +176,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.description"
+        v-input-mask="'freeText'"
         label="Descripción (opcional)"
         placeholder="Ingresa una descripción"
         variant="outlined"

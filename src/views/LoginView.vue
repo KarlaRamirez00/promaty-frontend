@@ -72,6 +72,7 @@ async function submit() {
       <v-form @submit.prevent="submit">
         <v-text-field
           v-model="email"
+          v-input-mask="'email'"
           label="Correo"
           type="email"
           autocomplete="email"

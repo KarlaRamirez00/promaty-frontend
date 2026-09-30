@@ -164,6 +164,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.name"
+        v-input-mask="'freeText'"
         label="Nombre"
         placeholder="Ingresa nombre del proyecto"
         variant="outlined"
@@ -181,6 +182,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="costCenterCodeModel"
+        v-input-mask="'lettersAndNumbers'"
         label="Centro de costo"
         placeholder="Ingresa el código de centro de costo"
         variant="outlined"

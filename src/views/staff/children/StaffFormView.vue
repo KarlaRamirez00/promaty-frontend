@@ -376,6 +376,7 @@ function submit() {
       <div :class="{ 'staff-identification-locked': isEditing }">
         <v-text-field
           v-model="identificationNumberInput"
+          v-input-mask="form.identificationType === 'RUT' ? 'rut' : 'lettersAndNumbers'"
           :label="form.identificationType === 'RUT' ? 'RUT' : 'Número de identificación'"
           :placeholder="form.identificationType === 'RUT' ? '99.999.999-9' : 'Ingresa el número'"
           variant="outlined"
@@ -400,6 +401,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.firstName"
+        v-input-mask="'onlyLetters'"
         label="Nombre"
         placeholder="Ingresa el nombre"
         variant="outlined"
@@ -416,6 +418,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.paternalLastName"
+        v-input-mask="'onlyLetters'"
         label="Apellido paterno"
         placeholder="Ingresa el apellido paterno"
         variant="outlined"
@@ -432,6 +435,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.maternalLastName"
+        v-input-mask="'onlyLetters'"
         label="Apellido materno"
         placeholder="Ingresa el apellido materno"
         variant="outlined"
@@ -458,6 +462,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.personalEmail"
+        v-input-mask="'email'"
         label="Correo personal"
         placeholder="Ingresa el correo"
         type="email"
@@ -473,6 +478,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.phone1"
+        v-input-mask="'phone'"
         label="Teléfono"
         placeholder="912345678"
         variant="outlined"
@@ -559,6 +565,7 @@ function submit() {
     <v-col v-if="form.hasChildren" cols="12" md="4">
       <v-text-field
         v-model.number="form.childrenCount"
+        v-input-mask="'onlyNumbers'"
         label="Cantidad de hijos"
         type="number"
         variant="outlined"
@@ -594,6 +601,7 @@ function submit() {
     <v-col cols="12" md="8">
       <v-text-field
         v-model="form.address"
+        v-input-mask="'freeText'"
         label="Dirección"
         placeholder="Ingresa la dirección"
         variant="outlined"
@@ -609,6 +617,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.city"
+        v-input-mask="'onlyLetters'"
         label="Ciudad"
         placeholder="Ingresa la ciudad"
         variant="outlined"
@@ -628,6 +637,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.emergencyContactName"
+        v-input-mask="'onlyLetters'"
         label="Nombre del contacto"
         placeholder="Ingresa el nombre completo"
         variant="outlined"
@@ -643,6 +653,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.emergencyPhone"
+        v-input-mask="'phone'"
         label="Teléfono de emergencia"
         placeholder="912345678"
         variant="outlined"
@@ -764,6 +775,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="accountNumberInput"
+        v-input-mask="'bankAccount'"
         label="Número de cuenta"
         placeholder="Ingresa el número de cuenta"
         variant="outlined"

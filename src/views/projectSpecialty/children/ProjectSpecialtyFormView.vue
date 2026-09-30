@@ -115,6 +115,7 @@ function submit() {
 
   <v-text-field
     v-model="form.name"
+    v-input-mask="'freeText'"
     label="Nombre"
     placeholder="Ingresa nombre de la especialidad"
     variant="outlined"
