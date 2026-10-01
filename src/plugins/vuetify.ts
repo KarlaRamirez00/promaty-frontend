@@ -36,4 +36,11 @@ export const vuetify = createVuetify({
     locale: 'es',
     messages: { es },
   },
+  defaults: {
+    VTextField: { autocomplete: 'off' },
+    VTextarea: { autocomplete: 'off' },
+    VSelect: { autocomplete: 'off' },
+    VAutocomplete: { autocomplete: 'off' },
+    VDateInput: { autocomplete: 'off' },
+  },
 })

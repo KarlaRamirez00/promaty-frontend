@@ -8,14 +8,13 @@ import {
   getProjectTypeDetailAction,
   updateProjectTypeAction,
 } from '@/actions'
+import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
-import { useError } from '@/utils'
 import messages from '@/messages'
 import projectTypeMessages from '@/messages/projectType.messages'
 import { ROUTE } from '@/router/route-names'
 import { createProjectTypeForm, type ProjectTypeForm } from '@/models'
 import { firstError, projectTypeNameRules } from '@/rules'
-import type { ApiErrorFields } from '@/types/api'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
@@ -27,7 +26,12 @@ const props = defineProps<{
 const router = useRouter()
 const queryClient = useQueryClient()
 const { toastSaved, toastFailed } = useMessage()
-const { normalizeError } = useError()
+const {
+  backendErrorFields,
+  setFromError,
+  clear: clearBackendErrors,
+  hasBackendError,
+} = useBackendFieldErrors()
 
 const projectTypeId = computed(() => (props.id ? Number(props.id) : null))
 const isEditing = computed(() => projectTypeId.value !== null)
@@ -40,7 +44,6 @@ const { data: existingProjectType } = useQuery({
 
 const form = ref<ProjectTypeForm>(createProjectTypeForm())
 const nameError = ref('')
-const backendErrorFields = ref<ApiErrorFields | null>(null)
 
 const hasValidationError = computed(() => !!nameError.value)
 const alert = computed(() =>
@@ -75,14 +78,12 @@ const saveMutation = useMutation({
     goToList()
   },
   onError: (error: unknown) => {
-    const { fieldErrors } = normalizeError(error)
-    nameError.value = fieldErrors?.name ?? ''
-    backendErrorFields.value = nameError.value ? null : fieldErrors
-    toastFailed(messages.projectType)
+    if (!setFromError(error)) toastFailed(messages.projectType)
   },
 })
 
 function submit() {
+  clearBackendErrors()
   const error = firstError(form.value.name, projectTypeNameRules)
   if (error) {
     nameError.value = error
@@ -104,8 +105,6 @@ function submit() {
     :icon="mdiArrowDownCircleOutline"
   />
 
-  <ErrorComponent :error-fields="backendErrorFields" />
-
   <h2 class="text-subtitle-1 font-weight-bold text-primary mt-2 mb-4">Datos principales</h2>
 
   <v-text-field
@@ -115,7 +114,7 @@ function submit() {
     placeholder="Ingresa nombre del tipo de proyecto"
     variant="outlined"
     density="comfortable"
-    :error="!!nameError"
+    :error="!!nameError || hasBackendError('name')"
     maxlength="120"
     counter
     hide-details="auto"
@@ -124,6 +123,8 @@ function submit() {
     @keyup.enter="submit"
   />
   <FieldErrorComponent :message="nameError" />
+
+  <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 
   <div class="d-flex justify-end ga-2 mt-6">
     <v-btn variant="text" @click="goToList">Cancelar</v-btn>

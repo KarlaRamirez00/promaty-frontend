@@ -9,8 +9,8 @@ import {
   getUserDetailAction,
   updateUserAction,
 } from '@/actions'
+import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
-import { useError } from '@/utils'
 import messages from '@/messages'
 import userMessages from '@/messages/user.messages'
 import { ROUTE } from '@/router/route-names'
@@ -22,7 +22,6 @@ import {
   userLastNameRules,
   userPasswordRules,
 } from '@/rules'
-import type { ApiErrorFields } from '@/types/api'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
@@ -34,7 +33,12 @@ const props = defineProps<{
 const router = useRouter()
 const queryClient = useQueryClient()
 const { toastSaved, toastFailed } = useMessage()
-const { normalizeError } = useError()
+const {
+  backendErrorFields,
+  setFromError,
+  clear: clearBackendErrors,
+  hasBackendError,
+} = useBackendFieldErrors()
 
 const userId = computed(() => (props.id ? Number(props.id) : null))
 const isEditing = computed(() => userId.value !== null)
@@ -52,8 +56,11 @@ const { data: roleOptions } = useQuery({
 
 const form = ref<UserForm>(createUserForm())
 const fieldErrors = ref<Record<string, string>>({})
-const backendErrorFields = ref<ApiErrorFields | null>(null)
 const showPassword = ref(false)
+
+function hasError(field: string): boolean {
+  return !!fieldErrors.value[field] || hasBackendError(field)
+}
 
 const hasValidationError = computed(() => Object.keys(fieldErrors.value).length > 0)
 const alert = computed(() =>
@@ -120,14 +127,12 @@ const saveMutation = useMutation({
     goToList()
   },
   onError: (error: unknown) => {
-    const { fieldErrors: backendFields } = normalizeError(error)
-    fieldErrors.value = backendFields ?? {}
-    backendErrorFields.value = Object.keys(fieldErrors.value).length ? null : backendFields
-    toastFailed(messages.user)
+    if (!setFromError(error)) toastFailed(messages.user)
   },
 })
 
 function submit() {
+  clearBackendErrors()
   if (!validate()) return
   saveMutation.mutate(form.value)
 }
@@ -144,8 +149,6 @@ function submit() {
     :icon="mdiArrowDownCircleOutline"
   />
 
-  <ErrorComponent :error-fields="backendErrorFields" />
-
   <h2 class="text-subtitle-1 font-weight-bold text-primary mt-2 mb-4">Datos principales</h2>
 
   <v-row>
@@ -157,7 +160,7 @@ function submit() {
         placeholder="Ingresa el nombre"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.firstName"
+        :error="hasError('firstName')"
         maxlength="120"
         counter
         hide-details="auto"
@@ -175,7 +178,7 @@ function submit() {
         placeholder="Ingresa el apellido"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.lastName"
+        :error="hasError('lastName')"
         maxlength="120"
         counter
         hide-details="auto"
@@ -193,7 +196,7 @@ function submit() {
         type="email"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.email"
+        :error="hasError('email')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -225,7 +228,7 @@ function submit() {
         variant="outlined"
         density="comfortable"
         persistent-placeholder
-        :error="!!fieldErrors.roleId"
+        :error="hasError('roleId')"
         hide-details="auto"
       />
       <FieldErrorComponent :message="fieldErrors.roleId" />
@@ -240,7 +243,7 @@ function submit() {
         autocomplete="new-password"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.password"
+        :error="hasError('password')"
         :append-inner-icon="showPassword ? mdiEyeOff : mdiEye"
         hide-details="auto"
         persistent-placeholder
@@ -249,6 +252,8 @@ function submit() {
       <FieldErrorComponent :message="fieldErrors.password" />
     </v-col>
   </v-row>
+
+  <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 
   <div class="d-flex justify-end ga-2 mt-6">
     <v-btn variant="text" @click="goToList">Cancelar</v-btn>

@@ -11,8 +11,8 @@ import {
   getProjectTypeOptionsAction,
   updateProjectAction,
 } from '@/actions'
+import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
-import { useError } from '@/utils'
 import messages from '@/messages'
 import projectMessages from '@/messages/project.messages'
 import { ROUTE } from '@/router/route-names'
@@ -23,7 +23,6 @@ import {
   projectCostCenterCodeRules,
   projectNameRules,
 } from '@/rules'
-import type { ApiErrorFields } from '@/types/api'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
@@ -36,7 +35,12 @@ const props = defineProps<{
 const router = useRouter()
 const queryClient = useQueryClient()
 const { toastSaved, toastFailed } = useMessage()
-const { normalizeError } = useError()
+const {
+  backendErrorFields,
+  setFromError,
+  clear: clearBackendErrors,
+  hasBackendError,
+} = useBackendFieldErrors()
 
 const projectId = computed(() => (props.id ? Number(props.id) : null))
 const isEditing = computed(() => projectId.value !== null)
@@ -68,7 +72,10 @@ const costCenterCodeModel = computed<string>({
   },
 })
 const fieldErrors = ref<Record<string, string>>({})
-const backendErrorFields = ref<ApiErrorFields | null>(null)
+
+function hasError(field: string): boolean {
+  return !!fieldErrors.value[field] || hasBackendError(field)
+}
 
 const hasValidationError = computed(() => Object.keys(fieldErrors.value).length > 0)
 const alert = computed(() =>
@@ -132,14 +139,12 @@ const saveMutation = useMutation({
     goToList()
   },
   onError: (error: unknown) => {
-    const { fieldErrors: backendFields } = normalizeError(error)
-    fieldErrors.value = backendFields ?? {}
-    backendErrorFields.value = Object.keys(fieldErrors.value).length ? null : backendFields
-    toastFailed(messages.project)
+    if (!setFromError(error)) toastFailed(messages.project)
   },
 })
 
 function submit() {
+  clearBackendErrors()
   if (!validate()) return
   saveMutation.mutate(form.value)
 }
@@ -156,8 +161,6 @@ function submit() {
     :icon="mdiArrowDownCircleOutline"
   />
 
-  <ErrorComponent :error-fields="backendErrorFields" />
-
   <h2 class="text-subtitle-1 font-weight-bold text-primary mt-2 mb-4">Datos principales</h2>
 
   <v-row>
@@ -169,7 +172,7 @@ function submit() {
         placeholder="Ingresa nombre del proyecto"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.name"
+        :error="hasError('name')"
         maxlength="120"
         counter
         hide-details="auto"
@@ -187,7 +190,7 @@ function submit() {
         placeholder="Ingresa el código de centro de costo"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.costCenterCode"
+        :error="hasError('costCenterCode')"
         maxlength="30"
         counter
         hide-details="auto"
@@ -200,7 +203,7 @@ function submit() {
       <DateField
         v-model="form.startDate"
         label="Fecha de inicio"
-        :error="!!fieldErrors.startDate"
+        :error="hasError('startDate')"
         hide-details
       />
       <FieldErrorComponent :message="fieldErrors.startDate" />
@@ -227,7 +230,7 @@ function submit() {
         variant="outlined"
         density="comfortable"
         persistent-placeholder
-        :error="!!fieldErrors.clientId"
+        :error="hasError('clientId')"
         hide-details
       />
       <FieldErrorComponent :message="fieldErrors.clientId" />
@@ -248,7 +251,7 @@ function submit() {
         variant="outlined"
         density="comfortable"
         persistent-placeholder
-        :error="!!fieldErrors.typeId"
+        :error="hasError('typeId')"
         hide-details
       />
       <FieldErrorComponent :message="fieldErrors.typeId" />
@@ -265,12 +268,14 @@ function submit() {
         variant="outlined"
         density="comfortable"
         persistent-placeholder
-        :error="!!fieldErrors.specialtyId"
+        :error="hasError('specialtyId')"
         hide-details
       />
       <FieldErrorComponent :message="fieldErrors.specialtyId" />
     </v-col>
   </v-row>
+
+  <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 
   <div class="d-flex justify-end ga-2 mt-6">
     <v-btn variant="text" @click="goToList">Cancelar</v-btn>

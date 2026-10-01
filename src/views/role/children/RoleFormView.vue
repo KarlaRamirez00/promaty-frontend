@@ -9,14 +9,13 @@ import {
   getRoleDetailAction,
   updateRoleAction,
 } from '@/actions'
+import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
-import { useError } from '@/utils'
 import messages from '@/messages'
 import roleMessages from '@/messages/role.messages'
 import { ROUTE } from '@/router/route-names'
 import { createRoleForm, type RoleForm, type RolePermissionOption, type RoleSubModuleSummary } from '@/models'
 import { firstError, roleNameRules } from '@/rules'
-import type { ApiErrorFields } from '@/types/api'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
@@ -28,7 +27,12 @@ const props = defineProps<{
 const router = useRouter()
 const queryClient = useQueryClient()
 const { toastSaved, toastFailed } = useMessage()
-const { normalizeError } = useError()
+const {
+  backendErrorFields,
+  setFromError,
+  clear: clearBackendErrors,
+  hasBackendError,
+} = useBackendFieldErrors()
 
 const roleId = computed(() => (props.id ? Number(props.id) : null))
 const isEditing = computed(() => roleId.value !== null)
@@ -69,7 +73,10 @@ const permissionGroups = computed(() => {
 
 const form = ref<RoleForm>(createRoleForm())
 const fieldErrors = ref<Record<string, string>>({})
-const backendErrorFields = ref<ApiErrorFields | null>(null)
+
+function hasError(field: string): boolean {
+  return !!fieldErrors.value[field] || hasBackendError(field)
+}
 
 const hasValidationError = computed(() => Object.keys(fieldErrors.value).length > 0)
 const alert = computed(() =>
@@ -126,14 +133,12 @@ const saveMutation = useMutation({
     goToList()
   },
   onError: (error: unknown) => {
-    const { fieldErrors: backendFields } = normalizeError(error)
-    fieldErrors.value = backendFields ?? {}
-    backendErrorFields.value = Object.keys(fieldErrors.value).length ? null : backendFields
-    toastFailed(messages.role)
+    if (!setFromError(error)) toastFailed(messages.role)
   },
 })
 
 function submit() {
+  clearBackendErrors()
   if (!validate()) return
   saveMutation.mutate(form.value)
 }
@@ -150,8 +155,6 @@ function submit() {
     :icon="mdiArrowDownCircleOutline"
   />
 
-  <ErrorComponent :error-fields="backendErrorFields" />
-
   <h2 class="text-subtitle-1 font-weight-bold text-primary mt-2 mb-4">Datos principales</h2>
 
   <v-row>
@@ -163,7 +166,7 @@ function submit() {
         placeholder="Ingresa nombre del rol"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.name"
+        :error="hasError('name')"
         maxlength="120"
         counter
         hide-details="auto"
@@ -230,6 +233,8 @@ function submit() {
       </v-card>
     </v-col>
   </v-row>
+
+  <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 
   <div class="d-flex justify-end ga-2 mt-6">
     <v-btn variant="text" @click="goToList">Cancelar</v-btn>
