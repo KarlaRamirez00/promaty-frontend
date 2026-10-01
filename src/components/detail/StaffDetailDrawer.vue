@@ -40,7 +40,9 @@ const fields = computed(() => {
     { key: 'personalEmail', label: 'Correo personal', value: s.personalEmail },
     { key: 'phone1', label: 'Teléfono', value: s.phone1 },
     { key: 'address', label: 'Dirección', value: s.address },
-    { key: 'city', label: 'Ciudad', value: s.city },
+    { key: 'region', label: 'Región', value: s.region.name },
+    { key: 'provincia', label: 'Provincia', value: s.provincia.name },
+    { key: 'comuna', label: 'Comuna', value: s.comuna.name },
     { key: 'emergencyContactName', label: 'Contacto de emergencia', value: s.emergencyContactName },
     { key: 'emergencyPhone', label: 'Teléfono de emergencia', value: s.emergencyPhone },
     {

@@ -3,10 +3,13 @@ import {
   getStaffApi,
   listAfpOptionsApi,
   listBankOptionsApi,
+  listComunaOptionsApi,
   listEducationLevelOptionsApi,
   listHealthSystemOptionsApi,
   listMaritalStatusOptionsApi,
   listNationalityOptionsApi,
+  listProvinciaOptionsApi,
+  listRegionOptionsApi,
   listRegisteredSexOptionsApi,
   listStaffApi,
   updateStaffApi,
@@ -62,6 +65,18 @@ export function getAfpOptionsAction() {
 
 export function getHealthSystemOptionsAction() {
   return listHealthSystemOptionsApi()
+}
+
+export function getRegionOptionsAction() {
+  return listRegionOptionsApi()
+}
+
+export function getProvinciaOptionsAction(regionId: number) {
+  return listProvinciaOptionsApi(regionId)
+}
+
+export function getComunaOptionsAction(provinciaId: number) {
+  return listComunaOptionsApi(provinciaId)
 }
 
 export function getBankOptionsAction() {

@@ -41,7 +41,9 @@ export interface StaffRaw extends StaffListRaw {
   emergencyPhone: string
   emergencyContactName: string
   address: string
-  city: string
+  region: CatalogOptionRaw
+  provincia: CatalogOptionRaw
+  comuna: CatalogOptionRaw
   hasChildren: boolean
   childrenCount: number | null
   personalEmail: string
@@ -69,7 +71,7 @@ export interface StaffFormPayload {
   emergencyPhone: string
   emergencyContactName: string
   address: string
-  city: string
+  comunaId: number
   hasChildren: boolean
   childrenCount: number | null
   personalEmail: string

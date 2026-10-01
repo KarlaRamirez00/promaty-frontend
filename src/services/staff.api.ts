@@ -72,6 +72,24 @@ export function listHealthSystemOptionsApi(): Promise<CatalogOptionRaw[]> {
   return listCatalogOptions('/healthSystems')
 }
 
+export function listRegionOptionsApi(): Promise<CatalogOptionRaw[]> {
+  return listCatalogOptions('/regions')
+}
+
+export async function listProvinciaOptionsApi(regionId: number): Promise<CatalogOptionRaw[]> {
+  const response = await rrhhApi.get<ApiListResponse<CatalogOptionRaw>>('/provincias', {
+    params: { regionId },
+  })
+  return response.data.data
+}
+
+export async function listComunaOptionsApi(provinciaId: number): Promise<CatalogOptionRaw[]> {
+  const response = await rrhhApi.get<ApiListResponse<CatalogOptionRaw>>('/comunas', {
+    params: { provinciaId },
+  })
+  return response.data.data
+}
+
 export async function listBankOptionsApi(): Promise<BankOptionRaw[]> {
   const response = await rrhhApi.get<ApiListResponse<BankOptionRaw>>('/banks')
   return response.data.data

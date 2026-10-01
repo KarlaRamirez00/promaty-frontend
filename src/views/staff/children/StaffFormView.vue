@@ -7,16 +7,20 @@ import {
   createStaffAction,
   getAfpOptionsAction,
   getBankOptionsAction,
+  getComunaOptionsAction,
   getEducationLevelOptionsAction,
   getHealthSystemOptionsAction,
   getMaritalStatusOptionsAction,
   getNationalityOptionsAction,
+  getProvinciaOptionsAction,
+  getRegionOptionsAction,
   getRegisteredSexOptionsAction,
   getStaffDetailAction,
   updateStaffAction,
 } from '@/actions'
+import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
-import { maskRut, useError } from '@/utils'
+import { maskRut } from '@/utils'
 import messages from '@/messages'
 import staffMessages from '@/messages/staff.messages'
 import { ROUTE } from '@/router/route-names'
@@ -34,7 +38,6 @@ import {
   isValidRut,
   staffAccountNumberRules,
   staffAddressRules,
-  staffCityRules,
   staffEmailRules,
   staffEmergencyContactNameRules,
   staffEmergencyPhoneRules,
@@ -42,7 +45,6 @@ import {
   staffNameRules,
   staffPhoneRules,
 } from '@/rules'
-import type { ApiErrorFields } from '@/types/api'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
@@ -55,7 +57,12 @@ const props = defineProps<{
 const router = useRouter()
 const queryClient = useQueryClient()
 const { toastSaved, toastFailed } = useMessage()
-const { normalizeError } = useError()
+const {
+  backendErrorFields,
+  setFromError,
+  clear: clearBackendErrors,
+  hasBackendError,
+} = useBackendFieldErrors()
 
 const staffId = computed(() => (props.id ? Number(props.id) : null))
 const isEditing = computed(() => staffId.value !== null)
@@ -90,15 +97,30 @@ const { data: healthSystemOptions } = useQuery({
   queryKey: ['healthSystems', 'options'],
   queryFn: getHealthSystemOptionsAction,
 })
+const { data: regionOptions } = useQuery({
+  queryKey: ['regions', 'options'],
+  queryFn: getRegionOptionsAction,
+})
 const { data: bankOptions } = useQuery({
   queryKey: ['banks', 'options'],
   queryFn: getBankOptionsAction,
 })
 
 const form = ref<StaffForm>(createStaffForm())
+
+const { data: provinciaOptions } = useQuery({
+  queryKey: computed(() => ['provincias', 'options', form.value.regionId]),
+  queryFn: () => getProvinciaOptionsAction(form.value.regionId as number),
+  enabled: computed(() => form.value.regionId !== null),
+})
+const { data: comunaOptions } = useQuery({
+  queryKey: computed(() => ['comunas', 'options', form.value.provinciaId]),
+  queryFn: () => getComunaOptionsAction(form.value.provinciaId as number),
+  enabled: computed(() => form.value.provinciaId !== null),
+})
+
 const fieldErrors = ref<Record<string, string>>({})
 const hasSubmitted = ref(false)
-const backendErrorFields = ref<ApiErrorFields | null>(null)
 
 const selectedBankSupportsRutAccount = computed(
   () => bankOptions.value?.find((bank) => bank.id === form.value.bankId)?.supportsRutAccount ?? false,
@@ -154,6 +176,19 @@ watch(
   },
 )
 
+function onRegionChange() {
+  form.value.provinciaId = null
+  form.value.comunaId = null
+}
+
+function onProvinciaChange() {
+  form.value.comunaId = null
+}
+
+function hasError(field: string): boolean {
+  return !!fieldErrors.value[field] || hasBackendError(field)
+}
+
 const hasValidationError = computed(() => hasSubmitted.value && Object.keys(fieldErrors.value).length > 0)
 const alert = computed(() =>
   hasValidationError.value ? staffMessages.alertError : staffMessages.alertInfo,
@@ -178,7 +213,9 @@ watch(
         emergencyPhone: staff.emergencyPhone,
         emergencyContactName: staff.emergencyContactName,
         address: staff.address,
-        city: staff.city,
+        regionId: staff.region.id,
+        provinciaId: staff.provincia.id,
+        comunaId: staff.comuna.id,
         hasChildren: staff.hasChildren,
         childrenCount: staff.childrenCount,
         personalEmail: staff.personalEmail,
@@ -249,9 +286,6 @@ function validateTextFields(): Record<string, string> {
   const addressError = firstError(form.value.address, staffAddressRules)
   if (addressError) errors.address = addressError
 
-  const cityError = firstError(form.value.city, staffCityRules)
-  if (cityError) errors.city = cityError
-
   const accountNumberError = firstError(form.value.accountNumber, staffAccountNumberRules)
   if (accountNumberError) errors.accountNumber = accountNumberError
 
@@ -269,6 +303,9 @@ function validateRequiredSelects(): Record<string, string> {
   if (!form.value.educationLevelId) errors.educationLevelId = staffMessages.rules.educationLevelRequired
   if (!form.value.afpId) errors.afpId = staffMessages.rules.afpRequired
   if (!form.value.healthSystemId) errors.healthSystemId = staffMessages.rules.healthSystemRequired
+  if (!form.value.regionId) errors.regionId = staffMessages.rules.regionRequired
+  if (!form.value.provinciaId) errors.provinciaId = staffMessages.rules.provinciaRequired
+  if (!form.value.comunaId) errors.comunaId = staffMessages.rules.comunaRequired
   if (!form.value.bankId) errors.bankId = staffMessages.rules.bankRequired
   if (!form.value.accountType) errors.accountType = staffMessages.rules.accountTypeRequired
 
@@ -325,15 +362,13 @@ const saveMutation = useMutation({
     goToList()
   },
   onError: (error: unknown) => {
-    const { fieldErrors: backendFields } = normalizeError(error)
-    fieldErrors.value = backendFields ?? {}
-    backendErrorFields.value = Object.keys(fieldErrors.value).length ? null : backendFields
-    toastFailed(messages.staff)
+    if (!setFromError(error)) toastFailed(messages.staff)
   },
 })
 
 function submit() {
   hasSubmitted.value = true
+  clearBackendErrors()
   if (!validate()) return
   saveMutation.mutate(form.value)
 }
@@ -350,8 +385,6 @@ function submit() {
     :icon="mdiArrowDownCircleOutline"
   />
 
-  <ErrorComponent :error-fields="backendErrorFields" />
-
   <h2 class="text-subtitle-1 font-weight-bold text-primary mt-2 mb-4">Identificación</h2>
 
   <v-row>
@@ -363,6 +396,7 @@ function submit() {
           item-title="title"
           item-value="value"
           label="Tipo de identificación"
+          placeholder="Seleccionar"
           variant="outlined"
           density="comfortable"
           persistent-placeholder
@@ -381,7 +415,7 @@ function submit() {
           :placeholder="form.identificationType === 'RUT' ? '99.999.999-9' : 'Ingresa el número'"
           variant="outlined"
           density="comfortable"
-          :error="!!fieldErrors.identificationNumber"
+          :error="hasError('identificationNumber')"
           :disabled="isEditing"
           :maxlength="identificationNumberMaxLength"
           hide-details="auto"
@@ -406,7 +440,7 @@ function submit() {
         placeholder="Ingresa el nombre"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.firstName"
+        :error="hasError('firstName')"
         maxlength="100"
         counter
         hide-details="auto"
@@ -423,7 +457,7 @@ function submit() {
         placeholder="Ingresa el apellido paterno"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.paternalLastName"
+        :error="hasError('paternalLastName')"
         maxlength="100"
         counter
         hide-details="auto"
@@ -440,7 +474,7 @@ function submit() {
         placeholder="Ingresa el apellido materno"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.maternalLastName"
+        :error="hasError('maternalLastName')"
         maxlength="100"
         counter
         hide-details="auto"
@@ -453,7 +487,7 @@ function submit() {
       <DateField
         v-model="form.birthDate"
         label="Fecha de nacimiento"
-        :error="!!fieldErrors.birthDate"
+        :error="hasError('birthDate')"
         hide-details
       />
       <FieldErrorComponent :message="fieldErrors.birthDate" />
@@ -468,7 +502,7 @@ function submit() {
         type="email"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.personalEmail"
+        :error="hasError('personalEmail')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -483,7 +517,7 @@ function submit() {
         placeholder="912345678"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.phone1"
+        :error="hasError('phone1')"
         maxlength="9"
         hide-details="auto"
         persistent-placeholder
@@ -498,9 +532,10 @@ function submit() {
         item-title="name"
         item-value="id"
         label="Sexo registral"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.registeredSexId"
+        :error="hasError('registeredSexId')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -514,9 +549,10 @@ function submit() {
         item-title="name"
         item-value="id"
         label="Estado civil"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.maritalStatusId"
+        :error="hasError('maritalStatusId')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -530,9 +566,10 @@ function submit() {
         item-title="name"
         item-value="id"
         label="Nacionalidad"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.nationalityId"
+        :error="hasError('nationalityId')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -570,7 +607,7 @@ function submit() {
         type="number"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.childrenCount"
+        :error="hasError('childrenCount')"
         min="1"
         hide-details="auto"
         persistent-placeholder
@@ -585,9 +622,10 @@ function submit() {
         item-title="name"
         item-value="id"
         label="Nivel educacional"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.educationLevelId"
+        :error="hasError('educationLevelId')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -598,15 +636,15 @@ function submit() {
   <h2 class="text-subtitle-1 font-weight-bold text-primary mt-6 mb-4">Dirección</h2>
 
   <v-row>
-    <v-col cols="12" md="8">
+    <v-col cols="12">
       <v-text-field
         v-model="form.address"
         v-input-mask="'freeText'"
         label="Dirección"
-        placeholder="Ingresa la dirección"
+        placeholder="Ingresa la calle y número"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.address"
+        :error="hasError('address')"
         maxlength="150"
         hide-details="auto"
         persistent-placeholder
@@ -615,19 +653,58 @@ function submit() {
     </v-col>
 
     <v-col cols="12" md="4">
-      <v-text-field
-        v-model="form.city"
-        v-input-mask="'onlyLetters'"
-        label="Ciudad"
-        placeholder="Ingresa la ciudad"
+      <v-select
+        v-model="form.regionId"
+        :items="regionOptions ?? []"
+        item-title="name"
+        item-value="id"
+        label="Región"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.city"
-        maxlength="100"
+        :error="hasError('regionId')"
+        hide-details="auto"
+        persistent-placeholder
+        @update:model-value="onRegionChange"
+      />
+      <FieldErrorComponent :message="fieldErrors.regionId" />
+    </v-col>
+
+    <v-col cols="12" md="4">
+      <v-select
+        v-model="form.provinciaId"
+        :items="provinciaOptions ?? []"
+        item-title="name"
+        item-value="id"
+        label="Provincia"
+        placeholder="Seleccionar"
+        variant="outlined"
+        density="comfortable"
+        :error="hasError('provinciaId')"
+        :disabled="!form.regionId"
+        hide-details="auto"
+        persistent-placeholder
+        @update:model-value="onProvinciaChange"
+      />
+      <FieldErrorComponent :message="fieldErrors.provinciaId" />
+    </v-col>
+
+    <v-col cols="12" md="4">
+      <v-select
+        v-model="form.comunaId"
+        :items="comunaOptions ?? []"
+        item-title="name"
+        item-value="id"
+        label="Comuna"
+        placeholder="Seleccionar"
+        variant="outlined"
+        density="comfortable"
+        :error="hasError('comunaId')"
+        :disabled="!form.provinciaId"
         hide-details="auto"
         persistent-placeholder
       />
-      <FieldErrorComponent :message="fieldErrors.city" />
+      <FieldErrorComponent :message="fieldErrors.comunaId" />
     </v-col>
   </v-row>
 
@@ -642,7 +719,7 @@ function submit() {
         placeholder="Ingresa el nombre completo"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.emergencyContactName"
+        :error="hasError('emergencyContactName')"
         maxlength="100"
         hide-details="auto"
         persistent-placeholder
@@ -658,7 +735,7 @@ function submit() {
         placeholder="912345678"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.emergencyPhone"
+        :error="hasError('emergencyPhone')"
         maxlength="9"
         hide-details="auto"
         persistent-placeholder
@@ -675,9 +752,10 @@ function submit() {
         v-model="form.shoeSize"
         :items="SHOE_SIZE_OPTIONS"
         label="Talla de calzado"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.shoeSize"
+        :error="hasError('shoeSize')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -689,9 +767,10 @@ function submit() {
         v-model="form.clothingSize"
         :items="CLOTHING_SIZE_OPTIONS"
         label="Talla de ropa"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.clothingSize"
+        :error="hasError('clothingSize')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -711,9 +790,10 @@ function submit() {
         item-title="name"
         item-value="id"
         label="AFP"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.afpId"
+        :error="hasError('afpId')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -727,9 +807,10 @@ function submit() {
         item-title="name"
         item-value="id"
         label="Sistema de salud"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.healthSystemId"
+        :error="hasError('healthSystemId')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -747,9 +828,10 @@ function submit() {
         item-title="name"
         item-value="id"
         label="Banco"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.bankId"
+        :error="hasError('bankId')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -763,9 +845,10 @@ function submit() {
         item-title="title"
         item-value="value"
         label="Tipo de cuenta"
+        placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.accountType"
+        :error="hasError('accountType')"
         hide-details="auto"
         persistent-placeholder
       />
@@ -780,7 +863,7 @@ function submit() {
         placeholder="Ingresa el número de cuenta"
         variant="outlined"
         density="comfortable"
-        :error="!!fieldErrors.accountNumber"
+        :error="hasError('accountNumber')"
         inputmode="numeric"
         maxlength="30"
         hide-details="auto"
@@ -789,6 +872,8 @@ function submit() {
       <FieldErrorComponent :message="fieldErrors.accountNumber" />
     </v-col>
   </v-row>
+
+  <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 
   <div class="d-flex justify-end ga-2 mt-6">
     <v-btn variant="text" @click="goToList">Cancelar</v-btn>
@@ -829,7 +914,7 @@ function submit() {
   left: 12px;
   z-index: 1;
   padding: 0 4px;
-  background: rgb(var(--v-theme-surface));
+  background: rgb(var(--v-theme-background));
   font-size: 12px;
   line-height: 1;
   color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));

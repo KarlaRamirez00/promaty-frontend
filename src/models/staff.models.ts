@@ -64,7 +64,9 @@ export interface Staff {
   emergencyPhone: string
   emergencyContactName: string
   address: string
-  city: string
+  region: StaffCatalogOption
+  provincia: StaffCatalogOption
+  comuna: StaffCatalogOption
   hasChildren: boolean
   childrenCount: number | null
   personalEmail: string
@@ -98,7 +100,9 @@ export interface StaffForm {
   emergencyPhone: string
   emergencyContactName: string
   address: string
-  city: string
+  regionId: number | null
+  provinciaId: number | null
+  comunaId: number | null
   hasChildren: boolean
   childrenCount: number | null
   personalEmail: string
@@ -127,7 +131,9 @@ export const createStaffForm = (overrides: Partial<StaffForm> = {}): StaffForm =
   emergencyPhone: '',
   emergencyContactName: '',
   address: '',
-  city: '',
+  regionId: null,
+  provinciaId: null,
+  comunaId: null,
   hasChildren: false,
   childrenCount: null,
   personalEmail: '',

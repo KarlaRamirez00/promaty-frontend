@@ -40,11 +40,6 @@ export const staffAddressRules: Validator[] = [
   maxLength(150, messages.staff.rules.addressMaxLength),
 ]
 
-export const staffCityRules: Validator[] = [
-  required(messages.staff.rules.cityRequired),
-  maxLength(100, messages.staff.rules.cityMaxLength),
-]
-
 export const staffAccountNumberRules: Validator[] = [
   required(messages.staff.rules.accountNumberRequired),
   maxLength(30, messages.staff.rules.accountNumberMaxLength),
