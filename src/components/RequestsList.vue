@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue'
 import { useDisplay } from 'vuetify'
 import {
   mdiAlertCircleOutline,
-  mdiCalendarBlankOutline,
   mdiCheck,
   mdiClockOutline,
   mdiClose,
@@ -184,7 +183,7 @@ const statusColor: Record<RequestStatus, string> = {
 <template>
   <div class="list-header mb-6">
     <div class="list-header__text">
-      <h1 class="text-h4 font-weight-bold">Lista de solicitudes</h1>
+      <h1 class="text-h5 font-weight-bold">Lista de solicitudes</h1>
       <p class="text-body-2 text-medium-emphasis mt-1">
         Revisa las solicitudes pendientes de <strong>aprobación</strong> y <strong>revisión</strong>.
       </p>
@@ -228,20 +227,7 @@ const statusColor: Record<RequestStatus, string> = {
     :page-text="pageText"
   >
     <template #item.type="{ item }">
-      <v-chip
-        size="small"
-        variant="tonal"
-        style="cursor: pointer"
-        @click="viewDetail(item)"
-      >
-        {{ item.type }}
-      </v-chip>
-    </template>
-
-    <template #item.createdAt="{ item }">
-      <v-chip size="small" variant="outlined" :prepend-icon="mdiCalendarBlankOutline">
-        {{ item.createdAt }}
-      </v-chip>
+      <span class="link-cell" @click="viewDetail(item)">{{ item.type }}</span>
     </template>
 
     <template #item.status="{ item }">
@@ -272,14 +258,9 @@ const statusColor: Record<RequestStatus, string> = {
       >
         <div class="pa-4" :class="{ 'request-block--divided': index > 0 }">
           <div class="d-flex flex-wrap align-center ga-2 mb-3">
-            <v-chip
-              size="small"
-              variant="tonal"
-              style="cursor: pointer"
-              @click="viewDetail(item)"
-            >
-              {{ item.type }}
-            </v-chip>
+            <span class="link-cell text-subtitle-2 font-weight-bold" @click="viewDetail(item)">{{
+              item.type
+            }}</span>
             <v-chip size="small" variant="tonal" :color="statusColor[item.status]">
               {{ item.status }}
             </v-chip>
