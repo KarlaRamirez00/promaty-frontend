@@ -78,7 +78,7 @@ async function saveProjectSpecialty(value: ProjectSpecialtyForm): Promise<void> 
 const saveMutation = useMutation({
   mutationFn: saveProjectSpecialty,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['projectSpecialties'] })
+    queryClient.invalidateQueries({ queryKey: ['projectSpecialties'], refetchType: 'none' })
     toastSaved(value.id, messages.projectSpecialty)
     goToList()
   },

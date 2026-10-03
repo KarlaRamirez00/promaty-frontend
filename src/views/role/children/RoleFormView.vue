@@ -128,7 +128,7 @@ async function saveRole(value: RoleForm): Promise<void> {
 const saveMutation = useMutation({
   mutationFn: saveRole,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['roles'] })
+    queryClient.invalidateQueries({ queryKey: ['roles'], refetchType: 'none' })
     toastSaved(value.id, messages.role)
     goToList()
   },

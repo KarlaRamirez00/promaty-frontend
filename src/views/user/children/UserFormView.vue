@@ -122,7 +122,7 @@ async function saveUser(value: UserForm): Promise<void> {
 const saveMutation = useMutation({
   mutationFn: saveUser,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['users'] })
+    queryClient.invalidateQueries({ queryKey: ['users'], refetchType: 'none' })
     toastSaved(value.id, messages.user)
     goToList()
   },
