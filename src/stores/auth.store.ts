@@ -45,6 +45,11 @@ export const useAuthStore = defineStore('auth', () => {
     claims.value = null
   }
 
+  function validateSession(): boolean {
+    if (token.value && isExpired(claims.value)) logout()
+    return isAuthenticated.value
+  }
+
   return {
     token,
     isAuthenticated,
@@ -55,5 +60,6 @@ export const useAuthStore = defineStore('auth', () => {
     projectIds,
     login,
     logout,
+    validateSession,
   }
 })

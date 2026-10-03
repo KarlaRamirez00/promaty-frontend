@@ -4,6 +4,7 @@ import { ROUTE } from '@/router/route-names'
 
 export const authMiddleware: NavigationGuardWithThis<undefined> = (to) => {
   const auth = useAuthStore()
+  auth.validateSession()
 
   if (!to.meta.public && !auth.isAuthenticated) {
     return {
