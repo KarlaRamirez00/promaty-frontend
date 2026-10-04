@@ -32,6 +32,7 @@ export interface User {
   active: boolean
   status: Badge
   role: UserRoleSummary
+  projectIds: number[]
   createdAt: string
   updatedAt: string
   createdBy: string
@@ -46,6 +47,7 @@ export interface UserForm {
   email: string
   phoneNumber: string
   roleId: number | null
+  projectIds: number[]
   password: string
 }
 
@@ -56,6 +58,7 @@ export const createUserForm = (overrides: Partial<UserForm> = {}): UserForm => (
   email: '',
   phoneNumber: '',
   roleId: null,
+  projectIds: [],
   password: '',
   ...overrides,
 })

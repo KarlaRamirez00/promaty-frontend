@@ -5,6 +5,11 @@ export interface ProjectRelationOption {
   name: string
 }
 
+export interface CostCenterOption {
+  id: number
+  title: string
+}
+
 export interface ProjectStatusOption {
   id: number
   code: string

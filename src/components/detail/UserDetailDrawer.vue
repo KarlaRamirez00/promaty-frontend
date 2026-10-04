@@ -8,11 +8,13 @@ import ActionsMenu from '@/components/common/ActionsMenu.vue'
 const props = withDefaults(
   defineProps<{
     user: User | null
+    costCenters?: string[]
     loading?: boolean
     hasUpdatePermission?: boolean
     hasActivePermission?: boolean
   }>(),
   {
+    costCenters: () => [],
     hasUpdatePermission: true,
     hasActivePermission: true,
   },
@@ -33,6 +35,11 @@ const fields = computed(() => {
     { key: 'email', label: 'Correo', value: u.email },
     { key: 'phoneNumber', label: 'Teléfono', value: u.phoneNumber },
     { key: 'role', label: 'Rol', value: u.role.name },
+    {
+      key: 'costCenters',
+      label: 'Centros de costo',
+      value: u.projectIds.length ? props.costCenters.join(', ') : 'Sin centros de costo asignados',
+    },
     { key: 'createdAt', label: 'Fecha de creación', value: u.createdAt },
     { key: 'createdBy', label: 'Creado por', value: u.createdBy },
     { key: 'updatedAt', label: 'Última actualización', value: u.updatedAt },

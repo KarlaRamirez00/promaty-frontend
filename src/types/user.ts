@@ -19,12 +19,17 @@ export interface UserRaw {
   updatedBy: string
 }
 
+export interface UserDetailRaw extends UserRaw {
+  projectIds: number[]
+}
+
 export interface UserFormPayload {
   firstName: string
   lastName: string
   email: string
   phoneNumber: string
   roleId: number
+  projectIds: number[]
 }
 
 // El campo password en creación va a desaparecer con HU-B80 (clave temporal generada por el

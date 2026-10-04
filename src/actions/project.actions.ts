@@ -2,6 +2,7 @@ import {
   createProjectApi,
   getProjectApi,
   listClientOptionsApi,
+  listCostCenterOptionsApi,
   listProjectsApi,
   listProjectSpecialtyOptionsApi,
   listProjectStatusOptionsApi,
@@ -38,6 +39,10 @@ export function updateProjectStatusAction(id: number, statusId: number) {
     (payload: { id: number; statusId: number }) => updateProjectStatusApi(payload.id, payload.statusId),
     { id, statusId },
   )
+}
+
+export function getCostCenterOptionsAction() {
+  return listCostCenterOptionsApi()
 }
 
 export function getClientOptionsAction() {

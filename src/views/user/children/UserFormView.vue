@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { mdiArrowDownCircleOutline, mdiContentSave, mdiEye, mdiEyeOff } from '@mdi/js'
 import {
   createUserAction,
+  getCostCenterOptionsAction,
   getRoleOptionsAction,
   getUserDetailAction,
   updateUserAction,
@@ -54,6 +55,11 @@ const { data: roleOptions } = useQuery({
   queryFn: () => getRoleOptionsAction(),
 })
 
+const { data: costCenterOptions } = useQuery({
+  queryKey: ['projects', 'options', 'costCenters'],
+  queryFn: getCostCenterOptionsAction,
+})
+
 const form = ref<UserForm>(createUserForm())
 const fieldErrors = ref<Record<string, string>>({})
 const showPassword = ref(false)
@@ -78,6 +84,7 @@ watch(
         email: user.email,
         phoneNumber: user.phoneNumber,
         roleId: user.role.id,
+        projectIds: user.projectIds,
       })
     }
   },
@@ -250,6 +257,25 @@ function submit() {
         @click:append-inner="showPassword = !showPassword"
       />
       <FieldErrorComponent :message="fieldErrors.password" />
+    </v-col>
+
+    <v-col cols="12" :md="isEditing ? 6 : 12">
+      <v-autocomplete
+        v-model="form.projectIds"
+        :items="costCenterOptions ?? []"
+        item-title="title"
+        item-value="id"
+        label="Centros de costo"
+        placeholder="Seleccionar"
+        variant="outlined"
+        density="comfortable"
+        persistent-placeholder
+        multiple
+        chips
+        closable-chips
+        :error="hasError('projectIds')"
+        hide-details="auto"
+      />
     </v-col>
   </v-row>
 

@@ -3,8 +3,9 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
+import { mdiEyeOutline, mdiPencilOutline, mdiAccountOutline } from '@mdi/js'
 import {
+  getCostCenterOptionsAction,
   getRoleOptionsAction,
   getUserDetailAction,
   getUserListAction,
@@ -196,6 +197,17 @@ const { data: selectedUser, isPending: detailLoading } = useQuery({
   enabled: computed(() => detailId.value !== null),
 })
 
+const { data: costCenterOptions } = useQuery({
+  queryKey: ['projects', 'options', 'costCenters'],
+  queryFn: getCostCenterOptionsAction,
+  enabled: detailDrawerOpen,
+})
+
+const selectedCostCenters = computed(() => {
+  const ids = new Set(selectedUser.value?.projectIds ?? [])
+  return (costCenterOptions.value ?? []).filter((option) => ids.has(option.id)).map((option) => option.title)
+})
+
 function viewDetail(item: { id: number }) {
   openDetail(item.id)
 }
@@ -370,6 +382,7 @@ function confirmToggleActive() {
   <UserDetailDrawer
     v-model:open="detailDrawerOpen"
     :user="selectedUser ?? null"
+    :cost-centers="selectedCostCenters"
     :loading="detailLoading"
     :has-update-permission="canUpdate"
     :has-active-permission="canToggleActive"
@@ -382,6 +395,7 @@ function confirmToggleActive() {
     :record="statusRecord"
     :loading="toggleMutation.isPending.value"
     entity="usuario"
+    :icon="mdiAccountOutline"
     @confirm="confirmToggleActive"
   />
 </template>

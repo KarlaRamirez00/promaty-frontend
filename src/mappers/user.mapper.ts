@@ -1,6 +1,6 @@
 import { formatDateTime } from '@/utils'
 import type { Badge } from '@/types/badge'
-import type { UserCreatePayload, UserFormPayload, UserRaw } from '@/types/user'
+import type { UserCreatePayload, UserDetailRaw, UserFormPayload, UserRaw } from '@/types/user'
 import type { User, UserForm, UserListItem } from '@/models'
 import { USER_ACTIONS_PLACEHOLDER } from '@/models'
 
@@ -26,7 +26,7 @@ export function mapperUserList(items: UserRaw[]): UserListItem[] {
   }))
 }
 
-export function mapperUserDetail(raw: UserRaw): User {
+export function mapperUserDetail(raw: UserDetailRaw): User {
   return {
     id: raw.id,
     firstName: raw.firstName,
@@ -37,6 +37,7 @@ export function mapperUserDetail(raw: UserRaw): User {
     active: raw.active,
     status: toStatusBadge(raw.active),
     role: raw.role,
+    projectIds: raw.projectIds,
     createdAt: formatDateTime(raw.createdAt),
     updatedAt: formatDateTime(raw.updatedAt),
     createdBy: raw.createdBy,
@@ -52,6 +53,7 @@ export function mapperUserFormToPayload(form: UserForm): UserFormPayload {
     email: form.email.trim(),
     phoneNumber: form.phoneNumber.trim(),
     roleId: form.roleId as number,
+    projectIds: form.projectIds,
   }
 }
 

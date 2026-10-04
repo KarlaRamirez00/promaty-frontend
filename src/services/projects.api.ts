@@ -1,7 +1,12 @@
 import { rrhhApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
 import type { ProjectFormPayload, ProjectListRaw, ProjectRaw } from '@/types/project'
-import type { ProjectQueryParams, ProjectRelationOption, ProjectStatusOption } from '@/models'
+import type {
+  CostCenterOption,
+  ProjectQueryParams,
+  ProjectRelationOption,
+  ProjectStatusOption,
+} from '@/models'
 
 export async function listProjectsApi(
   params: ProjectQueryParams,
@@ -70,6 +75,16 @@ export function listProjectTypeOptionsApi(): Promise<ProjectRelationOption[]> {
 
 export function listProjectSpecialtyOptionsApi(): Promise<ProjectRelationOption[]> {
   return listRelationOptions('/projectSpecialties')
+}
+
+export async function listCostCenterOptionsApi(): Promise<CostCenterOption[]> {
+  const response = await rrhhApi.get<ApiListResponse<ProjectListRaw>>('/projects', {
+    params: { size: 200, sort: 'costCenterCode,asc', page: 0 },
+  })
+  return response.data.data.map((item) => ({
+    id: item.id,
+    title: `${item.costCenterCode} — ${item.name}`,
+  }))
 }
 
 export async function listProjectStatusOptionsApi(): Promise<ProjectStatusOption[]> {
