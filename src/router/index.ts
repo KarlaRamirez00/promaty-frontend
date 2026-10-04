@@ -10,6 +10,7 @@ import { userRoutes } from '@/router/user.routes'
 import { staffRoutes } from '@/router/staff.routes'
 import { requestRoutes } from '@/router/request.routes'
 import { authMiddleware } from '@/middlewares/auth.middleware'
+import LoginView from '@/views/LoginView.vue'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -24,7 +25,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: ROUTE.LOGIN,
-    component: () => import('@/views/LoginView.vue'),
+    component: LoginView,
     meta: { public: true },
   },
   {
