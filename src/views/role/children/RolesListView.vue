@@ -3,10 +3,11 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiEyeOutline, mdiPencilOutline, mdiPower } from '@mdi/js'
+import { mdiAccountGroupOutline, mdiEyeOutline, mdiPencilOutline, mdiShieldKeyOutline, mdiSwapHorizontal } from '@mdi/js'
 import {
   getRoleDetailAction,
   getRoleListAction,
+  getPermissionOptionsAction,
   getRoleOptionsAction,
   toggleRoleActiveAction,
 } from '@/actions'
@@ -28,6 +29,7 @@ import FiltersDrawer, { type FilterField } from '@/components/common/FiltersDraw
 import RoleDetailDrawer from '@/components/detail/RoleDetailDrawer.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
+import ConfirmStatusDialog from '@/components/common/ConfirmStatusDialog.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 
 const { smAndDown } = useDisplay()
@@ -95,21 +97,20 @@ watch(
 
 const filtersOpen = ref(false)
 
-const activeFilter = computed<boolean | null>({
-  get: () => query.value.active,
-  set: (value) => patchQuery({ active: value }),
+const { data: permissionOptions } = useQuery({
+  queryKey: ['permissions', 'options'],
+  queryFn: getPermissionOptionsAction,
 })
 
-const activeFilters = computed(() => {
-  if (query.value.active === null) return []
-  return [{ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` }]
+const subModuleOptions = computed(() => {
+  const seen = new Map<number, string>()
+  for (const permission of permissionOptions.value ?? []) {
+    seen.set(permission.subModule.id, permission.subModule.alias || permission.subModule.name)
+  }
+  return [...seen].map(([value, title]) => ({ title, value }))
 })
 
-function clearActiveFilter() {
-  patchQuery({ active: null })
-}
-
-const filterFields: FilterField[] = [
+const filterFields = computed<FilterField[]>(() => [
   {
     key: 'active',
     type: 'select',
@@ -119,14 +120,36 @@ const filterFields: FilterField[] = [
       { title: 'Inactivos', value: false },
     ],
   },
-]
+  { key: 'subModuleId', type: 'select', label: 'Submódulo', options: subModuleOptions.value },
+])
 
 const filterValues = computed<Record<string, unknown>>({
-  get: () => ({ active: activeFilter.value }),
+  get: () => ({ active: query.value.active, subModuleId: query.value.subModuleId }),
   set: (value) => {
-    activeFilter.value = (value.active as boolean | null) ?? null
+    patchQuery({
+      active: (value.active as boolean | null) ?? null,
+      subModuleId: (value.subModuleId as number | null) ?? null,
+    })
   },
 })
+
+const activeFilters = computed(() => {
+  const active: { key: string; label: string }[] = []
+  if (query.value.active !== null) {
+    active.push({ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` })
+  }
+  const subModuleName = subModuleOptions.value.find((o) => o.value === query.value.subModuleId)?.title
+  if (subModuleName) active.push({ key: 'subModuleId', label: `Submódulo: ${subModuleName}` })
+  return active
+})
+
+function clearFilter(key: string) {
+  patchQuery({ [key]: null })
+}
+
+function clearAllFilters() {
+  patchQuery({ active: null, subModuleId: null })
+}
 
 const sort = computed<RoleSort>(() => query.value.sort)
 const sortBy = computed(() => [{ key: sort.value.key, order: sort.value.order }])
@@ -190,7 +213,7 @@ function openEditForm(item: { id: number }) {
 
 // Desactivar un rol con usuarios asignados exige un rol de reemplazo (backend lo valida server-side,
 // ver RoleServiceImpl.toggleRoleActive) — el diálogo pide ese selector solo cuando aplica.
-const statusDialogOpen = ref(false)
+const statusDialogRef = ref<InstanceType<typeof ConfirmStatusDialog> | null>(null)
 const statusRecord = ref<{ id: number; name: string; active: boolean; totalUsers: number } | null>(null)
 const replacementRoleId = ref<number | null>(null)
 
@@ -207,7 +230,7 @@ const { data: replacementOptions } = useQuery({
 function askToggleActive(item: { id: number; name: string; active: boolean; totalUsers: number }) {
   statusRecord.value = item
   replacementRoleId.value = null
-  statusDialogOpen.value = true
+  statusDialogRef.value?.open()
 }
 
 const toggleMutation = useMutation({
@@ -215,7 +238,7 @@ const toggleMutation = useMutation({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['roles'] })
     closeDetail()
-    statusDialogOpen.value = false
+    statusDialogRef.value?.close()
     if (statusRecord.value) toastToggled(statusRecord.value.active, messages.role)
   },
   onError: () => {
@@ -227,8 +250,6 @@ function confirmToggleActive() {
   if (statusRecord.value) toggleMutation.mutate()
 }
 
-const toggleActionLabel = computed(() => (statusRecord.value?.active ? 'Desactivar' : 'Activar'))
-const toggleActionColor = computed(() => (statusRecord.value?.active ? 'primary' : 'success'))
 const canConfirmToggle = computed(() => !needsReplacement.value || replacementRoleId.value !== null)
 </script>
 
@@ -252,8 +273,8 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
 
   <ActiveFilters
     :filters="activeFilters"
-    @remove-filter="clearActiveFilter"
-    @clear-all="clearActiveFilter"
+    @remove-filter="clearFilter"
+    @clear-all="clearAllFilters"
   />
 
   <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4 text-caption">
@@ -358,12 +379,13 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
     v-model:open="filtersOpen"
     v-model:values="filterValues"
     :fields="filterFields"
-    @clear="clearActiveFilter"
+    @clear="clearAllFilters"
   />
 
   <RoleDetailDrawer
     v-model:open="detailDrawerOpen"
     :role="selectedRole ?? null"
+    :permission-catalog="permissionOptions ?? []"
     :loading="detailLoading"
     :has-update-permission="canUpdate"
     :has-active-permission="canToggleActive"
@@ -371,57 +393,44 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
     @toggle-active="askToggleActive"
   />
 
-  <v-dialog v-model="statusDialogOpen" max-width="420">
-    <v-card>
-      <v-card-title class="d-flex align-center ga-2">
-        <v-icon :icon="mdiPower" :color="toggleActionColor" />
-        {{ toggleActionLabel }} rol
-      </v-card-title>
+  <ConfirmStatusDialog
+    ref="statusDialogRef"
+    :record="statusRecord"
+    :loading="toggleMutation.isPending.value"
+    :confirm-disabled="!canConfirmToggle"
+    entity="rol"
+    :icon="mdiShieldKeyOutline"
+    @confirm="confirmToggleActive"
+  >
+    <template #details>
+      <div class="d-flex align-center justify-space-between">
+        <span class="d-flex align-center ga-2 text-body-2">
+          <v-icon :icon="mdiAccountGroupOutline" color="info" size="20" />
+          Usuarios asignados
+        </span>
+        <v-chip size="small" variant="outlined" label>{{ statusRecord?.totalUsers }}</v-chip>
+      </div>
+    </template>
 
-      <v-card-text class="text-body-2">
-        <div>
-          ¿Seguro que quieres
-          <strong>{{ toggleActionLabel.toLowerCase() }}</strong>
-          <strong class="text-primary">&nbsp;{{ statusRecord?.name }}</strong>?
+    <template v-if="needsReplacement" #extra>
+      <v-sheet border rounded class="border-info px-4 py-3 mt-4">
+        <div class="d-flex align-center ga-2 text-body-2 mb-3">
+          <v-icon :icon="mdiSwapHorizontal" color="info" size="20" />
+          <span>Selecciona un <strong>nuevo rol</strong> para estos usuarios</span>
         </div>
-
-        <template v-if="needsReplacement">
-          <div class="mt-3 mb-1">
-            Este rol tiene <strong>{{ statusRecord?.totalUsers }}</strong> usuario(s) asignado(s).
-            Elige un rol de reemplazo para poder desactivarlo.
-          </div>
-          <v-select
-            v-model="replacementRoleId"
-            :items="replacementOptions ?? []"
-            item-title="name"
-            item-value="id"
-            label="Rol de reemplazo"
-            placeholder="Seleccionar"
-            variant="outlined"
-            density="comfortable"
-            persistent-placeholder
-            hide-details
-          />
-        </template>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-spacer />
-        <v-btn variant="text" :disabled="toggleMutation.isPending.value" @click="statusDialogOpen = false">
-          Cancelar
-        </v-btn>
-        <v-btn
-          :color="toggleActionColor"
-          variant="flat"
-          :loading="toggleMutation.isPending.value"
-          :disabled="!canConfirmToggle"
-          @click="confirmToggleActive"
-        >
-          {{ toggleActionLabel }}
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+        <v-select
+          v-model="replacementRoleId"
+          :items="replacementOptions ?? []"
+          item-title="name"
+          item-value="id"
+          placeholder="Seleccionar rol"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+        />
+      </v-sheet>
+    </template>
+  </ConfirmStatusDialog>
 </template>
 
 <style scoped>

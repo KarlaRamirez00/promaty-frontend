@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
+import { mdiEyeOutline, mdiPencilOutline, mdiDomain } from '@mdi/js'
 import { getClientDetailAction, getClientListAction, toggleClientActiveAction } from '@/actions'
 import { useMessage } from '@/composables/useMessage'
 import { usePermissions } from '@/composables/usePermissions'
@@ -348,6 +348,7 @@ function confirmToggleActive() {
     :record="statusRecord"
     :loading="toggleMutation.isPending.value"
     entity="mandante"
+    :icon="mdiDomain"
     @confirm="confirmToggleActive"
   />
 </template>

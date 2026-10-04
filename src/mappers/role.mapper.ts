@@ -42,6 +42,5 @@ export function mapperRoleFormToPayload(form: RoleForm): RoleFormPayload {
     name: form.name.trim(),
     description: form.description.trim() || null,
     permissionIds: form.permissionIds,
-    subModuleIds: form.subModuleIds,
   }
 }

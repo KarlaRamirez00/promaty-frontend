@@ -8,6 +8,7 @@ export async function listRolesApi(params: RoleQueryParams): Promise<PageResult<
     params: {
       search: params.search || undefined,
       active: params.active ?? undefined,
+      subModuleId: params.subModuleId ?? undefined,
       page: params.page - 1,
       size: params.size,
       sort: `${params.sort.key},${params.sort.order}`,

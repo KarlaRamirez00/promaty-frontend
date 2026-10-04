@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
+import { mdiEyeOutline, mdiPencilOutline, mdiShapeOutline } from '@mdi/js'
 import {
   getProjectTypeDetailAction,
   getProjectTypeListAction,
@@ -354,6 +354,7 @@ function confirmToggleActive() {
     :record="statusRecord"
     :loading="toggleMutation.isPending.value"
     entity="tipo de proyecto"
+    :icon="mdiShapeOutline"
     @confirm="confirmToggleActive"
   />
 </template>

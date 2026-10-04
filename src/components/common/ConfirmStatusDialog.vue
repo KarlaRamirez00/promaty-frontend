@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { mdiPower } from '@mdi/js'
+import { mdiArrowDownCircleOutline, mdiPower } from '@mdi/js'
+import AlertComponent from '@/components/common/AlertComponent.vue'
 
 interface StatusRecord {
   id: number | string
@@ -12,9 +13,12 @@ const props = withDefaults(
   defineProps<{
     record: StatusRecord | null
     loading: boolean
+    icon: string
     entity?: string
+    feminine?: boolean
+    confirmDisabled?: boolean
   }>(),
-  { entity: 'registro' },
+  { entity: 'registro', feminine: false, confirmDisabled: false },
 )
 
 const emit = defineEmits<{
@@ -33,28 +37,52 @@ function close() {
 
 defineExpose({ open, close })
 
-const actionLabel = computed(() => (props.record?.active ? 'Desactivar' : 'Activar'))
-const actionColor = computed(() => (props.record?.active ? 'primary' : 'success'))
+const isActive = computed(() => !!props.record?.active)
+const actionLabel = computed(() => (isActive.value ? 'Desactivar' : 'Activar'))
+const actionColor = computed(() => (isActive.value ? 'primary' : 'success'))
+const alertType = computed(() => (isActive.value ? 'error' : 'success'))
+const demonstrative = computed(() => (props.feminine ? 'esta' : 'este'))
+const alertMessage = computed(
+  () =>
+    `¿Seguro que quieres <strong>${actionLabel.value.toLowerCase()}</strong> ${demonstrative.value} ${props.entity}?`,
+)
 </script>
 
 <template>
   <v-dialog v-model="isOpen" max-width="420">
     <v-card>
-      <v-card-title class="d-flex align-center ga-2">
-        <v-icon :icon="mdiPower" :color="actionColor" />
+      <v-card-title class="d-flex align-center ga-2 px-6 pt-6 text-h6">
+        <v-icon :icon="mdiPower" :color="actionColor" size="24" />
         {{ actionLabel }} {{ entity }}
       </v-card-title>
 
-      <v-card-text class="text-body-2">
-        ¿Seguro que quieres
-        <strong>{{ actionLabel.toLowerCase() }}</strong>
-        <strong class="text-primary">&nbsp;{{ record?.name }}</strong>?
+      <v-card-text class="px-6">
+        <AlertComponent :type="alertType" :message="alertMessage" :icon="mdiArrowDownCircleOutline" />
+
+        <v-sheet border rounded class="px-4 py-3">
+          <div class="d-flex align-center ga-3">
+            <v-icon :icon="icon" color="primary" size="28" />
+            <span class="text-subtitle-1 font-weight-bold">{{ record?.name }}</span>
+          </div>
+          <template v-if="$slots.details">
+            <v-divider class="my-2" />
+            <slot name="details" />
+          </template>
+        </v-sheet>
+
+        <slot name="extra" />
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions class="px-6 pb-6">
         <v-spacer />
         <v-btn variant="text" :disabled="loading" @click="close">Cancelar</v-btn>
-        <v-btn :color="actionColor" variant="flat" :loading="loading" @click="emit('confirm')">
+        <v-btn
+          :color="actionColor"
+          variant="flat"
+          :loading="loading"
+          :disabled="confirmDisabled"
+          @click="emit('confirm')"
+        >
           {{ actionLabel }}
         </v-btn>
       </v-card-actions>

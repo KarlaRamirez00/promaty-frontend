@@ -22,6 +22,19 @@ export interface RolePermissionOption {
   subModule: RoleSubModuleSummary
 }
 
+export interface RolePermissionGroup {
+  subModule: RoleSubModuleSummary
+  permissions: RolePermissionOption[]
+  readPermission: RolePermissionOption | null
+}
+
+export interface RolePermissionSection {
+  title: string
+  icon: string
+  groups: RolePermissionGroup[]
+  scopePermissions: RolePermissionOption[]
+}
+
 export interface RoleRelationOption {
   id: number
   name: string
@@ -58,7 +71,6 @@ export interface RoleForm {
   name: string
   description: string
   permissionIds: number[]
-  subModuleIds: number[]
 }
 
 export const createRoleForm = (overrides: Partial<RoleForm> = {}): RoleForm => ({
@@ -66,18 +78,19 @@ export const createRoleForm = (overrides: Partial<RoleForm> = {}): RoleForm => (
   name: '',
   description: '',
   permissionIds: [],
-  subModuleIds: [],
   ...overrides,
 })
 
 export interface RoleFilters {
   search: string
   active: boolean | null
+  subModuleId: number | null
 }
 
 export const createRoleFilters = (overrides: Partial<RoleFilters> = {}): RoleFilters => ({
   search: '',
   active: null,
+  subModuleId: null,
   ...overrides,
 })
 
@@ -138,10 +151,16 @@ function toActiveFilter(raw: unknown): boolean | null {
   return null
 }
 
+function toSubModuleIdFilter(raw: unknown): number | null {
+  const n = Number(raw)
+  return typeof raw === 'string' && Number.isInteger(n) && n > 0 ? n : null
+}
+
 export function parseRoleQuery(query: Record<string, unknown>): RoleQueryParams {
   return {
     search: typeof query.search === 'string' ? query.search : '',
     active: toActiveFilter(query.active),
+    subModuleId: toSubModuleIdFilter(query.subModuleId),
     page: toPage(query.page),
     size: toPageSize(query.size),
     sort: parseRoleSort(query.sort),
@@ -153,6 +172,7 @@ export function roleQueryToRoute(params: RoleQueryParams): Record<string, string
   const search = params.search.trim()
   if (search) query.search = search
   if (params.active !== null) query.active = String(params.active)
+  if (params.subModuleId !== null) query.subModuleId = String(params.subModuleId)
   if (params.page !== DEFAULT_ROLE_QUERY.page) query.page = String(params.page)
   if (params.size !== DEFAULT_ROLE_QUERY.size) query.size = String(params.size)
   if (!isDefaultRoleSort(params.sort)) query.sort = formatRoleSort(params.sort)

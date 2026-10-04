@@ -1,5 +1,6 @@
 export * from './formats'
 export * from './masks'
+export * from './rolePermissionSections'
 export * from './useError'
 export * from './useGet'
 export * from './useMutation'

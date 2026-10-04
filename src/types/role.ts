@@ -41,7 +41,6 @@ export interface RoleFormPayload {
   name: string
   description: string | null
   permissionIds: number[]
-  subModuleIds: number[]
 }
 
 export interface RoleActiveUpdateResultRaw {

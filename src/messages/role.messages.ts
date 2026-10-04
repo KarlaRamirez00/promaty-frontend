@@ -34,5 +34,9 @@ export default {
   // Validación del formulario de crear/editar
   rules: {
     nameRequired: 'El nombre es obligatorio.',
+    permissionsRequired: 'Selecciona al menos un permiso.',
   },
+
+  scopePermissionDescription:
+    'En RRHH, ve los datos de todos los centros de costo, no solo los asignados.',
 }
