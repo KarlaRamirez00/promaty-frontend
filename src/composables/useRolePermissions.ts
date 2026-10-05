@@ -1,6 +1,6 @@
 import { computed, ref, type Ref } from 'vue'
 import { groupIntoSections } from '@/utils'
-import type { RolePermissionGroup, RolePermissionOption, RolePermissionSection } from '@/models'
+import type { RolePermissionGroup, RolePermissionOption } from '@/models'
 
 // El alias es texto traducible; la clave estable del permiso "Ver" es el sufijo de su name.
 const READ_SUFFIX = '.read'
@@ -76,18 +76,6 @@ export function useRolePermissions(
     return group.permissions.filter(isSelected).length
   }
 
-  function sectionSelectedCount(section: RolePermissionSection): number {
-    const scopeSelected = section.scopePermissions.filter(isSelected).length
-    return section.groups.reduce((total, group) => total + selectedCount(group), scopeSelected)
-  }
-
-  function sectionTotal(section: RolePermissionSection): number {
-    return section.groups.reduce(
-      (total, group) => total + group.permissions.length,
-      section.scopePermissions.length,
-    )
-  }
-
   function isAllSelected(group: RolePermissionGroup): boolean {
     return group.permissions.every(isSelected)
   }
@@ -134,8 +122,6 @@ export function useRolePermissions(
     totalSelected,
     isSelected,
     selectedCount,
-    sectionSelectedCount,
-    sectionTotal,
     isAllSelected,
     isDisabled,
     toggleAll,

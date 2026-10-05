@@ -74,8 +74,6 @@ const {
   totalSelected,
   isSelected,
   selectedCount,
-  sectionSelectedCount,
-  sectionTotal,
   isAllSelected,
   isDisabled,
   toggleAll,
@@ -226,15 +224,10 @@ function submit() {
   />
 
   <section v-for="section in sections" :key="section.title" class="mb-6">
-    <div class="d-flex align-center justify-space-between mb-3">
-      <h3 class="d-flex align-center ga-2 text-subtitle-2 font-weight-bold">
-        <v-icon :icon="section.icon" size="20" />
-        {{ section.title }}
-      </h3>
-      <span class="text-body-2 text-medium-emphasis">
-        {{ sectionSelectedCount(section) }} / {{ sectionTotal(section) }}
-      </span>
-    </div>
+    <h3 class="d-flex align-center ga-2 text-subtitle-2 font-weight-bold mb-3">
+      <v-icon :icon="section.icon" size="20" />
+      {{ section.title }}
+    </h3>
 
     <v-sheet
       v-for="permission in section.scopePermissions"

@@ -56,8 +56,6 @@ const {
   totalSelected,
   isSelected,
   selectedCount,
-  sectionSelectedCount,
-  sectionTotal,
 } = useRolePermissions(catalog, selectedPermissionIds)
 
 const tiles = computed(() => {
@@ -148,15 +146,10 @@ const tiles = computed(() => {
       />
 
       <section v-for="section in sections" :key="section.title" class="mb-4">
-        <div class="d-flex align-center justify-space-between mb-2">
-          <h4 class="d-flex align-center ga-2 text-subtitle-2 font-weight-bold">
-            <v-icon :icon="section.icon" size="20" />
-            {{ section.title }}
-          </h4>
-          <span class="text-body-2 text-medium-emphasis">
-            {{ sectionSelectedCount(section) }} / {{ sectionTotal(section) }}
-          </span>
-        </div>
+        <h4 class="d-flex align-center ga-2 text-subtitle-2 font-weight-bold mb-2">
+          <v-icon :icon="section.icon" size="20" />
+          {{ section.title }}
+        </h4>
 
         <v-sheet
           v-for="permission in section.scopePermissions"
