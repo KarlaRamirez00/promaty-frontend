@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiAccountGroupOutline, mdiEyeOutline, mdiPencilOutline, mdiShieldKeyOutline, mdiSwapHorizontal } from '@mdi/js'
+import { mdiAccountGroupOutline, mdiEyeOutline, mdiPencilOutline, mdiSwapHorizontal } from '@mdi/js'
 import {
   getRoleDetailAction,
   getRoleListAction,
@@ -399,7 +399,6 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
     :loading="toggleMutation.isPending.value"
     :confirm-disabled="!canConfirmToggle"
     entity="rol"
-    :icon="mdiShieldKeyOutline"
     @confirm="confirmToggleActive"
   >
     <template #details>

@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiEyeOutline, mdiPencilOutline, mdiAccountOutline } from '@mdi/js'
+import { mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
 import {
   getCostCenterOptionsAction,
   getRoleOptionsAction,
@@ -395,7 +395,6 @@ function confirmToggleActive() {
     :record="statusRecord"
     :loading="toggleMutation.isPending.value"
     entity="usuario"
-    :icon="mdiAccountOutline"
     @confirm="confirmToggleActive"
   />
 </template>

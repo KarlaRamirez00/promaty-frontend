@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiEyeOutline, mdiPencilOutline, mdiToolboxOutline } from '@mdi/js'
+import { mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
 import {
   getProjectSpecialtyDetailAction,
   getProjectSpecialtyListAction,
@@ -356,7 +356,6 @@ function confirmToggleActive() {
     :record="statusRecord"
     :loading="toggleMutation.isPending.value"
     entity="especialidad"
-    :icon="mdiToolboxOutline"
     feminine
     @confirm="confirmToggleActive"
   />

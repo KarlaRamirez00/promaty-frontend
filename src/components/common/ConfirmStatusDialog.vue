@@ -13,7 +13,6 @@ const props = withDefaults(
   defineProps<{
     record: StatusRecord | null
     loading: boolean
-    icon: string
     entity?: string
     feminine?: boolean
     confirmDisabled?: boolean
@@ -60,10 +59,7 @@ const alertMessage = computed(
         <AlertComponent :type="alertType" :message="alertMessage" :icon="mdiArrowDownCircleOutline" />
 
         <v-sheet border rounded class="px-4 py-3">
-          <div class="d-flex align-center ga-3">
-            <v-icon :icon="icon" color="primary" size="28" />
-            <span class="text-subtitle-1 font-weight-bold">{{ record?.name }}</span>
-          </div>
+          <span class="text-subtitle-1 font-weight-bold">{{ record?.name }}</span>
           <template v-if="$slots.details">
             <v-divider class="my-2" />
             <slot name="details" />
