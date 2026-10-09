@@ -169,7 +169,6 @@ function submit() {
         density="comfortable"
         :error="hasError('name')"
         maxlength="120"
-        counter
         hide-details="auto"
         persistent-placeholder
         autofocus

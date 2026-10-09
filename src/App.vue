@@ -106,6 +106,11 @@ html {
   font-size: 0.875rem;
 }
 
+.v-counter {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
 .v-list-item-title {
   font-size: 0.875rem;
 }

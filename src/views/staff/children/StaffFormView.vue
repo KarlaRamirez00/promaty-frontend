@@ -442,7 +442,6 @@ function submit() {
         density="comfortable"
         :error="hasError('firstName')"
         maxlength="100"
-        counter
         hide-details="auto"
         persistent-placeholder
       />
@@ -459,7 +458,6 @@ function submit() {
         density="comfortable"
         :error="hasError('paternalLastName')"
         maxlength="100"
-        counter
         hide-details="auto"
         persistent-placeholder
       />
@@ -476,7 +474,6 @@ function submit() {
         density="comfortable"
         :error="hasError('maternalLastName')"
         maxlength="100"
-        counter
         hide-details="auto"
         persistent-placeholder
       />

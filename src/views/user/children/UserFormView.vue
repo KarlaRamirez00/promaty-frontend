@@ -170,7 +170,6 @@ function submit() {
         density="comfortable"
         :error="hasError('firstName')"
         maxlength="120"
-        counter
         hide-details="auto"
         persistent-placeholder
         autofocus
@@ -188,7 +187,6 @@ function submit() {
         density="comfortable"
         :error="hasError('lastName')"
         maxlength="120"
-        counter
         hide-details="auto"
         persistent-placeholder
       />

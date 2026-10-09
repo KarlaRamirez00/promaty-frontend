@@ -192,7 +192,6 @@ function submit() {
         density="comfortable"
         :error="hasError('costCenterCode')"
         maxlength="30"
-        counter
         hide-details="auto"
         persistent-placeholder
       />
