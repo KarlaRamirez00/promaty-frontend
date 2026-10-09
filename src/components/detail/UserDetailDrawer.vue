@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { User } from '@/models'
+import { formatPhone } from '@/utils'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
@@ -33,7 +34,7 @@ const fields = computed(() => {
   return [
     { key: 'fullName', label: 'Nombre completo', value: u.fullName },
     { key: 'email', label: 'Correo', value: u.email },
-    { key: 'phoneNumber', label: 'Teléfono', value: u.phoneNumber },
+    { key: 'phoneNumber', label: 'Teléfono', value: formatPhone(u.phoneNumber) },
     { key: 'role', label: 'Rol', value: u.role.name },
     {
       key: 'costCenters',

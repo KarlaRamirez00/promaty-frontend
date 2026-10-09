@@ -20,7 +20,7 @@ import {
 } from '@/actions'
 import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
-import { maskRut } from '@/utils'
+import { maskPhone, maskRut } from '@/utils'
 import messages from '@/messages'
 import staffMessages from '@/messages/staff.messages'
 import { ROUTE } from '@/router/route-names'
@@ -209,8 +209,8 @@ watch(
         registeredSexId: staff.registeredSex.id,
         maritalStatusId: staff.maritalStatus.id,
         nationalityId: staff.nationality.id,
-        phone1: staff.phone1,
-        emergencyPhone: staff.emergencyPhone,
+        phone1: maskPhone(staff.phone1),
+        emergencyPhone: maskPhone(staff.emergencyPhone),
         emergencyContactName: staff.emergencyContactName,
         address: staff.address,
         regionId: staff.region.id,
@@ -514,11 +514,12 @@ function submit() {
         v-model="form.phone1"
         v-input-mask="'phone'"
         label="Teléfono"
-        placeholder="912345678"
+        prefix="+56"
+        placeholder="9 1234 5678"
         variant="outlined"
         density="comfortable"
         :error="hasError('phone1')"
-        maxlength="9"
+        maxlength="11"
         hide-details="auto"
         persistent-placeholder
       />
@@ -732,11 +733,12 @@ function submit() {
         v-model="form.emergencyPhone"
         v-input-mask="'phone'"
         label="Teléfono de emergencia"
-        placeholder="912345678"
+        prefix="+56"
+        placeholder="9 1234 5678"
         variant="outlined"
         density="comfortable"
         :error="hasError('emergencyPhone')"
-        maxlength="9"
+        maxlength="11"
         hide-details="auto"
         persistent-placeholder
       />

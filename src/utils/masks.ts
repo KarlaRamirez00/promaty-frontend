@@ -28,9 +28,15 @@ export const INPUT_MASKS: Record<InputMaskType, (raw: string) => string> = {
   lettersAndNumbers: (raw) => raw.replaceAll(/[^\p{L}\d]/gu, ''),
   freeText: (raw) => raw.replaceAll(/[^\p{L}\d .,_()/$°-]/gu, ''),
   rut: (raw) => maskRut(raw),
-  phone: ONLY_DIGITS,
+  phone: (raw) => maskPhone(raw),
   email: (raw) => raw.replaceAll(/[^A-Za-z\d@._-]/g, ''),
   bankAccount: ONLY_DIGITS,
+}
+
+// Celular chileno de 9 dígitos agrupado con espacios al escribir: "962099485" → "9 6209 9485".
+export function maskPhone(raw: string): string {
+  const digits = ONLY_DIGITS(raw).slice(0, 9)
+  return [digits.slice(0, 1), digits.slice(1, 5), digits.slice(5)].filter(Boolean).join(' ')
 }
 
 // Deja dígitos y una "K" final, limita el cuerpo a 8 dígitos y agrega puntos y guion al escribir.

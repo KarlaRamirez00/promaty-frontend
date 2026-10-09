@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { accountTypeLabel, identificationTypeLabel, type Staff } from '@/models'
-import { formatDate } from '@/utils'
+import { formatDate, formatPhone } from '@/utils'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
@@ -38,13 +38,13 @@ const fields = computed(() => {
     { key: 'maritalStatus', label: 'Estado civil', value: s.maritalStatus.name },
     { key: 'nationality', label: 'Nacionalidad', value: s.nationality.name },
     { key: 'personalEmail', label: 'Correo personal', value: s.personalEmail },
-    { key: 'phone1', label: 'Teléfono', value: s.phone1 },
+    { key: 'phone1', label: 'Teléfono', value: formatPhone(s.phone1) },
     { key: 'address', label: 'Dirección', value: s.address },
     { key: 'region', label: 'Región', value: s.region.name },
     { key: 'provincia', label: 'Provincia', value: s.provincia.name },
     { key: 'comuna', label: 'Comuna', value: s.comuna.name },
     { key: 'emergencyContactName', label: 'Contacto de emergencia', value: s.emergencyContactName },
-    { key: 'emergencyPhone', label: 'Teléfono de emergencia', value: s.emergencyPhone },
+    { key: 'emergencyPhone', label: 'Teléfono de emergencia', value: formatPhone(s.emergencyPhone) },
     {
       key: 'children',
       label: 'Hijos',

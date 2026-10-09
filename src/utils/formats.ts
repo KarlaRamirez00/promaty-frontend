@@ -58,3 +58,10 @@ export function formatRut(value: string): string {
 
   return `${grouped}-${dv.toUpperCase()}`
 }
+
+// Backend guarda el celular chileno como 9 dígitos sin prefijo; en pantalla se muestra con +56.
+export function formatPhone(value: string): string {
+  const digits = value.replaceAll(/\D/g, '')
+  if (digits.length !== 9) return value
+  return `+56 ${digits[0]} ${digits.slice(1, 5)} ${digits.slice(5)}`
+}

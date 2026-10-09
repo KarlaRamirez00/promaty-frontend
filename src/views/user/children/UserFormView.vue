@@ -15,6 +15,7 @@ import { useMessage } from '@/composables/useMessage'
 import messages from '@/messages'
 import userMessages from '@/messages/user.messages'
 import { ROUTE } from '@/router/route-names'
+import { maskPhone } from '@/utils'
 import { createUserForm, type UserForm } from '@/models'
 import {
   firstError,
@@ -82,7 +83,7 @@ watch(
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: maskPhone(user.phoneNumber),
         roleId: user.role.id,
         projectIds: user.projectIds,
       })
@@ -214,8 +215,9 @@ function submit() {
       <v-text-field
         v-model="form.phoneNumber"
         v-input-mask="'phone'"
-        maxlength="9"
+        maxlength="11"
         label="Teléfono (opcional)"
+        prefix="+56"
         placeholder="Ingresa el teléfono"
         variant="outlined"
         density="comfortable"
@@ -265,7 +267,7 @@ function submit() {
         :items="costCenterOptions ?? []"
         item-title="title"
         item-value="id"
-        label="Centros de costo"
+        label="Centros de costo (opcional)"
         placeholder="Seleccionar"
         variant="outlined"
         density="comfortable"

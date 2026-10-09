@@ -101,6 +101,11 @@ html {
   font-size: 0.875rem;
 }
 
+.v-text-field__prefix,
+.v-text-field__suffix {
+  font-size: 0.875rem;
+}
+
 .v-list-item-title {
   font-size: 0.875rem;
 }

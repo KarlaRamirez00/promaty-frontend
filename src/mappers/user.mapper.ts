@@ -51,7 +51,7 @@ export function mapperUserFormToPayload(form: UserForm): UserFormPayload {
     firstName: form.firstName.trim(),
     lastName: form.lastName.trim(),
     email: form.email.trim(),
-    phoneNumber: form.phoneNumber.trim(),
+    phoneNumber: form.phoneNumber.replaceAll(' ', ''),
     roleId: form.roleId as number,
     projectIds: form.projectIds,
   }

@@ -19,15 +19,18 @@ export const staffEmailRules: Validator[] = [
   email(messages.staff.rules.emailInvalid),
 ]
 
-// Formato exacto que exige el backend: 9 dígitos, empieza con 9, sin +56.
+// Backend exige 9 dígitos que empiecen con 9, sin +56; el valor del formulario llega con la máscara
+// "9 XXXX XXXX" y los espacios se quitan al armar el payload.
+const PHONE_PATTERN = /^9 \d{4} \d{4}$/
+
 export const staffPhoneRules: Validator[] = [
   required(messages.staff.rules.phoneRequired),
-  pattern(/^9\d{8}$/, messages.staff.rules.phoneInvalid),
+  pattern(PHONE_PATTERN, messages.staff.rules.phoneInvalid),
 ]
 
 export const staffEmergencyPhoneRules: Validator[] = [
   required(messages.staff.rules.emergencyPhoneRequired),
-  pattern(/^9\d{8}$/, messages.staff.rules.emergencyPhoneInvalid),
+  pattern(PHONE_PATTERN, messages.staff.rules.emergencyPhoneInvalid),
 ]
 
 export const staffEmergencyContactNameRules: Validator[] = [
