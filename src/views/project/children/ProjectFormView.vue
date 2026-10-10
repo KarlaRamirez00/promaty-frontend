@@ -16,7 +16,7 @@ import { useMessage } from '@/composables/useMessage'
 import messages from '@/messages'
 import projectMessages from '@/messages/project.messages'
 import { ROUTE } from '@/router/route-names'
-import { createProjectForm, type ProjectForm } from '@/models'
+import { createProjectForm, type ProjectForm, type ProjectRelationOption } from '@/models'
 import {
   firstError,
   inputMaskNumbers,
@@ -63,6 +63,23 @@ const { data: clientOptions } = useQuery({
   queryKey: ['clients', 'options'],
   queryFn: getClientOptionsAction,
 })
+// Las opciones solo traen registros activos: si el proyecto referencia uno desactivado, se agrega
+// deshabilitado para que el selector muestre su nombre sin permitir volver a elegirlo.
+function withCurrent(
+  options: ProjectRelationOption[] | undefined,
+  current: ProjectRelationOption | undefined,
+): (ProjectRelationOption & { props?: { disabled: boolean } })[] {
+  const list = options ?? []
+  if (!current || list.some((option) => option.id === current.id)) return list
+  return [...list, { ...current, props: { disabled: true } }]
+}
+
+const typeItems = computed(() => withCurrent(typeOptions.value, existingProject.value?.type))
+const specialtyItems = computed(() =>
+  withCurrent(specialtyOptions.value, existingProject.value?.specialty),
+)
+const clientItems = computed(() => withCurrent(clientOptions.value, existingProject.value?.client))
+
 const form = ref<ProjectForm>(createProjectForm())
 
 const costCenterCodeModel = computed<string>({
@@ -221,7 +238,7 @@ function submit() {
     <v-col cols="12">
       <v-select
         v-model="form.clientId"
-        :items="clientOptions ?? []"
+        :items="clientItems"
         item-title="name"
         item-value="id"
         label="Mandante"
@@ -242,7 +259,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.typeId"
-        :items="typeOptions ?? []"
+        :items="typeItems"
         item-title="name"
         item-value="id"
         label="Tipo de proyecto"
@@ -259,7 +276,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.specialtyId"
-        :items="specialtyOptions ?? []"
+        :items="specialtyItems"
         item-title="name"
         item-value="id"
         label="Especialidad"
