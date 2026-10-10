@@ -15,13 +15,13 @@ import {
 } from '@mdi/js'
 import type { MenuItem } from '@/data/menu/menu.types'
 
-// Solicitudes (datos mock) y Colaboradores tienen ruta real hoy. El resto son placeholders sin
+// Solicitudes y Colaboradores tienen ruta real hoy. El resto son placeholders sin
 // `to`, listados a propósito para mostrar el mapa completo de módulos por construir.
 export const hrMenu: MenuItem = {
   title: 'RRHH',
   icon: mdiAccountGroupOutline,
   submenu: [
-    { title: 'Solicitudes', icon: mdiClipboardTextOutline, to: '/requests' },
+    { title: 'Solicitudes', icon: mdiClipboardTextOutline, to: '/requests', module: 'contract', permission: 'read' },
     { title: 'Anexos', icon: mdiFilePlusOutline },
     { title: 'Anticipos', icon: mdiCashClock },
     { title: 'Colaboradores', icon: mdiAccountMultipleOutline, to: '/staff', module: 'staff', permission: 'read' },

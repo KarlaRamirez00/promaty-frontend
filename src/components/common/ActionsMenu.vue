@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { mdiDotsHorizontal, mdiEyeOutline, mdiPencilOutline, mdiPower } from '@mdi/js'
+import {
+  mdiCheck,
+  mdiClose,
+  mdiDotsHorizontal,
+  mdiEyeOutline,
+  mdiPencilOutline,
+  mdiPower,
+} from '@mdi/js'
 import { ACTION } from '@/constants/actions.constants'
 
 const props = withDefaults(
@@ -8,12 +15,16 @@ const props = withDefaults(
     record: { active?: boolean; actions: string[] }
     hasUpdatePermission?: boolean
     hasActivePermission?: boolean
+    hasApprovePermission?: boolean
+    hasValidatePermission?: boolean
     // false en el slide de detalle: "Ver detalle" no tiene sentido si ya estás viendo el detalle.
     showView?: boolean
   }>(),
   {
     hasUpdatePermission: true,
     hasActivePermission: true,
+    hasApprovePermission: false,
+    hasValidatePermission: false,
     showView: true,
   },
 )
@@ -22,6 +33,9 @@ const emit = defineEmits<{
   view: []
   edit: []
   toggle: []
+  approve: []
+  validate: []
+  reject: []
 }>()
 
 // Doble gate: el permiso dice quién puede hacerlo; actions[] dice si este registro lo permite ahora.
@@ -32,12 +46,26 @@ const showToggle = computed(
     props.record.active !== undefined &&
     props.record.actions.includes(ACTION.ACTIVE),
 )
+const showApprove = computed(
+  () => props.hasApprovePermission && props.record.actions.includes(ACTION.APPROVE),
+)
+const showValidate = computed(
+  () => props.hasValidatePermission && props.record.actions.includes(ACTION.VALIDATE),
+)
+const showReject = computed(() => showApprove.value || showValidate.value)
 const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activar'))
 const toggleColor = computed(() => (props.record.active ? 'error' : 'success'))
 
 // Fuente única: si ninguna acción aplica para este registro, no se renderiza el botón "..." —
 // un menú sin opciones es un botón muerto (ver Documentacion/.../actions-slide.md).
-const hasAnyAction = computed(() => props.showView || showEdit.value || showToggle.value)
+const hasAnyAction = computed(
+  () =>
+    props.showView ||
+    showEdit.value ||
+    showToggle.value ||
+    showApprove.value ||
+    showValidate.value,
+)
 </script>
 
 <template>
@@ -53,6 +81,27 @@ const hasAnyAction = computed(() => props.showView || showEdit.value || showTogg
         base-color="info"
         title="Ver detalle"
         @click="emit('view')"
+      />
+      <v-list-item
+        v-if="showApprove"
+        :prepend-icon="mdiCheck"
+        base-color="success"
+        title="Aprobar"
+        @click="emit('approve')"
+      />
+      <v-list-item
+        v-if="showValidate"
+        :prepend-icon="mdiCheck"
+        base-color="success"
+        title="Validar"
+        @click="emit('validate')"
+      />
+      <v-list-item
+        v-if="showReject"
+        :prepend-icon="mdiClose"
+        base-color="error"
+        title="Rechazar"
+        @click="emit('reject')"
       />
       <v-list-item
         v-if="showEdit"

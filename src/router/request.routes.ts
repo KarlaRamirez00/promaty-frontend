@@ -7,6 +7,8 @@ export const requestRoutes: RouteRecordRaw[] = [
     name: ROUTE.REQUEST_LIST,
     component: () => import('@/views/RequestsView.vue'),
     meta: {
+      module: 'contract',
+      permission: 'read',
       breadcrumbs: [
         { title: 'Lista de solicitudes', disabled: true },
       ],

@@ -15,6 +15,12 @@ interface ToggleMessages {
   toastDeactivate: ToastText
 }
 
+interface DecisionMessages {
+  toastApprove: ToastText
+  toastValidate: ToastText
+  toastReject: ToastText
+}
+
 interface ErrorMessages {
   toastError: ToastText
 }
@@ -30,9 +36,18 @@ export function useMessage() {
     snackbar.success(wasActive ? messages.toastDeactivate : messages.toastActivate)
   }
 
+  function toastDecided(type: 'APPROVE' | 'VALIDATE' | 'REJECT', messages: DecisionMessages) {
+    const text = {
+      APPROVE: messages.toastApprove,
+      VALIDATE: messages.toastValidate,
+      REJECT: messages.toastReject,
+    }[type]
+    snackbar.success(text)
+  }
+
   function toastFailed(messages: ErrorMessages) {
     snackbar.error(messages.toastError)
   }
 
-  return { toastSaved, toastToggled, toastFailed }
+  return { toastSaved, toastToggled, toastDecided, toastFailed }
 }

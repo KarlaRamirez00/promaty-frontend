@@ -2,12 +2,13 @@ import type { PageResult } from '@/types/api'
 
 type QueryErrorHandler = (error: unknown) => void
 
-export interface TablePage<TData> {
+export interface TablePage<TData, TOtherData = undefined> {
   data: TData[]
   meta: {
     total: number
     pageCount: number
     currentPage: number
+    otherData?: TOtherData
   }
 }
 
@@ -28,13 +29,13 @@ export async function useGetDetail<TParams, TRaw, TData>(
 }
 
 // Tabla paginada
-export async function useGetTable<TParams, TRaw, TData>(
-  apiFn: (params: TParams) => Promise<PageResult<TRaw>>,
+export async function useGetTable<TParams, TRaw, TData, TOtherData = undefined>(
+  apiFn: (params: TParams) => Promise<PageResult<TRaw, TOtherData>>,
   params: TParams,
   mapper: (data: TRaw[]) => TData[],
   onSuccess?: (data: TData[]) => void,
   onError?: QueryErrorHandler,
-): Promise<TablePage<TData>> {
+): Promise<TablePage<TData, TOtherData>> {
   try {
     const result = await apiFn(params)
     const data = mapper(result.items)
@@ -45,6 +46,7 @@ export async function useGetTable<TParams, TRaw, TData>(
         total: result.pagination.total,
         pageCount: result.pagination.pageCount,
         currentPage: result.pagination.page + 1,
+        otherData: result.otherData,
       },
     }
   } catch (error) {

@@ -1,182 +1,317 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { mdiAlertCircleOutline, mdiClockOutline } from '@mdi/js'
 import {
-  mdiAlertCircleOutline,
-  mdiCheck,
-  mdiClockOutline,
-  mdiClose,
-  mdiDotsHorizontal,
-  mdiEyeOutline,
-} from '@mdi/js'
-import { requests } from '@/data/requests'
-import type { Request, RequestStatus } from '@/types/request'
+  approveRequestAction,
+  getCostCenterOptionsAction,
+  getRejectionReasonOptionsAction,
+  getRequestDetailAction,
+  getRequesterOptionsAction,
+  getRequestListAction,
+  getRequestStatusOptionsAction,
+  rejectRequestAction,
+} from '@/actions'
+import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
+import { useMessage } from '@/composables/useMessage'
+import { usePermissions } from '@/composables/usePermissions'
+import messages from '@/messages'
+import {
+  parseRequestQuery,
+  requestQueryToRoute,
+  type RequestDecisionForm,
+  type RequestListItem,
+  type RequestQueryParams,
+} from '@/models'
+import { formatDate } from '@/utils'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
 import FiltersDrawer, { type FilterField } from '@/components/common/FiltersDrawer.vue'
 import RequestDetailDrawer from '@/components/detail/RequestDetailDrawer.vue'
 import IndicatorCard from '@/components/common/IndicatorCard.vue'
+import ListFooter from '@/components/common/ListFooter.vue'
+import ActionsMenu from '@/components/common/ActionsMenu.vue'
+import AlertComponent from '@/components/common/AlertComponent.vue'
+import ApproveRejectDialog, { type DecisionType } from '@/components/common/ApproveRejectDialog.vue'
 
 const { smAndDown } = useDisplay()
+const route = useRoute()
+const router = useRouter()
+const queryClient = useQueryClient()
+const { toastDecided, toastFailed } = useMessage()
+const { hasPermission } = usePermissions()
+const {
+  backendErrorFields,
+  setFromError,
+  clear: clearBackendErrors,
+} = useBackendFieldErrors()
+const canApprove = computed(() => hasPermission('approve'))
+const canValidate = computed(() => hasPermission('validate'))
 
-const search = ref('')
+const query = computed<RequestQueryParams>(() => parseRequestQuery(route.query))
 
-const detailOpen = ref(false)
-const selectedRequest = ref<Request | null>(null)
+// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
+let pendingQuery: RequestQueryParams | null = null
 
-function viewDetail(request: Request) {
-  selectedRequest.value = request
-  detailOpen.value = true
+function patchQuery(patch: Partial<RequestQueryParams>) {
+  const next: RequestQueryParams = { ...(pendingQuery ?? query.value), ...patch }
+  if (!('page' in patch)) next.page = 1
+  pendingQuery = next
+  void router
+    .replace({ query: { ...requestQueryToRoute(next), ...detailQueryParam.value } })
+    .finally(() => {
+      pendingQuery = null
+    })
 }
 
-// Fecha en los datos mock viene como dd/mm/yyyy; se convierte para poder
-// compararla contra los inputs type="date" (yyyy-mm-dd) del panel de filtros.
-function parseCreatedAt(value: string): Date {
-  const [day, month, year] = value.split('/').map(Number)
-  return new Date(year, month - 1, day)
+// Detalle abierto vía ?detail={id}: sobrevive a un refresh y es compartible por link.
+const detailId = computed(() => {
+  const raw = route.query.detail
+  const n = Number(raw)
+  return typeof raw === 'string' && Number.isInteger(n) && n > 0 ? n : null
+})
+
+const detailQueryParam = computed(() => (detailId.value ? { detail: String(detailId.value) } : {}))
+
+const detailDrawerOpen = computed<boolean>({
+  get: () => detailId.value !== null,
+  set: (value) => {
+    if (!value) closeDetail()
+  },
+})
+
+function openDetail(id: number) {
+  router.push({ query: { ...route.query, detail: String(id) } })
 }
 
-// new Date("yyyy-mm-dd") interpreta el string como UTC medianoche: en un huso horario detrás de
-// UTC (ej. Chile) el Date resultante cae en el día anterior al convertirlo a hora local.
-function parseFilterDate(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number)
-  return new Date(year, month - 1, day)
+function closeDetail() {
+  const rest = { ...route.query }
+  delete rest.detail
+  router.push({ query: rest })
 }
+
+const searchInput = ref(query.value.search)
+let debounceTimer: ReturnType<typeof setTimeout>
+watch(searchInput, (value) => {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
+})
+watch(
+  () => query.value.search,
+  (value) => {
+    if (value !== searchInput.value.trim()) searchInput.value = value
+  },
+)
 
 const filtersOpen = ref(false)
-const filterStatus = ref<RequestStatus | null>(null)
-const filterCc = ref<string | null>(null)
-const filterRequester = ref<string | null>(null)
-const filterDateFrom = ref<string | null>(null)
-const filterDateTo = ref<string | null>(null)
 
-const ccOptions = computed(() => [...new Set(requests.map((r) => r.cc))].sort())
-const requesterOptions = computed(() => [...new Set(requests.map((r) => r.requester))].sort())
-
-const filteredRequests = computed(() => {
-  const query = search.value.trim().toLowerCase()
-  const from = filterDateFrom.value ? parseFilterDate(filterDateFrom.value) : null
-  const to = filterDateTo.value ? parseFilterDate(filterDateTo.value) : null
-
-  return requests.filter((r) => {
-    if (filterStatus.value && r.status !== filterStatus.value) return false
-    if (filterCc.value && r.cc !== filterCc.value) return false
-    if (filterRequester.value && r.requester !== filterRequester.value) return false
-
-    const createdAt = parseCreatedAt(r.createdAt)
-    if (from && createdAt < from) return false
-    if (to && createdAt > to) return false
-
-    if (query && !r.type.toLowerCase().includes(query) && !r.cc.toLowerCase().includes(query)) {
-      return false
-    }
-
-    return true
-  })
+const { data: statusOptions } = useQuery({
+  queryKey: ['requests', 'options', 'statuses'],
+  queryFn: getRequestStatusOptionsAction,
 })
-
-const page = ref(1)
-const itemsPerPage = ref(10)
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredRequests.value.length / itemsPerPage.value)),
-)
-const pageText = computed(() => `Página ${page.value} de ${totalPages.value}`)
-
-// La vista en bloques pagina manualmente y no reajusta la página al filtrar.
-watch(totalPages, () => {
-  if (page.value > totalPages.value) page.value = 1
+const { data: costCenterOptions } = useQuery({
+  queryKey: ['projects', 'options', 'costCenters'],
+  queryFn: getCostCenterOptionsAction,
 })
-
-const paginatedRequests = computed(() => {
-  const start = (page.value - 1) * itemsPerPage.value
-  return filteredRequests.value.slice(start, start + itemsPerPage.value)
+const { data: requesterOptions } = useQuery({
+  queryKey: ['requests', 'options', 'requesters'],
+  queryFn: getRequesterOptionsAction,
 })
-
-const activeFilters = computed(() => {
-  const active: { key: string; label: string }[] = []
-  if (filterStatus.value) active.push({ key: 'status', label: `Estado: ${filterStatus.value}` })
-  if (filterCc.value) active.push({ key: 'cc', label: `Centro de costo: ${filterCc.value}` })
-  if (filterRequester.value) active.push({ key: 'requester', label: `Solicitante: ${filterRequester.value}` })
-  if (filterDateFrom.value && filterDateTo.value) {
-    active.push({
-      key: 'dateRange',
-      label: `Fechas: ${filterDateFrom.value} a ${filterDateTo.value}`,
-    })
-  }
-  return active
-})
-
-function removeFilter(key: string) {
-  if (key === 'status') filterStatus.value = null
-  if (key === 'cc') filterCc.value = null
-  if (key === 'requester') filterRequester.value = null
-  if (key === 'dateRange') {
-    filterDateFrom.value = null
-    filterDateTo.value = null
-  }
-}
-
-function clearAllFilters() {
-  filterStatus.value = null
-  filterCc.value = null
-  filterRequester.value = null
-  filterDateFrom.value = null
-  filterDateTo.value = null
-}
-
-const statusOptions: RequestStatus[] = [
-  'Pendiente aprobación',
-  'Pendiente validación',
-  'Aprobado',
-  'Rechazado',
-]
 
 const filterFields = computed<FilterField[]>(() => [
-  { key: 'status', type: 'select', label: 'Estado', options: statusOptions },
-  { key: 'cc', type: 'select', label: 'Centro de costo', options: ccOptions.value },
-  { key: 'requester', type: 'autocomplete', label: 'Solicitante', options: requesterOptions.value },
+  {
+    key: 'statusId',
+    type: 'select',
+    label: 'Estado',
+    options: (statusOptions.value ?? []).map((o) => ({ title: o.name, value: o.id })),
+  },
+  {
+    key: 'projectId',
+    type: 'autocomplete',
+    label: 'Centro de costo',
+    options: (costCenterOptions.value ?? []).map((o) => ({ title: o.title, value: o.id })),
+  },
+  {
+    key: 'requesterUserId',
+    type: 'autocomplete',
+    label: 'Solicitante',
+    options: (requesterOptions.value ?? []).map((o) => ({ title: o.name, value: o.id })),
+  },
   { key: 'dateRange', type: 'date', label: 'Rango de fechas', range: true },
 ])
 
 const filterValues = computed<Record<string, unknown>>({
   get: () => ({
-    status: filterStatus.value,
-    cc: filterCc.value,
-    requester: filterRequester.value,
-    dateRange: filterDateFrom.value && filterDateTo.value ? [filterDateFrom.value, filterDateTo.value] : null,
+    statusId: query.value.statusId,
+    projectId: query.value.projectId,
+    requesterUserId: query.value.requesterUserId,
+    dateRange:
+      query.value.createdFrom && query.value.createdTo
+        ? [query.value.createdFrom, query.value.createdTo]
+        : null,
   }),
   set: (value) => {
-    filterStatus.value = (value.status as RequestStatus | null) ?? null
-    filterCc.value = (value.cc as string | null) ?? null
-    filterRequester.value = (value.requester as string | null) ?? null
     const range = value.dateRange as [string, string] | null | undefined
-    filterDateFrom.value = range?.[0] ?? null
-    filterDateTo.value = range?.[1] ?? null
+    patchQuery({
+      statusId: (value.statusId as number | null) ?? null,
+      projectId: (value.projectId as number | null) ?? null,
+      requesterUserId: (value.requesterUserId as number | null) ?? null,
+      createdFrom: range?.[0] ?? null,
+      createdTo: range?.[1] ?? null,
+    })
   },
 })
 
+const activeFilters = computed(() => {
+  const active: { key: string; label: string }[] = []
+  const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
+  if (statusName) active.push({ key: 'statusId', label: `Estado: ${statusName}` })
+  const costCenter = costCenterOptions.value?.find((o) => o.id === query.value.projectId)?.title
+  if (costCenter) active.push({ key: 'projectId', label: `Centro de costo: ${costCenter}` })
+  const requesterName = requesterOptions.value?.find(
+    (o) => o.id === query.value.requesterUserId,
+  )?.name
+  if (requesterName) active.push({ key: 'requesterUserId', label: `Solicitante: ${requesterName}` })
+  if (query.value.createdFrom && query.value.createdTo) {
+    active.push({
+      key: 'dateRange',
+      label: `Fechas: ${formatDate(query.value.createdFrom)} a ${formatDate(query.value.createdTo)}`,
+    })
+  }
+  return active
+})
+
+function clearFilter(key: string) {
+  if (key === 'dateRange') patchQuery({ createdFrom: null, createdTo: null })
+  else patchQuery({ [key]: null })
+}
+
+function clearAllFilters() {
+  patchQuery({
+    statusId: null,
+    projectId: null,
+    requesterUserId: null,
+    createdFrom: null,
+    createdTo: null,
+  })
+}
+
+const pageModel = computed<number>({
+  get: () => query.value.page,
+  set: (value) => patchQuery({ page: value }),
+})
+
+const sizeModel = computed<number>({
+  get: () => query.value.size,
+  set: (value) => patchQuery({ size: value }),
+})
+
+const listQueryKey = computed(() => ['requests', { ...query.value }])
+
+const {
+  data: listResult,
+  isPending,
+  isError,
+} = useQuery({
+  queryKey: listQueryKey,
+  queryFn: () => getRequestListAction({ ...query.value }),
+  placeholderData: keepPreviousData,
+})
+
+const items = computed<RequestListItem[]>(() => listResult.value?.data ?? [])
+const totalItems = computed(() => listResult.value?.meta.total ?? 0)
+const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
+const pendingApproval = computed(() => listResult.value?.meta.otherData?.pendingApproval ?? 0)
+const pendingValidation = computed(() => listResult.value?.meta.otherData?.pendingValidation ?? 0)
+
+watch(pageCount, (count) => {
+  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
+})
+
+function statusIdByCode(code: string): number | null {
+  return statusOptions.value?.find((o) => o.code === code)?.id ?? null
+}
+
+function isCounterActive(code: string): boolean {
+  const id = statusIdByCode(code)
+  return id !== null && query.value.statusId === id
+}
+
+function toggleCounter(code: string) {
+  const id = statusIdByCode(code)
+  if (id === null) return
+  patchQuery({ statusId: query.value.statusId === id ? null : id })
+}
+
 const headers = [
-  { title: 'CC', key: 'cc' },
-  { title: 'Tipo de solicitud', key: 'type' },
-  { title: 'Proyecto', key: 'project' },
-  { title: 'Creación', key: 'createdAt' },
-  { title: 'Solicitante', key: 'requester' },
-  { title: 'Estado', key: 'status' },
+  { title: 'CC', key: 'costCenterCode', sortable: false },
+  { title: 'Tipo de solicitud', key: 'typeName', sortable: false },
+  { title: 'Proyecto', key: 'projectName', sortable: false },
+  { title: 'Creación', key: 'createdAt', sortable: false },
+  { title: 'Solicitante', key: 'requesterName', sortable: false },
+  { title: 'Estado', key: 'status', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-const pendingApproval = computed(
-  () => requests.filter((r) => r.status === 'Pendiente aprobación').length,
-)
-const pendingValidation = computed(
-  () => requests.filter((r) => r.status === 'Pendiente validación').length,
-)
+const { data: selectedRequest, isPending: detailLoading } = useQuery({
+  queryKey: computed(() => ['requests', 'detail', detailId.value]),
+  queryFn: () => getRequestDetailAction(detailId.value as number),
+  enabled: computed(() => detailId.value !== null),
+})
 
-const statusColor: Record<RequestStatus, string> = {
-  'Pendiente aprobación': 'warning',
-  'Pendiente validación': 'info',
-  Aprobado: 'success',
-  Rechazado: 'error',
+function viewDetail(item: { id: number }) {
+  openDetail(item.id)
+}
+
+const decisionDialogRef = ref<InstanceType<typeof ApproveRejectDialog> | null>(null)
+const decisionType = ref<DecisionType>('APPROVE')
+const decisionRecord = ref<{ id: number; title: string; subtitle: string } | null>(null)
+
+const { data: rejectionReasons } = useQuery({
+  queryKey: ['requestRejectionReasons', 'selector', 'contracts'],
+  queryFn: getRejectionReasonOptionsAction,
+  enabled: computed(() => decisionType.value === 'REJECT'),
+})
+
+function askDecision(
+  item: { id: number; typeName: string; costCenterCode: string; projectName: string },
+  type: DecisionType,
+) {
+  decisionType.value = type
+  decisionRecord.value = {
+    id: item.id,
+    title: item.typeName,
+    subtitle: `${item.costCenterCode} · ${item.projectName}`,
+  }
+  clearBackendErrors()
+  decisionDialogRef.value?.open()
+}
+
+interface DecisionVariables {
+  type: DecisionType
+  id: number
+  form: RequestDecisionForm
+}
+
+const decisionMutation = useMutation({
+  mutationFn: ({ type, id, form }: DecisionVariables) =>
+    type === 'REJECT' ? rejectRequestAction(id, form) : approveRequestAction(id),
+  onSuccess: (_data, { type }) => {
+    queryClient.invalidateQueries({ queryKey: ['requests'] })
+    decisionDialogRef.value?.close()
+    toastDecided(type, messages.request)
+  },
+  onError: (error: unknown) => {
+    if (!setFromError(error)) toastFailed(messages.request)
+  },
+})
+
+function confirmDecision(form: RequestDecisionForm) {
+  if (!decisionRecord.value) return
+  clearBackendErrors()
+  decisionMutation.mutate({ type: decisionType.value, id: decisionRecord.value.id, form })
 }
 </script>
 
@@ -195,85 +330,117 @@ const statusColor: Record<RequestStatus, string> = {
         color="warning"
         title="Por aprobar"
         :count="pendingApproval"
+        :class="['indicator', { 'indicator--active': isCounterActive('PENDING_APPROVAL') }]"
+        role="button"
+        @click="toggleCounter('PENDING_APPROVAL')"
       />
       <IndicatorCard
         :icon="mdiClockOutline"
         color="info"
         title="Por validar"
         :count="pendingValidation"
+        :class="['indicator', { 'indicator--active': isCounterActive('PENDING_VALIDATION') }]"
+        role="button"
+        @click="toggleCounter('PENDING_VALIDATION')"
       />
     </div>
   </div>
 
   <ListControls
-    v-model:search="search"
-    search-placeholder="Buscar por tipo de solicitud o centro de costo"
+    v-model:search="searchInput"
+    search-placeholder="Buscar por proyecto o centro de costo"
+    :show-export="false"
+    :show-new="false"
     @filter="filtersOpen = true"
   />
 
   <ActiveFilters
     :filters="activeFilters"
-    @remove-filter="removeFilter"
+    @remove-filter="clearFilter"
     @clear-all="clearAllFilters"
   />
 
-  <v-data-table
+  <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4 text-caption">
+    No se pudo cargar la lista de solicitudes.
+  </v-alert>
+
+  <v-data-table-server
     v-if="!smAndDown"
-    v-model:page="page"
-    v-model:items-per-page="itemsPerPage"
-    :items-per-page-options="[10, 25, 50, 100]"
+    :page="query.page"
+    :items-per-page="query.size"
     :headers="headers"
-    :items="filteredRequests"
-    :page-text="pageText"
+    :items="items"
+    :items-length="totalItems"
+    :loading="isPending"
   >
-    <template #item.type="{ item }">
-      <span class="link-cell" @click="viewDetail(item)">{{ item.type }}</span>
+    <template #item.typeName="{ item }">
+      <span class="link-cell" @click="viewDetail(item)">{{ item.typeName }}</span>
     </template>
 
     <template #item.status="{ item }">
-      <v-chip size="small" variant="tonal" :color="statusColor[item.status as RequestStatus]">
-        {{ item.status }}
+      <v-chip size="small" variant="tonal" :color="item.statusColor">
+        {{ item.status.name }}
       </v-chip>
     </template>
 
     <template #item.actions="{ item }">
-      <v-menu>
-        <template #activator="{ props }">
-          <v-btn :icon="mdiDotsHorizontal" variant="text" size="small" v-bind="props" />
-        </template>
-        <v-list density="compact">
-          <v-list-item title="Ver detalle" :prepend-icon="mdiEyeOutline" @click="viewDetail(item)" />
-          <v-list-item title="Aprobar" :prepend-icon="mdiCheck" />
-          <v-list-item title="Rechazar" :prepend-icon="mdiClose" />
-        </v-list>
-      </v-menu>
+      <ActionsMenu
+        :record="item"
+        :has-update-permission="false"
+        :has-active-permission="false"
+        :has-approve-permission="canApprove"
+        :has-validate-permission="canValidate"
+        @view="viewDetail(item)"
+        @approve="askDecision(item, 'APPROVE')"
+        @validate="askDecision(item, 'VALIDATE')"
+        @reject="askDecision(item, 'REJECT')"
+      />
     </template>
-  </v-data-table>
+
+    <template #bottom>
+      <ListFooter
+        v-model:page="pageModel"
+        v-model:size="sizeModel"
+        :total="totalItems"
+        :page-count="pageCount"
+      />
+    </template>
+  </v-data-table-server>
 
   <template v-else>
     <v-card flat border>
-      <template
-        v-for="(item, index) in paginatedRequests"
-        :key="`${item.cc}-${item.type}-${item.createdAt}-${item.requester}`"
-      >
+      <template v-for="(item, index) in items" :key="item.id">
         <div class="pa-4" :class="{ 'request-block--divided': index > 0 }">
-          <div class="d-flex flex-wrap align-center ga-2 mb-3">
-            <span class="link-cell text-subtitle-2 font-weight-bold" @click="viewDetail(item)">{{
-              item.type
-            }}</span>
-            <v-chip size="small" variant="tonal" :color="statusColor[item.status]">
-              {{ item.status }}
-            </v-chip>
+          <div class="d-flex align-center justify-space-between ga-2 mb-3">
+            <div class="d-flex flex-wrap align-center ga-2">
+              <span class="link-cell text-subtitle-2 font-weight-bold" @click="viewDetail(item)">{{
+                item.typeName
+              }}</span>
+              <v-chip size="small" variant="tonal" :color="item.statusColor">
+                {{ item.status.name }}
+              </v-chip>
+            </div>
+            <ActionsMenu
+              :record="item"
+              :has-update-permission="false"
+              :has-active-permission="false"
+              :has-approve-permission="canApprove"
+              :has-validate-permission="canValidate"
+              @view="viewDetail(item)"
+              @approve="askDecision(item, 'APPROVE')"
+              @validate="askDecision(item, 'VALIDATE')"
+              @reject="askDecision(item, 'REJECT')"
+            />
           </div>
 
           <dl class="request-block__fields">
             <div class="request-block__field">
               <dt>CC</dt>
-              <dd>{{ item.cc }}</dd>
+              <dd>{{ item.costCenterCode }}</dd>
             </div>
             <div class="request-block__field">
               <dt>Proyecto</dt>
-              <dd>{{ item.project }}</dd>
+              <dd>{{ item.projectName }}</dd>
             </div>
             <div class="request-block__field">
               <dt>Creación</dt>
@@ -281,43 +448,27 @@ const statusColor: Record<RequestStatus, string> = {
             </div>
             <div class="request-block__field">
               <dt>Solicitante</dt>
-              <dd>{{ item.requester }}</dd>
+              <dd>{{ item.requesterName }}</dd>
             </div>
           </dl>
-
-          <div class="d-flex flex-wrap ga-2 mt-3">
-            <v-btn
-              size="small"
-              variant="tonal"
-              :prepend-icon="mdiEyeOutline"
-              @click="viewDetail(item)"
-            >
-              Ver detalle
-            </v-btn>
-            <v-btn size="small" variant="text" :prepend-icon="mdiCheck">Aprobar</v-btn>
-            <v-btn size="small" variant="text" :prepend-icon="mdiClose">Rechazar</v-btn>
-          </div>
         </div>
       </template>
 
-      <div
-        v-if="!paginatedRequests.length"
-        class="pa-8 text-center text-medium-emphasis"
-      >
-        No hay solicitudes que coincidan con los filtros aplicados.
-      </div>
+      <AlertComponent
+        v-if="!items.length && !isError"
+        type="info"
+        message="No hay solicitudes que coincidan con los filtros aplicados."
+        class="ma-4"
+      />
     </v-card>
 
-    <div v-if="totalPages > 1" class="d-flex flex-column align-center ga-1 mt-4">
-      <v-pagination
-        v-model="page"
-        :length="totalPages"
-        :total-visible="5"
-        density="comfortable"
-        rounded="circle"
-      />
-      <span class="text-caption text-medium-emphasis">{{ pageText }}</span>
-    </div>
+    <ListFooter
+      v-model:page="pageModel"
+      v-model:size="sizeModel"
+      :total="totalItems"
+      :page-count="pageCount"
+      class="mt-2"
+    />
   </template>
 
   <FiltersDrawer
@@ -327,7 +478,26 @@ const statusColor: Record<RequestStatus, string> = {
     @clear="clearAllFilters"
   />
 
-  <RequestDetailDrawer v-model:open="detailOpen" :request="selectedRequest" />
+  <RequestDetailDrawer
+    v-model:open="detailDrawerOpen"
+    :request="selectedRequest ?? null"
+    :loading="detailLoading"
+    :has-approve-permission="canApprove"
+    :has-validate-permission="canValidate"
+    @approve="askDecision($event, 'APPROVE')"
+    @validate="askDecision($event, 'VALIDATE')"
+    @reject="askDecision($event, 'REJECT')"
+  />
+
+  <ApproveRejectDialog
+    ref="decisionDialogRef"
+    :type="decisionType"
+    :record="decisionRecord"
+    :loading="decisionMutation.isPending.value"
+    :reason-options="rejectionReasons ?? []"
+    :error-fields="backendErrorFields"
+    @confirm="confirmDecision"
+  />
 </template>
 
 <style scoped>
@@ -341,6 +511,15 @@ const statusColor: Record<RequestStatus, string> = {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.indicator {
+  cursor: pointer;
+  user-select: none;
+}
+
+.indicator--active {
+  outline: 2px solid rgba(var(--v-theme-on-surface), 0.38);
 }
 
 @media (min-width: 600px) {

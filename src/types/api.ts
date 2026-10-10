@@ -5,8 +5,9 @@ export interface Pagination {
   pageCount: number
 }
 
-export interface ApiMeta {
+export interface ApiMeta<TOtherData = undefined> {
   pagination?: Pagination
+  otherData?: TOtherData
 }
 
 export type ApiErrorFields = Record<string, string>
@@ -25,9 +26,9 @@ export interface ApiResponse<T> {
 }
 
 // Las respuestas de lista (BaseListData en el backend) no llevan campo "error".
-export interface ApiListResponse<T> {
+export interface ApiListResponse<T, TOtherData = undefined> {
   data: T[]
-  meta: ApiMeta
+  meta: ApiMeta<TOtherData>
 }
 
 export interface ApiErrorResponse {
@@ -36,9 +37,10 @@ export interface ApiErrorResponse {
   meta: ApiMeta
 }
 
-export interface PageResult<T> {
+export interface PageResult<T, TOtherData = undefined> {
   items: T[]
   pagination: Pagination
+  otherData?: TOtherData
 }
 
 export interface PageQuery {

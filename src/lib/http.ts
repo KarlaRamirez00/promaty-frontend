@@ -92,7 +92,9 @@ export function unwrap<T>(response: AxiosResponse<ApiResponse<T>>): T {
   return response.data.data
 }
 
-export function unwrapPage<T>(response: AxiosResponse<ApiListResponse<T>>): PageResult<T> {
+export function unwrapPage<T, TOtherData = undefined>(
+  response: AxiosResponse<ApiListResponse<T, TOtherData>>,
+): PageResult<T, TOtherData> {
   const { data, meta } = response.data
   return {
     items: data,
@@ -102,5 +104,6 @@ export function unwrapPage<T>(response: AxiosResponse<ApiListResponse<T>>): Page
       total: data.length,
       pageCount: 1,
     },
+    otherData: meta.otherData,
   }
 }

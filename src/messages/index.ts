@@ -5,6 +5,7 @@ import project from './project.messages'
 import role from './role.messages'
 import user from './user.messages'
 import staff from './staff.messages'
+import request from './request.messages'
 
 export default {
   client,
@@ -14,4 +15,5 @@ export default {
   role,
   user,
   staff,
+  request,
 }
