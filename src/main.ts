@@ -6,7 +6,6 @@ import App from '@/App.vue'
 import router from '@/router'
 import { vuetify } from '@/plugins/vuetify'
 import { vInputMask } from '@/directives/input-mask'
-import '@vuepic/vue-datepicker/dist/main.css'
 
 createApp(App)
   .directive('input-mask', vInputMask)

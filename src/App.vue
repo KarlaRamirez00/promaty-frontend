@@ -97,6 +97,11 @@ html {
   font-size: 0.8125rem;
 }
 
+.date-field .v-field__prepend-inner > .v-icon {
+  color: currentColor;
+  opacity: var(--v-disabled-opacity);
+}
+
 .v-field__input {
   font-size: 0.875rem;
 }

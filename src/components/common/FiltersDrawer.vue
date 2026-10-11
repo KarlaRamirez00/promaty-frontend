@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useTheme } from 'vuetify'
-import { VueDatePicker } from '@vuepic/vue-datepicker'
-import { es } from 'date-fns/locale'
+import { ref, watch } from 'vue'
 import { mdiChevronRight, mdiTuneVariant } from '@mdi/js'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
+import DateField, { type DateFieldValue } from '@/components/common/DateField.vue'
 
 export interface FilterOption {
   title: string
@@ -21,9 +19,6 @@ const props = defineProps<{
   fields: FilterField[]
 }>()
 
-const theme = useTheme()
-const isDark = computed(() => theme.global.current.value.dark)
-
 const open = defineModel<boolean>('open', { default: false })
 const values = defineModel<Record<string, unknown>>('values', { default: () => ({}) })
 
@@ -31,14 +26,29 @@ const emit = defineEmits<{
   clear: []
 }>()
 
+// Los cambios se acumulan en un borrador y solo se aplican al pulsar "Aplicar".
+const draft = ref<Record<string, unknown>>({ ...values.value })
+
+watch(open, (isOpen) => {
+  if (isOpen) draft.value = { ...values.value }
+})
+
 function setValue(key: string, value: unknown) {
-  values.value = { ...values.value, [key]: value }
+  draft.value = { ...draft.value, [key]: value }
 }
 
-type DateFieldValue = string | string[] | null
-
 function dateValue(key: string): DateFieldValue {
-  return values.value[key] as DateFieldValue
+  return draft.value[key] as DateFieldValue
+}
+
+function apply() {
+  values.value = { ...draft.value }
+  open.value = false
+}
+
+function clear() {
+  draft.value = Object.fromEntries(props.fields.map((field) => [field.key, null]))
+  emit('clear')
 }
 </script>
 
@@ -67,7 +77,7 @@ function dateValue(key: string): DateFieldValue {
 
         <v-select
           v-if="field.type === 'select'"
-          :model-value="values[field.key]"
+          :model-value="draft[field.key]"
           :items="field.options"
           item-title="title"
           item-value="value"
@@ -81,7 +91,7 @@ function dateValue(key: string): DateFieldValue {
 
         <v-autocomplete
           v-else-if="field.type === 'autocomplete'"
-          :model-value="values[field.key]"
+          :model-value="draft[field.key]"
           :items="field.options"
           item-title="title"
           item-value="value"
@@ -95,36 +105,30 @@ function dateValue(key: string): DateFieldValue {
 
         <v-switch
           v-else-if="field.type === 'boolean'"
-          :model-value="values[field.key]"
+          :model-value="draft[field.key]"
           color="primary"
           density="compact"
           hide-details
           @update:model-value="setValue(field.key, $event)"
         />
 
-        <VueDatePicker
+        <DateField
           v-else-if="field.type === 'date'"
           :model-value="dateValue(field.key)"
           :range="field.range ?? false"
           :month-picker="field.mode === 'month'"
-          :model-type="field.mode === 'month' ? 'yyyy-MM' : 'yyyy-MM-dd'"
-          :format="field.mode === 'month' ? 'MM/yyyy' : 'dd/MM/yyyy'"
-          :locale="es"
-          :week-start="1"
-          six-weeks
-          :time-config="{ enableTimePicker: false }"
-          :dark="isDark"
-          teleport="body"
-          auto-apply
-          placeholder="Seleccionar"
+          label=""
+          density="compact"
+          clearable
+          hide-details
           @update:model-value="setValue(field.key, $event)"
         />
       </div>
     </div>
 
     <template #actions>
-      <v-btn variant="text" block @click="emit('clear')">Limpiar</v-btn>
-      <v-btn color="primary" variant="flat" block @click="open = false">Filtrar contenido</v-btn>
+      <v-btn variant="text" block @click="clear">Limpiar</v-btn>
+      <v-btn color="primary" variant="flat" block @click="apply">Aplicar</v-btn>
     </template>
   </DetailDrawer>
 </template>

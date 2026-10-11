@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { mdiCalendarOutline } from '@mdi/js'
 import { VDateInput } from 'vuetify/labs/VDateInput'
 
 export type DateFieldValue = string | string[] | null
@@ -14,6 +15,7 @@ const props = withDefaults(
     clearable?: boolean
     hideDetails?: boolean
     minDate?: string | null
+    density?: 'default' | 'comfortable' | 'compact'
   }>(),
   {
     placeholder: 'Seleccionar',
@@ -23,6 +25,7 @@ const props = withDefaults(
     clearable: false,
     hideDetails: false,
     minDate: null,
+    density: 'comfortable',
   },
 )
 
@@ -59,17 +62,53 @@ function toIsoString(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+// VDateInput en modo rango trabaja con todos los días del intervalo; el modelo público solo
+// guarda los extremos [desde, hasta].
+function expandRange(from: Date, to: Date): Date[] {
+  const days = Math.round((to.getTime() - from.getTime()) / DAY_MS)
+  return Array.from({ length: days + 1 }, (_, i) => new Date(from.getFullYear(), from.getMonth(), from.getDate() + i))
+}
+
+// En modo rango el primer clic llega como un rango de un solo día: se retiene hasta que el usuario
+// elija el segundo extremo, para no emitir (ni filtrar) con un rango incompleto.
+const pendingStart = ref<Date | null>(null)
+
+// En modo rango VDateInput no cierra el menú solo; se cierra al quedar el rango completo.
+const menu = ref(false)
+
 const internalValue = computed<Date | Date[] | null>({
   get() {
+    if (pendingStart.value) return [pendingStart.value]
     if (!model.value) return props.range ? [] : null
-    return Array.isArray(model.value) ? model.value.map(toDate) : toDate(model.value)
+    if (!Array.isArray(model.value)) return toDate(model.value)
+    const dates = model.value.map(toDate)
+    return dates.length > 1 ? expandRange(dates[0], dates[dates.length - 1]) : dates
   },
   set(value) {
     if (!value || (Array.isArray(value) && !value.length)) {
+      pendingStart.value = null
       model.value = null
       return
     }
-    model.value = Array.isArray(value) ? value.map(toIsoString) : toIsoString(value)
+    if (!Array.isArray(value)) {
+      model.value = toIsoString(value)
+      return
+    }
+    const sorted = [...value].sort((a, b) => a.getTime() - b.getTime())
+    if (sorted.length === 1) {
+      const isSameDayTwice = pendingStart.value?.getTime() === sorted[0].getTime()
+      if (!isSameDayTwice) {
+        pendingStart.value = sorted[0]
+        return
+      }
+    }
+    pendingStart.value = null
+    const first = toIsoString(sorted[0])
+    const last = toIsoString(sorted[sorted.length - 1])
+    model.value = [first, last]
+    menu.value = false
   },
 })
 
@@ -85,11 +124,14 @@ const minDateValue = computed(() => (props.minDate ? toDate(props.minDate) : und
     :view-mode="viewMode"
     :display-format="displayFormat"
     :min="minDateValue"
+    v-model:menu="menu"
+    class="date-field"
+    :prepend-inner-icon="mdiCalendarOutline"
     :error="error"
     :clearable="clearable"
     :hide-details="hideDetails"
     variant="outlined"
-    density="comfortable"
+    :density="density"
     persistent-placeholder
     hide-actions
     prepend-icon=""

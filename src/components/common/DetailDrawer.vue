@@ -23,15 +23,6 @@ const { xs } = useDisplay()
 const resolvedTitle = computed(() =>
   props.entity ? `Detalle de ${props.entity}` : props.title,
 )
-
-// El calendario de VueDatePicker se teletransporta a <body>, fuera del árbol DOM del dialog:
-// Vuetify lo trata como clic externo y cerraría el drawer al elegir una fecha. persistent +
-// este handler dejan el cierre por clic afuera intacto para el resto de los casos.
-function onClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement | null
-  if (target?.closest('.dp__menu, .dp__outer_menu_wrap')) return
-  open.value = false
-}
 </script>
 
 <template>
@@ -42,7 +33,7 @@ function onClickOutside(event: MouseEvent) {
     persistent
     transition="detail-drawer-transition"
     content-class="detail-drawer"
-    @click:outside="onClickOutside"
+    @click:outside="open = false"
   >
     <v-card class="detail-drawer__card d-flex flex-column">
       <div class="detail-drawer__header pa-4 flex-shrink-0">
