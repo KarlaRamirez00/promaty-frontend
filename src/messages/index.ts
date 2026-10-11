@@ -6,6 +6,7 @@ import role from './role.messages'
 import user from './user.messages'
 import staff from './staff.messages'
 import request from './request.messages'
+import contract from './contract.messages'
 
 export default {
   client,
@@ -16,4 +17,5 @@ export default {
   user,
   staff,
   request,
+  contract,
 }

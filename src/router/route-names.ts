@@ -25,6 +25,8 @@ export const ROUTE = {
   STAFF_LIST: 'staff',
   STAFF_NEW: 'staff-new',
   STAFF_EDIT: 'staff-edit',
+  CONTRACT_LIST: 'contracts',
+  CONTRACT_NEW: 'contracts-new',
 } as const
 
 export type RouteName = (typeof ROUTE)[keyof typeof ROUTE]

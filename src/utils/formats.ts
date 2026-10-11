@@ -65,3 +65,10 @@ export function formatPhone(value: string): string {
   if (digits.length !== 9) return value
   return `+56 ${digits[0]} ${digits.slice(1, 5)} ${digits.slice(5)}`
 }
+
+const currencyFormatter = new Intl.NumberFormat('es-CL')
+
+export function formatCurrency(value: number | null | undefined, fallback = '—'): string {
+  if (value === null || value === undefined) return fallback
+  return `$ ${currencyFormatter.format(value)}`
+}

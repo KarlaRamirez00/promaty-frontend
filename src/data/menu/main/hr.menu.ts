@@ -25,7 +25,7 @@ export const hrMenu: MenuItem = {
     { title: 'Anexos', icon: mdiFilePlusOutline },
     { title: 'Anticipos', icon: mdiCashClock },
     { title: 'Colaboradores', icon: mdiAccountMultipleOutline, to: '/staff', module: 'staff', permission: 'read' },
-    { title: 'Contratos', icon: mdiFileSign },
+    { title: 'Contratos', icon: mdiFileSign, to: '/contracts', module: 'contract', permission: 'read' },
     { title: 'Control de asistencia', icon: mdiCalendarClockOutline },
     { title: 'Finiquitos', icon: mdiFileDocumentRemoveOutline },
     { title: 'Licencias Médicas', icon: mdiMedicalBag },

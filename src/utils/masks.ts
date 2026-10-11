@@ -13,6 +13,8 @@ export type InputMaskType =
   | 'phone'
   | 'email'
   | 'bankAccount'
+  | 'currency'
+  | 'decimalCurrency'
 
 const ONLY_DIGITS = (raw: string) => raw.replaceAll(/\D/g, '')
 
@@ -31,6 +33,8 @@ export const INPUT_MASKS: Record<InputMaskType, (raw: string) => string> = {
   phone: (raw) => maskPhone(raw),
   email: (raw) => raw.replaceAll(/[^A-Za-z\d@._-]/g, ''),
   bankAccount: ONLY_DIGITS,
+  currency: (raw) => maskCurrency(raw, 0),
+  decimalCurrency: (raw) => maskCurrency(raw, 2),
 }
 
 // Celular chileno de 9 dígitos agrupado con espacios al escribir: "962099485" → "9 6209 9485".
@@ -51,4 +55,27 @@ export function maskRut(raw: string): string {
     return withDot + acc
   }, '')
   return `${formattedBody}-${dv}`
+}
+
+function groupThousands(digits: string): string {
+  const groups: string[] = []
+  for (let end = digits.length; end > 0; end -= 3) {
+    groups.unshift(digits.slice(Math.max(0, end - 3), end))
+  }
+  return groups.join('.')
+}
+
+// Formato chileno: punto como separador de miles y coma como decimal ("42.520,23"). Con decimals en 0
+// solo admite enteros ("800.000"); con decimals > 0 permite una coma y limita los decimales.
+export function maskCurrency(raw: string, decimals: number): string {
+  const [integerPart, ...rest] = raw.replaceAll(/[^\d,]/g, '').split(',')
+  const digits = integerPart.replace(/^0+(?=\d)/, '')
+  const grouped = groupThousands(digits)
+  if (decimals === 0 || rest.length === 0) return grouped
+  return `${grouped},${rest.join('').slice(0, decimals)}`
+}
+
+// Inverso de maskCurrency: "42.520,23" → 42520.23. Devuelve NaN si el texto no es un número válido.
+export function parseCurrency(value: string): number {
+  return Number(value.replaceAll('.', '').replace(',', '.'))
 }

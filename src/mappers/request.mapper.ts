@@ -1,4 +1,4 @@
-import { formatDateTime } from '@/utils'
+import { formatDate, formatDateTime } from '@/utils'
 import type {
   RequestApprovalRaw,
   RequestDecidePayload,
@@ -27,7 +27,7 @@ export function mapperRequestList(items: RequestRaw[]): RequestListItem[] {
     requesterName: item.requesterName,
     status: item.status,
     statusColor: requestStatusColor(item.status.code),
-    createdAt: formatDateTime(item.createdAt),
+    createdAt: formatDate(item.createdAt),
     actions: item.actions,
   }))
 }

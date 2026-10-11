@@ -9,6 +9,7 @@ import { roleRoutes } from '@/router/role.routes'
 import { userRoutes } from '@/router/user.routes'
 import { staffRoutes } from '@/router/staff.routes'
 import { requestRoutes } from '@/router/request.routes'
+import { contractRoutes } from '@/router/contract.routes'
 import { authMiddleware } from '@/middlewares/auth.middleware'
 import LoginView from '@/views/LoginView.vue'
 
@@ -39,6 +40,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/HomeView.vue'),
   },
   ...requestRoutes,
+  ...contractRoutes,
   ...clientRoutes,
   ...projectTypeRoutes,
   ...projectSpecialtyRoutes,
