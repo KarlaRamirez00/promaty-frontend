@@ -2,6 +2,7 @@ import 'vuetify/styles'
 import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import { es } from 'vuetify/locale'
+import { getStoredTheme } from '@/utils/theme'
 
 export const vuetify = createVuetify({
   icons: {
@@ -14,7 +15,7 @@ export const vuetify = createVuetify({
     sets: { mdi },
   },
   theme: {
-    defaultTheme: 'light',
+    defaultTheme: getStoredTheme(),
     themes: {
       light: {
         colors: {

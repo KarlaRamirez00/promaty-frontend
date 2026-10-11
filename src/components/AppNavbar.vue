@@ -17,6 +17,7 @@ import {
 import { useSidebarRail } from '@/composables/useSidebarRail'
 import { useAuthStore } from '@/stores'
 import { ROUTE } from '@/router/route-names'
+import { storeTheme } from '@/utils/theme'
 import type { Breadcrumb } from '@/types/navigation'
 
 const props = defineProps<{
@@ -48,7 +49,9 @@ const currentTitle = computed(
 const visibleBreadcrumbs = computed(() => props.breadcrumbs.filter((crumb) => crumb.to || crumb.disabled))
 
 function toggleTheme() {
-  theme.change(isDark.value ? 'light' : 'dark')
+  const next = isDark.value ? 'light' : 'dark'
+  theme.change(next)
+  storeTheme(next)
 }
 
 function logout() {
