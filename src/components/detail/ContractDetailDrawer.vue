@@ -1,15 +1,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Contract } from '@/models'
+import type { Contract, RequestApproval } from '@/models'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
+import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const props = defineProps<{
-  contract: Contract | null
-  loading?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    contract: Contract | null
+    approvals?: RequestApproval[]
+    loading?: boolean
+  }>(),
+  {
+    approvals: () => [],
+  },
+)
 
 const open = defineModel<boolean>('open', { default: false })
+
+const emit = defineEmits<{
+  approve: [contract: Contract]
+  validate: [contract: Contract]
+  reject: [contract: Contract]
+}>()
 
 const fields = computed(() => {
   const c = props.contract
@@ -17,7 +30,9 @@ const fields = computed(() => {
   return [
     { key: 'fullName', label: 'Colaborador', value: c.fullName },
     { key: 'identificationNumber', label: 'Identificación', value: c.identificationNumber },
-    { key: 'contractNumber', label: 'Número de contrato', value: c.contractNumber },
+    ...(c.rexContractNumber
+      ? [{ key: 'rexContractNumber', label: 'N° de contrato Rex+', value: c.rexContractNumber }]
+      : []),
     { key: 'costCenterCode', label: 'Centro de costo', value: c.costCenterCode },
     { key: 'companyName', label: 'Empresa', value: c.companyName },
     { key: 'contractTypeName', label: 'Tipo de contrato', value: c.contractTypeName },
@@ -46,10 +61,48 @@ const fields = computed(() => {
       </v-chip>
     </template>
 
+    <template v-if="contract" #menu>
+      <ActionsMenu
+        :record="contract"
+        :show-view="false"
+        @approve="emit('approve', contract)"
+        @validate="emit('validate', contract)"
+        @reject="emit('reject', contract)"
+      />
+    </template>
+
     <div v-if="loading && !contract" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
 
-    <DetailFieldList v-else-if="contract" :items="fields" />
+    <template v-else-if="contract">
+      <DetailFieldList :items="fields" />
+
+      <h3 class="text-subtitle-2 font-weight-bold mt-6 mb-3">Historial de aprobaciones</h3>
+
+      <p v-if="!approvals.length" class="text-body-2 text-medium-emphasis">
+        Aún no hay decisiones registradas.
+      </p>
+
+      <div v-else class="d-flex flex-column ga-3">
+        <v-sheet v-for="approval in approvals" :key="approval.id" border rounded class="px-4 py-3">
+          <div class="d-flex align-center justify-space-between ga-2">
+            <span class="text-subtitle-2 font-weight-bold">{{ approval.levelLabel }}</span>
+            <v-chip size="small" variant="tonal" :color="approval.approved ? 'success' : 'error'">
+              {{ approval.approved ? 'Aprobó' : 'Rechazó' }}
+            </v-chip>
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
+            {{ approval.approverName }} · {{ approval.createdAt }}
+          </div>
+          <div v-if="approval.rejectionReasonName" class="text-body-2 mt-2">
+            <span class="font-weight-medium">Motivo:</span> {{ approval.rejectionReasonName }}
+          </div>
+          <div v-if="approval.comment" class="text-body-2 mt-1">
+            <span class="font-weight-medium">Observaciones:</span> {{ approval.comment }}
+          </div>
+        </v-sheet>
+      </div>
+    </template>
   </DetailDrawer>
 </template>

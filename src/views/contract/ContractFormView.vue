@@ -25,6 +25,7 @@ import {
   createContractForm,
   WEEKLY_WORK_HOURS_OPTIONS,
   WORK_DAYS_OPTIONS,
+  WORKFLOW_QUERY_KEYS,
   type ContractForm,
 } from '@/models'
 import { contractDetailRules, firstError, isBeforeToday, todayIso } from '@/rules'
@@ -170,9 +171,12 @@ function validate(): boolean {
 const saveMutation = useMutation({
   mutationFn: createContractRequestAction,
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['requests'] })
     toastSaved(null, messages.contract)
     goToRequests()
+    return queryClient.invalidateQueries({
+      predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
+      refetchType: 'none',
+    })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.contract)

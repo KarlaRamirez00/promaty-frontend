@@ -66,8 +66,12 @@ export interface ContractStatusOption {
 }
 
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'success',
-  LATE_REGISTRATION: 'warning',
+  PENDING_APPROVAL: 'warning',
+  PENDING_VALIDATION: 'warning',
+  ACTIVE: 'info',
+  REJECTED: 'primary',
+  SYNC_ERROR: 'secondary',
+  LATE_REGISTRATION: 'grey',
 }
 
 export function contractStatusColor(code: string): string {
@@ -76,18 +80,23 @@ export function contractStatusColor(code: string): string {
 
 export interface ContractListItem {
   id: number
+  requestId: number
   costCenterCode: string
   contractTypeName: string
+  jobTitleName: string
   identificationNumber: string
   fullName: string
   startDate: string
   endDate: string
+  agreedSalary: string
   statusName: string
+  statusColor: string
   actions: string[]
 }
 
 export interface Contract {
   id: number
+  requestId: number
   fullName: string
   identificationNumber: string
   companyName: string
@@ -104,7 +113,7 @@ export interface Contract {
   contractDetail: string
   mealTypeName: string
   transportTypeName: string
-  contractNumber: string
+  rexContractNumber: string | null
   status: ContractStatusOption
   statusColor: string
   createdAt: string

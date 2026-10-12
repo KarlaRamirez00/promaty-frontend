@@ -21,6 +21,7 @@ const APPROVAL_LEVEL_LABELS: Record<string, string> = {
 export function mapperRequestList(items: RequestRaw[]): RequestListItem[] {
   return items.map((item) => ({
     id: item.id,
+    entityId: item.entityId,
     typeName: item.typeName,
     projectName: item.projectName,
     costCenterCode: item.costCenterCode,

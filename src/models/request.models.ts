@@ -14,11 +14,14 @@ export interface RequestRelationOption {
   name: string
 }
 
+// Cachés que cambian juntas: una solicitud de contrato aparece en Solicitudes y en Contratos.
+export const WORKFLOW_QUERY_KEYS = new Set<unknown>(['requests', 'contracts'])
+
 export const REQUEST_STATUS_COLORS: Record<string, string> = {
   PENDING_APPROVAL: 'warning',
-  PENDING_VALIDATION: 'info',
+  PENDING_VALIDATION: 'warning',
   APPROVED: 'success',
-  REJECTED: 'error',
+  REJECTED: 'primary',
 }
 
 export function requestStatusColor(code: string): string {
@@ -27,6 +30,7 @@ export function requestStatusColor(code: string): string {
 
 export interface RequestListItem {
   id: number
+  entityId: number | null
   typeName: string
   projectName: string
   costCenterCode: string

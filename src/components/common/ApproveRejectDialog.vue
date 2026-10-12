@@ -27,7 +27,6 @@ const DECISIONS: Record<DecisionType, DecisionConfig> = {
 const props = withDefaults(
   defineProps<{
     type: DecisionType
-    record: { title: string; subtitle?: string } | null
     loading: boolean
     reasonOptions?: { id: number; name: string }[]
     errorFields?: ApiErrorFields | null
@@ -85,13 +84,6 @@ function submit() {
           :message="alertMessage"
           :icon="mdiArrowDownCircleOutline"
         />
-
-        <v-sheet border rounded class="px-4 py-3">
-          <div class="text-subtitle-1 font-weight-bold">{{ record?.title }}</div>
-          <div v-if="record?.subtitle" class="text-caption text-medium-emphasis">
-            {{ record.subtitle }}
-          </div>
-        </v-sheet>
 
         <template v-if="isReject">
           <v-select

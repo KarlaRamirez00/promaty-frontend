@@ -8,11 +8,12 @@ import {
   getContractListAction,
   getContractStatusOptionsAction,
   getCostCenterOptionsAction,
+  getRequestDetailAction,
 } from '@/actions'
 import { usePermissions } from '@/composables/usePermissions'
+import { useRequestDecision } from '@/composables/useRequestDecision'
 import {
   contractQueryToRoute,
-  contractStatusColor,
   parseContractQuery,
   type ContractListItem,
   type ContractQueryParams,
@@ -25,12 +26,23 @@ import ContractDetailDrawer from '@/components/detail/ContractDetailDrawer.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
+import ApproveRejectDialog from '@/components/common/ApproveRejectDialog.vue'
 
 const { smAndDown } = useDisplay()
 const route = useRoute()
 const router = useRouter()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
+
+const {
+  setDialogRef: setDecisionDialogRef,
+  type: decisionType,
+  rejectionReasons,
+  backendErrorFields,
+  isPending: decisionPending,
+  askDecision,
+  confirmDecision,
+} = useRequestDecision()
 
 const query = computed<ContractQueryParams>(() => parseContractQuery(route.query))
 
@@ -173,32 +185,50 @@ watch(pageCount, (count) => {
   if (count >= 1 && query.value.page > count) patchQuery({ page: count })
 })
 
-// La fila trae solo el nombre del estado; el código sale del catálogo para elegir el color.
-function statusColor(statusName: string): string {
-  const code = statusOptions.value?.find((o) => o.name === statusName)?.code
-  return code ? contractStatusColor(code) : 'grey'
-}
-
 const headers = [
   { title: 'CC', key: 'costCenterCode', sortable: false },
   { title: 'Tipo de contrato', key: 'contractTypeName', sortable: false },
+  { title: 'Cargo', key: 'jobTitleName', sortable: false },
   { title: 'RUT', key: 'identificationNumber', sortable: false },
   { title: 'Nombre', key: 'fullName', sortable: false },
   { title: 'Fecha de inicio', key: 'startDate', sortable: false },
   { title: 'Fecha de término', key: 'endDate', sortable: false },
+  { title: 'Sueldo pactado', key: 'agreedSalary', sortable: false },
   { title: 'Estado', key: 'statusName', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-const { data: selectedContract, isPending: detailLoading } = useQuery({
-  queryKey: computed(() => ['contracts', 'detail', detailId.value]),
-  queryFn: () => getContractDetailAction(detailId.value as number),
-  enabled: computed(() => detailId.value !== null),
+// Último id abierto: la query lo conserva al cerrar el slide para que no quede en blanco mientras se anima.
+const selectedId = ref<number | null>(detailId.value)
+watch(detailId, (id) => {
+  if (id !== null) selectedId.value = id
+})
+
+const { data: selectedContract, isLoading: detailLoading } = useQuery({
+  queryKey: computed(() => ['contracts', 'detail', selectedId.value]),
+  queryFn: () => {
+    const id = selectedId.value
+    if (id === null) throw new Error('No hay contrato seleccionado')
+    return getContractDetailAction(id)
+  },
+  enabled: computed(() => selectedId.value !== null),
+})
+
+// El historial de aprobaciones vive en la solicitud asociada al contrato.
+const { data: selectedRequest } = useQuery({
+  queryKey: computed(() => ['requests', 'detail', selectedContract.value?.requestId]),
+  queryFn: () => {
+    const id = selectedContract.value?.requestId
+    if (id === undefined) throw new Error('No hay solicitud asociada al contrato')
+    return getRequestDetailAction(id)
+  },
+  enabled: computed(() => selectedContract.value !== undefined),
 })
 
 function viewDetail(item: { id: number }) {
   openDetail(item.id)
 }
+
 
 function openRequestForm() {
   router.push({ name: ROUTE.CONTRACT_NEW })
@@ -245,7 +275,7 @@ function openRequestForm() {
     </template>
 
     <template #item.statusName="{ item }">
-      <v-chip size="small" variant="tonal" :color="statusColor(item.statusName)">
+      <v-chip size="small" variant="tonal" :color="item.statusColor">
         {{ item.statusName }}
       </v-chip>
     </template>
@@ -253,9 +283,10 @@ function openRequestForm() {
     <template #item.actions="{ item }">
       <ActionsMenu
         :record="item"
-        :has-update-permission="false"
-        :has-active-permission="false"
         @view="viewDetail(item)"
+        @approve="askDecision(item.requestId, 'APPROVE')"
+        @validate="askDecision(item.requestId, 'VALIDATE')"
+        @reject="askDecision(item.requestId, 'REJECT')"
       />
     </template>
 
@@ -278,15 +309,16 @@ function openRequestForm() {
               <span class="link-cell text-subtitle-2 font-weight-bold" @click="viewDetail(item)">{{
                 item.fullName
               }}</span>
-              <v-chip size="small" variant="tonal" :color="statusColor(item.statusName)">
+              <v-chip size="small" variant="tonal" :color="item.statusColor">
                 {{ item.statusName }}
               </v-chip>
             </div>
             <ActionsMenu
               :record="item"
-              :has-update-permission="false"
-              :has-active-permission="false"
               @view="viewDetail(item)"
+              @approve="askDecision(item.requestId, 'APPROVE')"
+              @validate="askDecision(item.requestId, 'VALIDATE')"
+              @reject="askDecision(item.requestId, 'REJECT')"
             />
           </div>
 
@@ -302,6 +334,14 @@ function openRequestForm() {
             <div class="contract-block__field">
               <dt>Tipo</dt>
               <dd>{{ item.contractTypeName }}</dd>
+            </div>
+            <div class="contract-block__field">
+              <dt>Cargo</dt>
+              <dd>{{ item.jobTitleName }}</dd>
+            </div>
+            <div class="contract-block__field">
+              <dt>Sueldo</dt>
+              <dd>{{ item.agreedSalary }}</dd>
             </div>
             <div class="contract-block__field">
               <dt>Inicio</dt>
@@ -342,7 +382,20 @@ function openRequestForm() {
   <ContractDetailDrawer
     v-model:open="detailDrawerOpen"
     :contract="selectedContract ?? null"
+    :approvals="selectedRequest?.approvals"
     :loading="detailLoading"
+    @approve="askDecision($event.requestId, 'APPROVE')"
+    @validate="askDecision($event.requestId, 'VALIDATE')"
+    @reject="askDecision($event.requestId, 'REJECT')"
+  />
+
+  <ApproveRejectDialog
+    :ref="setDecisionDialogRef"
+    :type="decisionType"
+    :loading="decisionPending"
+    :reason-options="rejectionReasons ?? []"
+    :error-fields="backendErrorFields"
+    @confirm="confirmDecision"
   />
 </template>
 

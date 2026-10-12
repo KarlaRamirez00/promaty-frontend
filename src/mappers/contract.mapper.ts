@@ -61,13 +61,17 @@ export function mapperContractFormToPayload(form: ContractForm): ContractRequest
 export function mapperContractList(items: ContractListRaw[]): ContractListItem[] {
   return items.map((item) => ({
     id: item.id,
+    requestId: item.requestId,
     costCenterCode: item.costCenterCode,
     contractTypeName: item.contractTypeName,
+    jobTitleName: item.jobTitleName,
     identificationNumber: toDisplayIdentification(item.staff.identificationNumber),
     fullName: item.staff.fullName,
     startDate: formatDate(item.startDate),
     endDate: formatDate(item.endDate, EMPTY_VALUE),
+    agreedSalary: formatCurrency(item.agreedSalary),
     statusName: item.statusName,
+    statusColor: contractStatusColor(item.statusCode),
     actions: item.actions,
   }))
 }
@@ -75,6 +79,7 @@ export function mapperContractList(items: ContractListRaw[]): ContractListItem[]
 export function mapperContractDetail(raw: ContractRaw): Contract {
   return {
     id: raw.id,
+    requestId: raw.requestId,
     fullName: raw.staff.fullName,
     identificationNumber: toDisplayIdentification(raw.staff.identificationNumber),
     companyName: raw.company.name,
@@ -91,7 +96,7 @@ export function mapperContractDetail(raw: ContractRaw): Contract {
     contractDetail: raw.contractDetail ?? EMPTY_VALUE,
     mealTypeName: raw.mealType?.name ?? EMPTY_VALUE,
     transportTypeName: raw.transportType?.name ?? EMPTY_VALUE,
-    contractNumber: raw.contractNumber ?? EMPTY_VALUE,
+    rexContractNumber: raw.rexContractNumber,
     status: raw.status,
     statusColor: contractStatusColor(raw.status.code),
     createdAt: formatDateTime(raw.createdAt),

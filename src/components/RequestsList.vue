@@ -2,53 +2,33 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 import { mdiAlertCircleOutline, mdiClockOutline } from '@mdi/js'
 import {
-  approveRequestAction,
   getCostCenterOptionsAction,
-  getRejectionReasonOptionsAction,
-  getRequestDetailAction,
   getRequesterOptionsAction,
   getRequestListAction,
   getRequestStatusOptionsAction,
-  rejectRequestAction,
 } from '@/actions'
-import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
-import { useMessage } from '@/composables/useMessage'
-import { usePermissions } from '@/composables/usePermissions'
-import messages from '@/messages'
 import {
   parseRequestQuery,
   requestQueryToRoute,
-  type RequestDecisionForm,
   type RequestListItem,
   type RequestQueryParams,
 } from '@/models'
+import { ROUTE } from '@/router/route-names'
 import { formatDate } from '@/utils'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
 import FiltersDrawer, { type FilterField } from '@/components/common/FiltersDrawer.vue'
-import RequestDetailDrawer from '@/components/detail/RequestDetailDrawer.vue'
 import IndicatorCard from '@/components/common/IndicatorCard.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
-import ApproveRejectDialog, { type DecisionType } from '@/components/common/ApproveRejectDialog.vue'
 
 const { smAndDown } = useDisplay()
 const route = useRoute()
 const router = useRouter()
-const queryClient = useQueryClient()
-const { toastDecided, toastFailed } = useMessage()
-const { hasPermission } = usePermissions()
-const {
-  backendErrorFields,
-  setFromError,
-  clear: clearBackendErrors,
-} = useBackendFieldErrors()
-const canApprove = computed(() => hasPermission('approve'))
-const canValidate = computed(() => hasPermission('validate'))
 
 const query = computed<RequestQueryParams>(() => parseRequestQuery(route.query))
 
@@ -60,36 +40,10 @@ function patchQuery(patch: Partial<RequestQueryParams>) {
   if (!('page' in patch)) next.page = 1
   pendingQuery = next
   void router
-    .replace({ query: { ...requestQueryToRoute(next), ...detailQueryParam.value } })
+    .replace({ query: requestQueryToRoute(next) })
     .finally(() => {
       pendingQuery = null
     })
-}
-
-// Detalle abierto vía ?detail={id}: sobrevive a un refresh y es compartible por link.
-const detailId = computed(() => {
-  const raw = route.query.detail
-  const n = Number(raw)
-  return typeof raw === 'string' && Number.isInteger(n) && n > 0 ? n : null
-})
-
-const detailQueryParam = computed(() => (detailId.value ? { detail: String(detailId.value) } : {}))
-
-const detailDrawerOpen = computed<boolean>({
-  get: () => detailId.value !== null,
-  set: (value) => {
-    if (!value) closeDetail()
-  },
-})
-
-function openDetail(id: number) {
-  router.push({ query: { ...route.query, detail: String(id) } })
-}
-
-function closeDetail() {
-  const rest = { ...route.query }
-  delete rest.detail
-  router.push({ query: rest })
 }
 
 const searchInput = ref(query.value.search)
@@ -255,63 +209,10 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-const { data: selectedRequest, isPending: detailLoading } = useQuery({
-  queryKey: computed(() => ['requests', 'detail', detailId.value]),
-  queryFn: () => getRequestDetailAction(detailId.value as number),
-  enabled: computed(() => detailId.value !== null),
-})
-
-function viewDetail(item: { id: number }) {
-  openDetail(item.id)
-}
-
-const decisionDialogRef = ref<InstanceType<typeof ApproveRejectDialog> | null>(null)
-const decisionType = ref<DecisionType>('APPROVE')
-const decisionRecord = ref<{ id: number; title: string; subtitle: string } | null>(null)
-
-const { data: rejectionReasons } = useQuery({
-  queryKey: ['requestRejectionReasons', 'selector', 'contracts'],
-  queryFn: getRejectionReasonOptionsAction,
-  enabled: computed(() => decisionType.value === 'REJECT'),
-})
-
-function askDecision(
-  item: { id: number; typeName: string; costCenterCode: string; projectName: string },
-  type: DecisionType,
-) {
-  decisionType.value = type
-  decisionRecord.value = {
-    id: item.id,
-    title: item.typeName,
-    subtitle: `${item.costCenterCode} · ${item.projectName}`,
-  }
-  clearBackendErrors()
-  decisionDialogRef.value?.open()
-}
-
-interface DecisionVariables {
-  type: DecisionType
-  id: number
-  form: RequestDecisionForm
-}
-
-const decisionMutation = useMutation({
-  mutationFn: ({ type, id, form }: DecisionVariables) =>
-    type === 'REJECT' ? rejectRequestAction(id, form) : approveRequestAction(id),
-  onSuccess: (_data, { type }) => {
-    queryClient.invalidateQueries({ queryKey: ['requests'] })
-    decisionDialogRef.value?.close()
-    toastDecided(type, messages.request)
-  },
-  onError: (error: unknown) => {
-    if (!setFromError(error)) toastFailed(messages.request)
-  },
-})
-
-function confirmDecision(form: RequestDecisionForm) {
-  if (!decisionRecord.value) return
-  clearBackendErrors()
-  decisionMutation.mutate({ type: decisionType.value, id: decisionRecord.value.id, form })
+// El detalle es único: vive en Contratos y se abre con ?detail={id del contrato}.
+function viewDetail(item: { entityId: number | null }) {
+  if (item.entityId === null) return
+  router.push({ name: ROUTE.CONTRACT_LIST, query: { detail: String(item.entityId) } })
 }
 </script>
 
@@ -332,7 +233,10 @@ function confirmDecision(form: RequestDecisionForm) {
         :count="pendingApproval"
         :class="['indicator', { 'indicator--active': isCounterActive('PENDING_APPROVAL') }]"
         role="button"
+        tabindex="0"
         @click="toggleCounter('PENDING_APPROVAL')"
+        @keydown.enter="toggleCounter('PENDING_APPROVAL')"
+        @keydown.space.prevent="toggleCounter('PENDING_APPROVAL')"
       />
       <IndicatorCard
         :icon="mdiClockOutline"
@@ -341,7 +245,10 @@ function confirmDecision(form: RequestDecisionForm) {
         :count="pendingValidation"
         :class="['indicator', { 'indicator--active': isCounterActive('PENDING_VALIDATION') }]"
         role="button"
+        tabindex="0"
         @click="toggleCounter('PENDING_VALIDATION')"
+        @keydown.enter="toggleCounter('PENDING_VALIDATION')"
+        @keydown.space.prevent="toggleCounter('PENDING_VALIDATION')"
       />
     </div>
   </div>
@@ -386,14 +293,7 @@ function confirmDecision(form: RequestDecisionForm) {
     <template #item.actions="{ item }">
       <ActionsMenu
         :record="item"
-        :has-update-permission="false"
-        :has-active-permission="false"
-        :has-approve-permission="canApprove"
-        :has-validate-permission="canValidate"
         @view="viewDetail(item)"
-        @approve="askDecision(item, 'APPROVE')"
-        @validate="askDecision(item, 'VALIDATE')"
-        @reject="askDecision(item, 'REJECT')"
       />
     </template>
 
@@ -422,14 +322,7 @@ function confirmDecision(form: RequestDecisionForm) {
             </div>
             <ActionsMenu
               :record="item"
-              :has-update-permission="false"
-              :has-active-permission="false"
-              :has-approve-permission="canApprove"
-              :has-validate-permission="canValidate"
               @view="viewDetail(item)"
-              @approve="askDecision(item, 'APPROVE')"
-              @validate="askDecision(item, 'VALIDATE')"
-              @reject="askDecision(item, 'REJECT')"
             />
           </div>
 
@@ -476,27 +369,6 @@ function confirmDecision(form: RequestDecisionForm) {
     v-model:values="filterValues"
     :fields="filterFields"
     @clear="clearAllFilters"
-  />
-
-  <RequestDetailDrawer
-    v-model:open="detailDrawerOpen"
-    :request="selectedRequest ?? null"
-    :loading="detailLoading"
-    :has-approve-permission="canApprove"
-    :has-validate-permission="canValidate"
-    @approve="askDecision($event, 'APPROVE')"
-    @validate="askDecision($event, 'VALIDATE')"
-    @reject="askDecision($event, 'REJECT')"
-  />
-
-  <ApproveRejectDialog
-    ref="decisionDialogRef"
-    :type="decisionType"
-    :record="decisionRecord"
-    :loading="decisionMutation.isPending.value"
-    :reason-options="rejectionReasons ?? []"
-    :error-fields="backendErrorFields"
-    @confirm="confirmDecision"
   />
 </template>
 

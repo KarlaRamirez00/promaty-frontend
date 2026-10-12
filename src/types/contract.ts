@@ -53,14 +53,16 @@ export interface ContractStaffRaw {
 
 export interface ContractListRaw {
   id: number
+  requestId: number
   staff: ContractStaffRaw
-  name: string | null
-  contractNumber: string | null
   costCenterCode: string
   contractTypeName: string
+  jobTitleName: string
+  statusCode: string
   statusName: string
   startDate: string
   endDate: string | null
+  agreedSalary: number | null
   createdAt: string
   updatedAt: string
   createdBy: string
@@ -75,6 +77,7 @@ interface ContractNamedRaw {
 
 export interface ContractRaw {
   id: number
+  requestId: number
   staff: ContractStaffRaw
   company: ContractNamedRaw
   contractType: ContractNamedRaw
@@ -91,8 +94,7 @@ export interface ContractRaw {
   mealType: ContractNamedRaw | null
   transportType: ContractNamedRaw | null
   status: ContractStatusRaw
-  name: string | null
-  contractNumber: string | null
+  rexContractNumber: string | null
   createdAt: string
   updatedAt: string
   createdBy: string
