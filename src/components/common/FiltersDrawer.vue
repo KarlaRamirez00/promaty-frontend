@@ -56,14 +56,14 @@ function clear() {
   <DetailDrawer v-model:open="open" width="340">
     <template #header>
       <div class="d-flex ga-3">
-        <div
+        <button
+          type="button"
           class="detail-drawer__icon-box flex-shrink-0"
-          role="button"
           aria-label="Cerrar filtros"
           @click="open = false"
         >
           <v-icon :icon="mdiChevronRight" size="20" />
-        </div>
+        </button>
         <div class="d-flex align-center ga-2">
           <v-icon :icon="mdiTuneVariant" size="20" />
           <span class="text-h6 font-weight-bold">Filtros</span>

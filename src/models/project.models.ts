@@ -16,6 +16,18 @@ export interface ProjectStatusOption {
   name: string
 }
 
+const PROJECT_STATUS_COLORS: Record<string, string> = {
+  PLANNED: 'warning',
+  IN_PROGRESS: 'info',
+  SUSPENDED: 'grey',
+  COMPLETED: 'success',
+  CANCELLED: 'secondary',
+}
+
+export function projectStatusColor(code: string): string {
+  return PROJECT_STATUS_COLORS[code] ?? 'grey'
+}
+
 export interface ProjectListItem {
   id: number
   name: string
@@ -24,6 +36,7 @@ export interface ProjectListItem {
   specialtyName: string
   clientName: string
   statusName: string
+  statusColor: string
   startDate: string
   endDate: string
   actions: string[]

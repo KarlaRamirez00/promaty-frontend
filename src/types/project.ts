@@ -16,6 +16,7 @@ export interface ProjectListRaw {
   typeName: string
   specialtyName: string
   clientName: string
+  statusCode: string
   statusName: string
   startDate: string
   endDate: string | null

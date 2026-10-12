@@ -4,7 +4,7 @@ import type { ProjectTypeFormPayload, ProjectTypeListRaw, ProjectTypeRaw } from 
 import type { ProjectType, ProjectTypeForm, ProjectTypeListItem } from '@/models'
 
 function toStatusBadge(active: boolean): Badge {
-  return active ? { label: 'Activo', color: 'success' } : { label: 'Inactivo', color: 'grey' }
+  return active ? { label: 'Activo', color: 'info' } : { label: 'Inactivo', color: 'grey' }
 }
 
 export function mapperProjectTypeList(items: ProjectTypeListRaw[]): ProjectTypeListItem[] {

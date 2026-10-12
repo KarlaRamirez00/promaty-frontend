@@ -39,14 +39,14 @@ const resolvedTitle = computed(() =>
       <div class="detail-drawer__header pa-4 flex-shrink-0">
         <slot name="header">
           <div class="d-flex ga-3">
-            <div
+            <button
+              type="button"
               class="detail-drawer__icon-box flex-shrink-0"
-              role="button"
               aria-label="Cerrar detalle"
               @click="open = false"
             >
               <v-icon :icon="mdiChevronRight" size="20" />
-            </div>
+            </button>
             <div>
               <div v-if="resolvedTitle" class="text-h6 font-weight-bold">{{ resolvedTitle }}</div>
               <slot name="badge" />
@@ -109,7 +109,10 @@ const resolvedTitle = computed(() =>
   width: 40px;
   height: 40px;
   margin-left: -2px;
+  padding: 0;
+  border: 0;
   border-radius: 10px;
+  color: inherit;
   background: rgba(var(--v-theme-on-surface), 0.06);
   display: flex;
   align-items: center;

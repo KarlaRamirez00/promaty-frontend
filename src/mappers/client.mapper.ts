@@ -4,7 +4,7 @@ import type { ClientFormPayload, ClientListRaw, ClientRaw } from '@/types/client
 import type { Client, ClientForm, ClientListItem } from '@/models'
 
 function toStatusBadge(active: boolean): Badge {
-  return active ? { label: 'Activo', color: 'success' } : { label: 'Inactivo', color: 'grey' }
+  return active ? { label: 'Activo', color: 'info' } : { label: 'Inactivo', color: 'grey' }
 }
 
 export function mapperClientList(items: ClientListRaw[]): ClientListItem[] {

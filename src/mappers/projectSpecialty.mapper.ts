@@ -12,7 +12,7 @@ import type {
 } from '@/models'
 
 function toStatusBadge(active: boolean): Badge {
-  return active ? { label: 'Activo', color: 'success' } : { label: 'Inactivo', color: 'grey' }
+  return active ? { label: 'Activo', color: 'info' } : { label: 'Inactivo', color: 'grey' }
 }
 
 export function mapperProjectSpecialtyList(items: ProjectSpecialtyListRaw[]): ProjectSpecialtyListItem[] {

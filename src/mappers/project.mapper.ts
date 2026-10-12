@@ -1,5 +1,6 @@
 import { formatDate, formatDateTime } from '@/utils'
 import type { ProjectFormPayload, ProjectListRaw, ProjectRaw } from '@/types/project'
+import { projectStatusColor } from '@/models'
 import type { Project, ProjectForm, ProjectListItem } from '@/models'
 
 export function mapperProjectList(items: ProjectListRaw[]): ProjectListItem[] {
@@ -11,6 +12,7 @@ export function mapperProjectList(items: ProjectListRaw[]): ProjectListItem[] {
     specialtyName: item.specialtyName,
     clientName: item.clientName,
     statusName: item.statusName,
+    statusColor: projectStatusColor(item.statusCode),
     startDate: formatDate(item.startDate),
     endDate: formatDate(item.endDate),
     actions: item.actions,
