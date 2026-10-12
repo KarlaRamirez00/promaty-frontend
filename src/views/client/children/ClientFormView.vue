@@ -38,7 +38,11 @@ const isEditing = computed(() => clientId.value !== null)
 
 const { data: existingClient } = useQuery({
   queryKey: computed(() => ['clients', 'detail', clientId.value]),
-  queryFn: () => getClientDetailAction(clientId.value as number),
+  queryFn: () => {
+    const id = clientId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getClientDetailAction(id)
+  },
   enabled: computed(() => clientId.value !== null),
 })
 
@@ -73,9 +77,9 @@ async function saveClient(value: ClientForm): Promise<void> {
 const saveMutation = useMutation({
   mutationFn: saveClient,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['clients'], refetchType: 'none' })
     toastSaved(value.id, messages.client)
     goToList()
+    return queryClient.invalidateQueries({ queryKey: ['clients'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.client)

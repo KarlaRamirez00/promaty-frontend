@@ -5,18 +5,10 @@ import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const props = withDefaults(
-  defineProps<{
-    projectSpecialty: ProjectSpecialty | null
-    loading?: boolean
-    hasUpdatePermission?: boolean
-    hasActivePermission?: boolean
-  }>(),
-  {
-    hasUpdatePermission: true,
-    hasActivePermission: true,
-  },
-)
+const props = defineProps<{
+  projectSpecialty: ProjectSpecialty | null
+  loading?: boolean
+}>()
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -55,8 +47,6 @@ const fields = computed(() => {
     <template v-if="projectSpecialty" #menu>
       <ActionsMenu
         :record="projectSpecialty"
-        :has-update-permission="hasUpdatePermission"
-        :has-active-permission="hasActivePermission"
         :show-view="false"
         @edit="emit('edit', projectSpecialty)"
         @toggle="emit('toggleActive', projectSpecialty)"

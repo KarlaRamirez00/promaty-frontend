@@ -6,10 +6,6 @@ export interface UserRoleSummary {
   name: string
 }
 
-// Sintético hasta que exista actions[] en el DTO real (T-B553): ActionsMenu espera este campo
-// para su doble gate, y acá siempre lo deja pasar — el único gate real hoy es el permiso.
-export const USER_ACTIONS_PLACEHOLDER = ['UPDATE', 'ACTIVE'] as const
-
 export interface UserListItem {
   id: number
   firstName: string

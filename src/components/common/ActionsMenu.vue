@@ -13,18 +13,10 @@ import { ACTION } from '@/constants/actions.constants'
 const props = withDefaults(
   defineProps<{
     record: { active?: boolean; actions: string[] }
-    hasUpdatePermission?: boolean
-    hasActivePermission?: boolean
-    hasApprovePermission?: boolean
-    hasValidatePermission?: boolean
     // false en el slide de detalle: "Ver detalle" no tiene sentido si ya estás viendo el detalle.
     showView?: boolean
   }>(),
   {
-    hasUpdatePermission: true,
-    hasActivePermission: true,
-    hasApprovePermission: false,
-    hasValidatePermission: false,
     showView: true,
   },
 )
@@ -38,20 +30,15 @@ const emit = defineEmits<{
   reject: []
 }>()
 
-// Doble gate: el permiso dice quién puede hacerlo; actions[] dice si este registro lo permite ahora.
-const showEdit = computed(() => props.hasUpdatePermission && props.record.actions.includes(ACTION.UPDATE))
+// actions[] es la única fuente: backend ya lo calcula según los permisos del usuario y el estado del registro.
+const showEdit = computed(() => props.record.actions.includes(ACTION.UPDATE))
 const showToggle = computed(
   () =>
-    props.hasActivePermission &&
     props.record.active !== undefined &&
     props.record.actions.includes(ACTION.ACTIVE),
 )
-const showApprove = computed(
-  () => props.hasApprovePermission && props.record.actions.includes(ACTION.APPROVE),
-)
-const showValidate = computed(
-  () => props.hasValidatePermission && props.record.actions.includes(ACTION.VALIDATE),
-)
+const showApprove = computed(() => props.record.actions.includes(ACTION.APPROVE))
+const showValidate = computed(() => props.record.actions.includes(ACTION.VALIDATE))
 const showReject = computed(() => showApprove.value || showValidate.value)
 const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activar'))
 const toggleColor = computed(() => (props.record.active ? 'error' : 'success'))

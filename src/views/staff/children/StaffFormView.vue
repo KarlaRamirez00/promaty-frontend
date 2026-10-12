@@ -69,7 +69,11 @@ const isEditing = computed(() => staffId.value !== null)
 
 const { data: existingStaff } = useQuery({
   queryKey: computed(() => ['staff', 'detail', staffId.value]),
-  queryFn: () => getStaffDetailAction(staffId.value as number),
+  queryFn: () => {
+    const id = staffId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getStaffDetailAction(id)
+  },
   enabled: computed(() => staffId.value !== null),
 })
 
@@ -110,12 +114,20 @@ const form = ref<StaffForm>(createStaffForm())
 
 const { data: provinciaOptions } = useQuery({
   queryKey: computed(() => ['provincias', 'options', form.value.regionId]),
-  queryFn: () => getProvinciaOptionsAction(form.value.regionId as number),
+  queryFn: () => {
+    const id = form.value.regionId
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getProvinciaOptionsAction(id)
+  },
   enabled: computed(() => form.value.regionId !== null),
 })
 const { data: comunaOptions } = useQuery({
   queryKey: computed(() => ['comunas', 'options', form.value.provinciaId]),
-  queryFn: () => getComunaOptionsAction(form.value.provinciaId as number),
+  queryFn: () => {
+    const id = form.value.provinciaId
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getComunaOptionsAction(id)
+  },
   enabled: computed(() => form.value.provinciaId !== null),
 })
 
@@ -357,9 +369,9 @@ async function saveStaff(value: StaffForm): Promise<void> {
 const saveMutation = useMutation({
   mutationFn: saveStaff,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['staff'], refetchType: 'none' })
     toastSaved(value.id, messages.staff)
     goToList()
+    return queryClient.invalidateQueries({ queryKey: ['staff'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.staff)

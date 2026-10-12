@@ -2,10 +2,9 @@ import { formatDateTime } from '@/utils'
 import type { Badge } from '@/types/badge'
 import type { UserCreatePayload, UserDetailRaw, UserFormPayload, UserRaw } from '@/types/user'
 import type { User, UserForm, UserListItem } from '@/models'
-import { USER_ACTIONS_PLACEHOLDER } from '@/models'
 
 function toStatusBadge(active: boolean): Badge {
-  return active ? { label: 'Activo', color: 'success' } : { label: 'Inactivo', color: 'grey' }
+  return active ? { label: 'Activo', color: 'info' } : { label: 'Inactivo', color: 'grey' }
 }
 
 function toFullName(firstName: string, lastName: string): string {
@@ -22,7 +21,7 @@ export function mapperUserList(items: UserRaw[]): UserListItem[] {
     active: item.active,
     status: toStatusBadge(item.active),
     role: item.role,
-    actions: [...USER_ACTIONS_PLACEHOLDER],
+    actions: [],
   }))
 }
 
@@ -42,7 +41,7 @@ export function mapperUserDetail(raw: UserDetailRaw): User {
     updatedAt: formatDateTime(raw.updatedAt),
     createdBy: raw.createdBy,
     updatedBy: raw.updatedBy,
-    actions: [...USER_ACTIONS_PLACEHOLDER],
+    actions: [],
   }
 }
 

@@ -5,18 +5,10 @@ import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const props = withDefaults(
-  defineProps<{
-    client: Client | null
-    loading?: boolean
-    hasUpdatePermission?: boolean
-    hasActivePermission?: boolean
-  }>(),
-  {
-    hasUpdatePermission: true,
-    hasActivePermission: true,
-  },
-)
+const props = defineProps<{
+  client: Client | null
+  loading?: boolean
+}>()
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -49,8 +41,6 @@ const fields = computed(() => {
     <template v-if="client" #menu>
       <ActionsMenu
         :record="client"
-        :has-update-permission="hasUpdatePermission"
-        :has-active-permission="hasActivePermission"
         :show-view="false"
         @edit="emit('edit', client)"
         @toggle="emit('toggleActive', client)"

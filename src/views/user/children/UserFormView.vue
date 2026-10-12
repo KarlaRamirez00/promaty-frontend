@@ -47,7 +47,11 @@ const isEditing = computed(() => userId.value !== null)
 
 const { data: existingUser } = useQuery({
   queryKey: computed(() => ['users', 'detail', userId.value]),
-  queryFn: () => getUserDetailAction(userId.value as number),
+  queryFn: () => {
+    const id = userId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getUserDetailAction(id)
+  },
   enabled: computed(() => userId.value !== null),
 })
 
@@ -130,9 +134,9 @@ async function saveUser(value: UserForm): Promise<void> {
 const saveMutation = useMutation({
   mutationFn: saveUser,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['users'], refetchType: 'none' })
     toastSaved(value.id, messages.user)
     goToList()
+    return queryClient.invalidateQueries({ queryKey: ['users'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.user)

@@ -37,8 +37,6 @@ const queryClient = useQueryClient()
 const { toastToggled, toastFailed } = useMessage()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-const canUpdate = computed(() => hasPermission('update'))
-const canToggleActive = computed(() => hasPermission('active'))
 
 const query = computed<ProjectSpecialtyQueryParams>(() => parseProjectSpecialtyQuery(route.query))
 
@@ -171,10 +169,20 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-const { data: selectedProjectSpecialty, isPending: detailLoading } = useQuery({
-  queryKey: computed(() => ['projectSpecialties', 'detail', detailId.value]),
-  queryFn: () => getProjectSpecialtyDetailAction(detailId.value as number),
-  enabled: computed(() => detailId.value !== null),
+// Último id abierto: la query lo conserva al cerrar el slide para que no quede en blanco mientras se anima.
+const selectedId = ref<number | null>(detailId.value)
+watch(detailId, (id) => {
+  if (id !== null) selectedId.value = id
+})
+
+const { data: selectedProjectSpecialty, isLoading: detailLoading } = useQuery({
+  queryKey: computed(() => ['projectSpecialties', 'detail', selectedId.value]),
+  queryFn: () => {
+    const id = selectedId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getProjectSpecialtyDetailAction(id)
+  },
+  enabled: computed(() => selectedId.value !== null),
 })
 
 function viewDetail(item: { id: number }) {
@@ -200,10 +208,10 @@ function askToggleActive(item: { id: number; name: string; active: boolean }) {
 const toggleMutation = useMutation({
   mutationFn: (id: number) => toggleProjectSpecialtyActiveAction(id),
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['projectSpecialties'] })
     closeDetail()
     statusDialogRef.value?.close()
     if (statusRecord.value) toastToggled(statusRecord.value.active, messages.projectSpecialty)
+    return queryClient.invalidateQueries({ queryKey: ['projectSpecialties'] })
   },
   onError: () => {
     toastFailed(messages.projectSpecialty)
@@ -269,8 +277,6 @@ function confirmToggleActive() {
     <template #item.actions="{ item }">
       <ActionsMenu
         :record="item"
-        :has-update-permission="canUpdate"
-        :has-active-permission="canToggleActive"
         @view="viewDetail(item)"
         @edit="openEditForm(item)"
         @toggle="askToggleActive(item)"
@@ -305,7 +311,7 @@ function confirmToggleActive() {
               Ver detalle
             </v-btn>
             <v-btn
-              v-if="canUpdate && item.actions.includes(ACTION.UPDATE)"
+              v-if="item.actions.includes(ACTION.UPDATE)"
               size="small"
               variant="text"
               :prepend-icon="mdiPencilOutline"
@@ -345,8 +351,6 @@ function confirmToggleActive() {
     v-model:open="detailDrawerOpen"
     :project-specialty="selectedProjectSpecialty ?? null"
     :loading="detailLoading"
-    :has-update-permission="canUpdate"
-    :has-active-permission="canToggleActive"
     @edit="openEditForm"
     @toggle-active="askToggleActive"
   />

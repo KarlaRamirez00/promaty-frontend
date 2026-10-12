@@ -20,13 +20,9 @@ const props = withDefaults(
     role: Role | null
     permissionCatalog?: RolePermissionOption[]
     loading?: boolean
-    hasUpdatePermission?: boolean
-    hasActivePermission?: boolean
   }>(),
   {
     permissionCatalog: () => [],
-    hasUpdatePermission: true,
-    hasActivePermission: true,
   },
 )
 
@@ -81,8 +77,6 @@ const tiles = computed(() => {
     <template v-if="role" #menu>
       <ActionsMenu
         :record="role"
-        :has-update-permission="hasUpdatePermission"
-        :has-active-permission="hasActivePermission"
         :show-view="false"
         @edit="emit('edit', role)"
         @toggle="emit('toggleActive', role)"

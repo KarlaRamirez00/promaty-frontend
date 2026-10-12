@@ -3,8 +3,8 @@ export interface UserRoleRaw {
   name: string
 }
 
-// actions[] todavía no viene en este DTO (T-B553, pendiente en backend) — a diferencia de
-// Role/Project, el gate de acciones acá es solo por permiso, sin doble gate por registro.
+// actions[] todavía no viene en este DTO (T-B553, pendiente en backend): la vista arma las
+// acciones desde los permisos del módulo mientras tanto.
 export interface UserRaw {
   id: number
   firstName: string

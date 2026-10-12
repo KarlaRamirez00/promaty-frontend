@@ -46,7 +46,11 @@ const isEditing = computed(() => roleId.value !== null)
 
 const { data: existingRole } = useQuery({
   queryKey: computed(() => ['roles', 'detail', roleId.value]),
-  queryFn: () => getRoleDetailAction(roleId.value as number),
+  queryFn: () => {
+    const id = roleId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getRoleDetailAction(id)
+  },
   enabled: computed(() => roleId.value !== null),
 })
 
@@ -129,9 +133,9 @@ async function saveRole(value: RoleForm): Promise<void> {
 const saveMutation = useMutation({
   mutationFn: saveRole,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['roles'], refetchType: 'none' })
     toastSaved(value.id, messages.role)
     goToList()
+    return queryClient.invalidateQueries({ queryKey: ['roles'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.role)

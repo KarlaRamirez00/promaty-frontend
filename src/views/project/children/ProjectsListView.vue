@@ -39,8 +39,6 @@ const route = useRoute()
 const router = useRouter()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-const canUpdate = computed(() => hasPermission('update'))
-const canChangeStatus = computed(() => hasPermission('status'))
 
 const query = computed<ProjectQueryParams>(() => parseProjectQuery(route.query))
 
@@ -224,10 +222,20 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-const { data: selectedProject, isPending: detailLoading } = useQuery({
-  queryKey: computed(() => ['projects', 'detail', detailId.value]),
-  queryFn: () => getProjectDetailAction(detailId.value as number),
-  enabled: computed(() => detailId.value !== null),
+// Último id abierto: la query lo conserva al cerrar el slide para que no quede en blanco mientras se anima.
+const selectedId = ref<number | null>(detailId.value)
+watch(detailId, (id) => {
+  if (id !== null) selectedId.value = id
+})
+
+const { data: selectedProject, isLoading: detailLoading } = useQuery({
+  queryKey: computed(() => ['projects', 'detail', selectedId.value]),
+  queryFn: () => {
+    const id = selectedId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getProjectDetailAction(id)
+  },
+  enabled: computed(() => selectedId.value !== null),
 })
 
 const queryClient = useQueryClient()
@@ -248,11 +256,15 @@ const canSaveStatus = computed(
 )
 
 const updateStatusMutation = useMutation({
-  mutationFn: () => updateProjectStatusAction(detailId.value as number, selectedStatusId.value as number),
+  mutationFn: () => {
+    const projectId = detailId.value
+    const statusId = selectedStatusId.value
+    if (projectId === null || statusId === null) throw new Error('Falta el proyecto o el estado')
+    return updateProjectStatusAction(projectId, statusId)
+  },
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['projects'] })
-    queryClient.invalidateQueries({ queryKey: ['projects', 'detail', detailId.value] })
     snackbar.success(messages.project.toastStatusUpdated)
+    return queryClient.invalidateQueries({ queryKey: ['projects'] })
   },
   onError: () => {
     toastFailed(messages.project)
@@ -313,10 +325,15 @@ function openEditForm(item: { id: number }) {
       <span class="link-cell" @click="viewDetail(item)">{{ item.name }}</span>
     </template>
 
+    <template #item.statusName="{ item }">
+      <v-chip size="small" variant="tonal" :color="item.statusColor">
+        {{ item.statusName }}
+      </v-chip>
+    </template>
+
     <template #item.actions="{ item }">
       <ActionsMenu
         :record="item"
-        :has-update-permission="canUpdate"
         @view="viewDetail(item)"
         @edit="openEditForm(item)"
       />
@@ -340,7 +357,9 @@ function openEditForm(item: { id: number }) {
             <span class="link-cell text-subtitle-2 font-weight-bold" @click="viewDetail(item)">{{
               item.name
             }}</span>
-            <v-chip size="small" variant="tonal" color="info">{{ item.statusName }}</v-chip>
+            <v-chip size="small" variant="tonal" :color="item.statusColor">{{
+              item.statusName
+            }}</v-chip>
           </div>
           <div class="text-caption text-medium-emphasis mt-1">
             {{ item.clientName }} · {{ item.typeName }}
@@ -351,7 +370,7 @@ function openEditForm(item: { id: number }) {
               Ver detalle
             </v-btn>
             <v-btn
-              v-if="canUpdate && item.actions.includes(ACTION.UPDATE)"
+              v-if="item.actions.includes(ACTION.UPDATE)"
               size="small"
               variant="text"
               :prepend-icon="mdiPencilOutline"
@@ -391,20 +410,19 @@ function openEditForm(item: { id: number }) {
     v-model:open="detailDrawerOpen"
     :project="selectedProject ?? null"
     :loading="detailLoading"
-    :has-update-permission="canUpdate"
     @edit="openEditForm"
   >
     <template #header>
       <div class="flex-grow-1">
         <div class="d-flex ga-3">
-          <div
+          <button
+            type="button"
             class="detail-drawer__icon-box flex-shrink-0"
-            role="button"
             aria-label="Cerrar detalle"
             @click="closeDetail"
           >
             <v-icon :icon="mdiChevronRight" size="20" />
-          </div>
+          </button>
           <div>
             <div class="text-h6 font-weight-bold">Detalle de proyecto</div>
             <div v-if="selectedProject" class="text-body-2 text-medium-emphasis">
@@ -414,7 +432,7 @@ function openEditForm(item: { id: number }) {
         </div>
 
         <div
-          v-if="selectedProject && canChangeStatus && selectedProject.actions.includes(ACTION.STATUS)"
+          v-if="selectedProject?.actions.includes(ACTION.STATUS)"
           class="mt-3"
         >
           <div class="text-subtitle-1 font-weight-bold text-primary">Estado</div>

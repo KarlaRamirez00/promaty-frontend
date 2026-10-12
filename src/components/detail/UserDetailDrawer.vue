@@ -11,13 +11,9 @@ const props = withDefaults(
     user: User | null
     costCenters?: string[]
     loading?: boolean
-    hasUpdatePermission?: boolean
-    hasActivePermission?: boolean
   }>(),
   {
     costCenters: () => [],
-    hasUpdatePermission: true,
-    hasActivePermission: true,
   },
 )
 
@@ -64,8 +60,6 @@ const fields = computed(() => {
     <template v-if="user" #menu>
       <ActionsMenu
         :record="user"
-        :has-update-permission="hasUpdatePermission"
-        :has-active-permission="hasActivePermission"
         :show-view="false"
         @edit="emit('edit', user)"
         @toggle="emit('toggleActive', user)"

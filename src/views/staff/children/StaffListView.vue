@@ -27,7 +27,6 @@ const route = useRoute()
 const router = useRouter()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-const canUpdate = computed(() => hasPermission('update'))
 
 const query = computed<StaffQueryParams>(() => parseStaffQuery(route.query))
 
@@ -124,10 +123,20 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-const { data: selectedStaff, isPending: detailLoading } = useQuery({
-  queryKey: computed(() => ['staff', 'detail', detailId.value]),
-  queryFn: () => getStaffDetailAction(detailId.value as number),
-  enabled: computed(() => detailId.value !== null),
+// Último id abierto: la query lo conserva al cerrar el slide para que no quede en blanco mientras se anima.
+const selectedId = ref<number | null>(detailId.value)
+watch(detailId, (id) => {
+  if (id !== null) selectedId.value = id
+})
+
+const { data: selectedStaff, isLoading: detailLoading } = useQuery({
+  queryKey: computed(() => ['staff', 'detail', selectedId.value]),
+  queryFn: () => {
+    const id = selectedId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getStaffDetailAction(id)
+  },
+  enabled: computed(() => selectedId.value !== null),
 })
 
 function viewDetail(item: { id: number }) {
@@ -193,7 +202,6 @@ function openEditForm(item: { id: number }) {
     <template #item.actions="{ item }">
       <ActionsMenu
         :record="item"
-        :has-update-permission="canUpdate"
         @view="viewDetail(item)"
         @edit="openEditForm(item)"
       />
@@ -225,7 +233,7 @@ function openEditForm(item: { id: number }) {
               Ver detalle
             </v-btn>
             <v-btn
-              v-if="canUpdate && item.actions.includes(ACTION.UPDATE)"
+              v-if="item.actions.includes(ACTION.UPDATE)"
               size="small"
               variant="text"
               :prepend-icon="mdiPencilOutline"
@@ -258,7 +266,6 @@ function openEditForm(item: { id: number }) {
     v-model:open="detailDrawerOpen"
     :staff="selectedStaff ?? null"
     :loading="detailLoading"
-    :has-update-permission="canUpdate"
     @edit="openEditForm"
   />
 </template>

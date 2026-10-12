@@ -39,8 +39,6 @@ const queryClient = useQueryClient()
 const { toastToggled, toastFailed } = useMessage()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-const canUpdate = computed(() => hasPermission('update'))
-const canToggleActive = computed(() => hasPermission('active'))
 
 const query = computed<RoleQueryParams>(() => parseRoleQuery(route.query))
 
@@ -193,10 +191,20 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-const { data: selectedRole, isPending: detailLoading } = useQuery({
-  queryKey: computed(() => ['roles', 'detail', detailId.value]),
-  queryFn: () => getRoleDetailAction(detailId.value as number),
-  enabled: computed(() => detailId.value !== null),
+// Último id abierto: la query lo conserva al cerrar el slide para que no quede en blanco mientras se anima.
+const selectedId = ref<number | null>(detailId.value)
+watch(detailId, (id) => {
+  if (id !== null) selectedId.value = id
+})
+
+const { data: selectedRole, isLoading: detailLoading } = useQuery({
+  queryKey: computed(() => ['roles', 'detail', selectedId.value]),
+  queryFn: () => {
+    const id = selectedId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getRoleDetailAction(id)
+  },
+  enabled: computed(() => selectedId.value !== null),
 })
 
 function viewDetail(item: { id: number }) {
@@ -234,12 +242,16 @@ function askToggleActive(item: { id: number; name: string; active: boolean; tota
 }
 
 const toggleMutation = useMutation({
-  mutationFn: () => toggleRoleActiveAction(statusRecord.value?.id as number, replacementRoleId.value),
+  mutationFn: () => {
+    const roleId = statusRecord.value?.id
+    if (roleId === undefined) throw new Error('No hay rol seleccionado')
+    return toggleRoleActiveAction(roleId, replacementRoleId.value)
+  },
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['roles'] })
     closeDetail()
     statusDialogRef.value?.close()
     if (statusRecord.value) toastToggled(statusRecord.value.active, messages.role)
+    return queryClient.invalidateQueries({ queryKey: ['roles'] })
   },
   onError: () => {
     toastFailed(messages.role)
@@ -307,8 +319,6 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
     <template #item.actions="{ item }">
       <ActionsMenu
         :record="item"
-        :has-update-permission="canUpdate"
-        :has-active-permission="canToggleActive"
         @view="viewDetail(item)"
         @edit="openEditForm(item)"
         @toggle="askToggleActive(item)"
@@ -346,7 +356,7 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
               Ver detalle
             </v-btn>
             <v-btn
-              v-if="canUpdate && item.actions.includes(ACTION.UPDATE)"
+              v-if="item.actions.includes(ACTION.UPDATE)"
               size="small"
               variant="text"
               :prepend-icon="mdiPencilOutline"
@@ -387,8 +397,6 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
     :role="selectedRole ?? null"
     :permission-catalog="permissionOptions ?? []"
     :loading="detailLoading"
-    :has-update-permission="canUpdate"
-    :has-active-permission="canToggleActive"
     @edit="openEditForm"
     @toggle-active="askToggleActive"
   />

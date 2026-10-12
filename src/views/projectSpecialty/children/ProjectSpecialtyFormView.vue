@@ -41,7 +41,11 @@ const isEditing = computed(() => projectSpecialtyId.value !== null)
 
 const { data: existingProjectSpecialty } = useQuery({
   queryKey: computed(() => ['projectSpecialties', 'detail', projectSpecialtyId.value]),
-  queryFn: () => getProjectSpecialtyDetailAction(projectSpecialtyId.value as number),
+  queryFn: () => {
+    const id = projectSpecialtyId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getProjectSpecialtyDetailAction(id)
+  },
   enabled: computed(() => projectSpecialtyId.value !== null),
 })
 
@@ -78,9 +82,9 @@ async function saveProjectSpecialty(value: ProjectSpecialtyForm): Promise<void> 
 const saveMutation = useMutation({
   mutationFn: saveProjectSpecialty,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['projectSpecialties'], refetchType: 'none' })
     toastSaved(value.id, messages.projectSpecialty)
     goToList()
+    return queryClient.invalidateQueries({ queryKey: ['projectSpecialties'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.projectSpecialty)

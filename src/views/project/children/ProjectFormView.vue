@@ -47,7 +47,11 @@ const isEditing = computed(() => projectId.value !== null)
 
 const { data: existingProject } = useQuery({
   queryKey: computed(() => ['projects', 'detail', projectId.value]),
-  queryFn: () => getProjectDetailAction(projectId.value as number),
+  queryFn: () => {
+    const id = projectId.value
+    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
+    return getProjectDetailAction(id)
+  },
   enabled: computed(() => projectId.value !== null),
 })
 
@@ -151,9 +155,9 @@ async function saveProject(value: ProjectForm): Promise<void> {
 const saveMutation = useMutation({
   mutationFn: saveProject,
   onSuccess: (_data, value) => {
-    queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' })
     toastSaved(value.id, messages.project)
     goToList()
+    return queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.project)

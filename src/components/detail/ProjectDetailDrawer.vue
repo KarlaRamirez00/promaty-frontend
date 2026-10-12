@@ -1,20 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Project } from '@/models'
+import { projectStatusColor, type Project } from '@/models'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const props = withDefaults(
-  defineProps<{
-    project: Project | null
-    loading?: boolean
-    hasUpdatePermission?: boolean
-  }>(),
-  {
-    hasUpdatePermission: true,
-  },
-)
+const props = defineProps<{
+  project: Project | null
+  loading?: boolean
+}>()
 
 const open = defineModel<boolean>('open', { default: false })
 
@@ -47,7 +41,13 @@ const fields = computed(() => {
       <slot name="header">
         <div>
           <div class="text-h6 font-weight-bold">Detalle de proyecto</div>
-          <v-chip v-if="project" size="small" variant="tonal" color="info" class="mt-1">
+          <v-chip
+            v-if="project"
+            size="small"
+            variant="tonal"
+            :color="projectStatusColor(project.status.code)"
+            class="mt-1"
+          >
             {{ project.status.name }}
           </v-chip>
         </div>
@@ -57,7 +57,6 @@ const fields = computed(() => {
     <template v-if="project" #menu>
       <ActionsMenu
         :record="project"
-        :has-update-permission="hasUpdatePermission"
         :show-view="false"
         @edit="emit('edit', project)"
       />
