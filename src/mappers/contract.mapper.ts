@@ -13,10 +13,9 @@ import type {
   ContractStaffOption,
 } from '@/models'
 import { contractStatusColor } from '@/models'
-import { formatCurrency, formatDate, formatDateTime, formatRut, parseCurrency } from '@/utils'
+import { formatCurrency, formatDate, formatDateTime, formatRut, NO_DATA, parseCurrency } from '@/utils'
 
 const RUT_PATTERN = /^\d{7,8}-[\dkK]$/
-const EMPTY_VALUE = '—'
 
 // El contrato no informa el tipo de identificación: solo se formatea lo que tiene forma de RUT.
 function toDisplayIdentification(value: string): string {
@@ -68,7 +67,7 @@ export function mapperContractList(items: ContractListRaw[]): ContractListItem[]
     identificationNumber: toDisplayIdentification(item.staff.identificationNumber),
     fullName: item.staff.fullName,
     startDate: formatDate(item.startDate),
-    endDate: formatDate(item.endDate, EMPTY_VALUE),
+    endDate: formatDate(item.endDate),
     agreedSalary: formatCurrency(item.agreedSalary),
     statusName: item.statusName,
     statusColor: contractStatusColor(item.statusCode),
@@ -88,14 +87,14 @@ export function mapperContractDetail(raw: ContractRaw): Contract {
     siteName: raw.site.name,
     costCenterCode: raw.costCenterCode,
     startDate: formatDate(raw.startDate),
-    endDate: formatDate(raw.endDate, EMPTY_VALUE),
+    endDate: formatDate(raw.endDate),
     baseSalary: formatCurrency(raw.baseSalary),
     agreedSalary: formatCurrency(raw.agreedSalary),
     weeklyWorkHours: raw.weeklyWorkHours,
     workDays: raw.workDays,
-    contractDetail: raw.contractDetail ?? EMPTY_VALUE,
-    mealTypeName: raw.mealType?.name ?? EMPTY_VALUE,
-    transportTypeName: raw.transportType?.name ?? EMPTY_VALUE,
+    contractDetail: raw.contractDetail ?? NO_DATA,
+    mealTypeName: raw.mealType?.name ?? NO_DATA,
+    transportTypeName: raw.transportType?.name ?? NO_DATA,
     rexContractNumber: raw.rexContractNumber,
     status: raw.status,
     statusColor: contractStatusColor(raw.status.code),

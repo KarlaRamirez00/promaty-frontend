@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useDisplay } from 'vuetify'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
 import { getClientDetailAction, getClientListAction, toggleClientActiveAction } from '@/actions'
+import { useDetailSlide } from '@/composables/useDetailSlide'
 import { useMessage } from '@/composables/useMessage'
 import { usePermissions } from '@/composables/usePermissions'
-import { ACTION } from '@/constants/actions.constants'
 import { ROUTE } from '@/router/route-names'
 import messages from '@/messages'
 import {
@@ -24,9 +22,7 @@ import ClientDetailDrawer from '@/components/detail/ClientDetailDrawer.vue'
 import ConfirmStatusDialog from '@/components/common/ConfirmStatusDialog.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
-import AlertComponent from '@/components/common/AlertComponent.vue'
 
-const { smAndDown } = useDisplay()
 const route = useRoute()
 const router = useRouter()
 const queryClient = useQueryClient()
@@ -48,31 +44,14 @@ function patchQuery(patch: Partial<ClientQueryParams>) {
   })
 }
 
-// Detalle abierto vía ?detail={id}: sobrevive a un refresh y es compartible por link.
-const detailId = computed(() => {
-  const raw = route.query.detail
-  const n = Number(raw)
-  return typeof raw === 'string' && Number.isInteger(n) && n > 0 ? n : null
-})
-
-const detailQueryParam = computed(() => (detailId.value ? { detail: String(detailId.value) } : {}))
-
-const detailDrawerOpen = computed<boolean>({
-  get: () => detailId.value !== null,
-  set: (value) => {
-    if (!value) closeDetail()
-  },
-})
-
-function openDetail(id: number) {
-  router.push({ query: { ...route.query, detail: String(id) } })
-}
-
-function closeDetail() {
-  const rest = { ...route.query }
-  delete rest.detail
-  router.push({ query: rest })
-}
+const {
+  detailQueryParam,
+  isOpen: detailDrawerOpen,
+  open: openDetail,
+  close: closeDetail,
+  record: selectedClient,
+  isLoading: detailLoading,
+} = useDetailSlide('clients', getClientDetailAction)
 
 const searchInput = ref(query.value.search)
 let debounceTimer: ReturnType<typeof setTimeout>
@@ -163,22 +142,6 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-// Último id abierto: la query lo conserva al cerrar el slide para que no quede en blanco mientras se anima.
-const selectedId = ref<number | null>(detailId.value)
-watch(detailId, (id) => {
-  if (id !== null) selectedId.value = id
-})
-
-const { data: selectedClient, isLoading: detailLoading } = useQuery({
-  queryKey: computed(() => ['clients', 'detail', selectedId.value]),
-  queryFn: () => {
-    const id = selectedId.value
-    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
-    return getClientDetailAction(id)
-  },
-  enabled: computed(() => selectedId.value !== null),
-})
-
 function viewDetail(item: { id: number }) {
   openDetail(item.id)
 }
@@ -246,7 +209,7 @@ function confirmToggleActive() {
   </v-alert>
 
   <v-data-table-server
-    v-if="!smAndDown"
+    mobile-breakpoint="md"
     :page="query.page"
     :items-per-page="query.size"
     :headers="headers"
@@ -287,51 +250,6 @@ function confirmToggleActive() {
     </template>
   </v-data-table-server>
 
-  <template v-else>
-    <v-card flat border>
-      <template v-for="(item, index) in items" :key="item.id">
-        <div class="pa-4" :class="{ 'client-block--divided': index > 0 }">
-          <div class="d-flex flex-wrap align-center justify-space-between ga-2">
-            <span class="link-cell text-subtitle-2 font-weight-bold" @click="viewDetail(item)">{{ item.name }}</span>
-            <v-chip size="small" variant="tonal" :color="item.status.color">
-              {{ item.status.label }}
-            </v-chip>
-          </div>
-
-          <div class="d-flex flex-wrap ga-2 mt-3">
-            <v-btn size="small" variant="tonal" :prepend-icon="mdiEyeOutline" @click="viewDetail(item)">
-              Ver detalle
-            </v-btn>
-            <v-btn
-              v-if="item.actions.includes(ACTION.UPDATE)"
-              size="small"
-              variant="text"
-              :prepend-icon="mdiPencilOutline"
-              @click="openEditForm(item)"
-            >
-              Editar
-            </v-btn>
-          </div>
-        </div>
-      </template>
-
-      <AlertComponent
-        v-if="!items.length && !isError"
-        type="info"
-        message="No hay resultados para tu búsqueda."
-        class="ma-4"
-      />
-    </v-card>
-
-    <ListFooter
-      v-model:page="pageModel"
-      v-model:size="sizeModel"
-      :total="totalItems"
-      :page-count="pageCount"
-      class="mt-2"
-    />
-  </template>
-
   <FiltersDrawer
     v-model:open="filtersOpen"
     v-model:values="filterValues"
@@ -357,10 +275,6 @@ function confirmToggleActive() {
 </template>
 
 <style scoped>
-.client-block--divided {
-  border-top: thin solid rgba(var(--v-theme-on-surface), 0.12);
-}
-
 :deep(.v-data-table-header__sort-icon) {
   font-size: 1.125rem;
 }

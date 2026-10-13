@@ -78,7 +78,7 @@ function submit() {
         {{ config.title }}
       </v-card-title>
 
-      <v-card-text class="px-6">
+      <v-card-text :class="isReject ? 'px-6' : 'px-6 pb-3'">
         <AlertComponent
           :type="isReject ? 'error' : 'success'"
           :message="alertMessage"

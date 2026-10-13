@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useDisplay } from 'vuetify'
 import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 import { mdiAlertCircleOutline, mdiClockOutline } from '@mdi/js'
 import {
@@ -24,9 +23,7 @@ import FiltersDrawer, { type FilterField } from '@/components/common/FiltersDraw
 import IndicatorCard from '@/components/common/IndicatorCard.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
-import AlertComponent from '@/components/common/AlertComponent.vue'
 
-const { smAndDown } = useDisplay()
 const route = useRoute()
 const router = useRouter()
 
@@ -272,7 +269,7 @@ function viewDetail(item: { entityId: number | null }) {
   </v-alert>
 
   <v-data-table-server
-    v-if="!smAndDown"
+    mobile-breakpoint="md"
     :page="query.page"
     :items-per-page="query.size"
     :headers="headers"
@@ -306,63 +303,6 @@ function viewDetail(item: { entityId: number | null }) {
       />
     </template>
   </v-data-table-server>
-
-  <template v-else>
-    <v-card flat border>
-      <template v-for="(item, index) in items" :key="item.id">
-        <div class="pa-4" :class="{ 'request-block--divided': index > 0 }">
-          <div class="d-flex align-center justify-space-between ga-2 mb-3">
-            <div class="d-flex flex-wrap align-center ga-2">
-              <span class="link-cell text-subtitle-2 font-weight-bold" @click="viewDetail(item)">{{
-                item.typeName
-              }}</span>
-              <v-chip size="small" variant="tonal" :color="item.statusColor">
-                {{ item.status.name }}
-              </v-chip>
-            </div>
-            <ActionsMenu
-              :record="item"
-              @view="viewDetail(item)"
-            />
-          </div>
-
-          <dl class="request-block__fields">
-            <div class="request-block__field">
-              <dt>CC</dt>
-              <dd>{{ item.costCenterCode }}</dd>
-            </div>
-            <div class="request-block__field">
-              <dt>Proyecto</dt>
-              <dd>{{ item.projectName }}</dd>
-            </div>
-            <div class="request-block__field">
-              <dt>Creación</dt>
-              <dd>{{ item.createdAt }}</dd>
-            </div>
-            <div class="request-block__field">
-              <dt>Solicitante</dt>
-              <dd>{{ item.requesterName }}</dd>
-            </div>
-          </dl>
-        </div>
-      </template>
-
-      <AlertComponent
-        v-if="!items.length && !isError"
-        type="info"
-        message="No hay solicitudes que coincidan con los filtros aplicados."
-        class="ma-4"
-      />
-    </v-card>
-
-    <ListFooter
-      v-model:page="pageModel"
-      v-model:size="sizeModel"
-      :total="totalItems"
-      :page-count="pageCount"
-      class="mt-2"
-    />
-  </template>
 
   <FiltersDrawer
     v-model:open="filtersOpen"
@@ -421,33 +361,4 @@ function viewDetail(item: { entityId: number | null }) {
   }
 }
 
-.request-block--divided {
-  border-top: thin solid rgba(var(--v-theme-on-surface), 0.12);
-}
-
-.request-block__fields {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin: 0;
-}
-
-.request-block__field {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.125rem 0.75rem;
-}
-
-.request-block__field dt {
-  min-width: 88px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  align-self: center;
-}
-
-.request-block__field dd {
-  margin: 0;
-  font-size: 0.875rem;
-}
 </style>

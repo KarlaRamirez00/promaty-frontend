@@ -3,8 +3,6 @@ export interface UserRoleRaw {
   name: string
 }
 
-// actions[] todavía no viene en este DTO (T-B553, pendiente en backend): la vista arma las
-// acciones desde los permisos del módulo mientras tanto.
 export interface UserRaw {
   id: number
   firstName: string
@@ -17,6 +15,7 @@ export interface UserRaw {
   updatedAt: string
   createdBy: string
   updatedBy: string
+  actions: string[]
 }
 
 export interface UserDetailRaw extends UserRaw {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { mdiCalendarOutline } from '@mdi/js'
 import { VDateInput } from 'vuetify/labs/VDateInput'
 
@@ -15,6 +15,7 @@ const props = withDefaults(
     clearable?: boolean
     hideDetails?: boolean
     minDate?: string | null
+    maxDate?: string | null
     density?: 'default' | 'comfortable' | 'compact'
   }>(),
   {
@@ -25,6 +26,7 @@ const props = withDefaults(
     clearable: false,
     hideDetails: false,
     minDate: null,
+    maxDate: null,
     density: 'comfortable',
   },
 )
@@ -113,6 +115,31 @@ const internalValue = computed<Date | Date[] | null>({
 })
 
 const minDateValue = computed(() => (props.minDate ? toDate(props.minDate) : undefined))
+const maxDateValue = computed(() => (props.maxDate ? toDate(props.maxDate) : undefined))
+
+// Con una fecha máxima en el pasado el calendario abriría en un mes deshabilitado: parte en la fecha
+// elegida o, si no hay, en la máxima. Sin fecha máxima no se controla la vista.
+const viewYear = ref<number>()
+const viewMonth = ref<number>()
+
+function syncView(value: DateFieldValue) {
+  const anchor = typeof value === 'string' ? toDate(value) : maxDateValue.value
+  viewYear.value = anchor?.getFullYear()
+  viewMonth.value = anchor?.getMonth()
+}
+
+watch(model, syncView, { immediate: true })
+
+const viewBindings = computed(() =>
+  maxDateValue.value
+    ? {
+        year: viewYear.value,
+        month: viewMonth.value,
+        'onUpdate:year': (value: number) => (viewYear.value = value),
+        'onUpdate:month': (value: number) => (viewMonth.value = value),
+      }
+    : {},
+)
 </script>
 
 <template>
@@ -124,6 +151,8 @@ const minDateValue = computed(() => (props.minDate ? toDate(props.minDate) : und
     :view-mode="viewMode"
     :display-format="displayFormat"
     :min="minDateValue"
+    :max="maxDateValue"
+    v-bind="viewBindings"
     v-model:menu="menu"
     class="date-field"
     :prepend-inner-icon="mdiCalendarOutline"

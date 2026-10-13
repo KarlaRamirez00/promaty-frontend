@@ -36,6 +36,7 @@ import {
   firstError,
   isAdult,
   isValidRut,
+  latestAdultBirthDate,
   staffAccountNumberRules,
   staffAddressRules,
   staffEmailRules,
@@ -63,6 +64,8 @@ const {
   clear: clearBackendErrors,
   hasBackendError,
 } = useBackendFieldErrors()
+
+const adultBirthDateLimit = latestAdultBirthDate()
 
 const staffId = computed(() => (props.id ? Number(props.id) : null))
 const isEditing = computed(() => staffId.value !== null)
@@ -496,6 +499,7 @@ function submit() {
       <DateField
         v-model="form.birthDate"
         label="Fecha de nacimiento"
+        :max-date="adultBirthDateLimit"
         :error="hasError('birthDate')"
         hide-details
       />

@@ -69,6 +69,18 @@ export function isValidRut(value: string): boolean {
   return expectedDv === dv.toUpperCase()
 }
 
+const ADULT_AGE = 18
+
+// Fecha de nacimiento más reciente que aún cumple la mayoría de edad ("yyyy-MM-dd"): límite
+// máximo del selector, para que no se pueda elegir una fecha que la validación rechazaría.
+export function latestAdultBirthDate(): string {
+  const now = new Date()
+  const limit = new Date(now.getFullYear() - ADULT_AGE, now.getMonth(), now.getDate())
+  const month = String(limit.getMonth() + 1).padStart(2, '0')
+  const day = String(limit.getDate()).padStart(2, '0')
+  return `${limit.getFullYear()}-${month}-${day}`
+}
+
 // El colaborador debe ser mayor de 18 años (regla de backend, replicada acá para feedback
 // inmediato — birthDate llega como "yyyy-MM-dd").
 export function isAdult(birthDate: string): boolean {
@@ -80,5 +92,5 @@ export function isAdult(birthDate: string): boolean {
     today.getMonth() > birth.getMonth() ||
     (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate())
   if (!hasHadBirthdayThisYear) age--
-  return age >= 18
+  return age >= ADULT_AGE
 }

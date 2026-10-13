@@ -21,7 +21,7 @@ export function mapperUserList(items: UserRaw[]): UserListItem[] {
     active: item.active,
     status: toStatusBadge(item.active),
     role: item.role,
-    actions: [],
+    actions: item.actions,
   }))
 }
 
@@ -41,7 +41,7 @@ export function mapperUserDetail(raw: UserDetailRaw): User {
     updatedAt: formatDateTime(raw.updatedAt),
     createdBy: raw.createdBy,
     updatedBy: raw.updatedBy,
-    actions: [],
+    actions: raw.actions,
   }
 }
 

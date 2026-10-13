@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useDisplay } from 'vuetify'
 import { keepPreviousData, useQuery } from '@tanstack/vue-query'
-import { mdiEyeOutline, mdiPencilOutline } from '@mdi/js'
 import { getStaffDetailAction, getStaffListAction } from '@/actions'
+import { useDetailSlide } from '@/composables/useDetailSlide'
 import { usePermissions } from '@/composables/usePermissions'
-import { ACTION } from '@/constants/actions.constants'
 import { ROUTE } from '@/router/route-names'
 import {
   identificationTypeLabel,
@@ -20,9 +18,7 @@ import ListControls from '@/components/common/ListControls.vue'
 import StaffDetailDrawer from '@/components/detail/StaffDetailDrawer.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
-import AlertComponent from '@/components/common/AlertComponent.vue'
 
-const { smAndDown } = useDisplay()
 const route = useRoute()
 const router = useRouter()
 const { hasPermission } = usePermissions()
@@ -42,31 +38,13 @@ function patchQuery(patch: Partial<StaffQueryParams>) {
   })
 }
 
-// Detalle abierto vía ?detail={id}: sobrevive a un refresh y es compartible por link.
-const detailId = computed(() => {
-  const raw = route.query.detail
-  const n = Number(raw)
-  return typeof raw === 'string' && Number.isInteger(n) && n > 0 ? n : null
-})
-
-const detailQueryParam = computed(() => (detailId.value ? { detail: String(detailId.value) } : {}))
-
-const detailDrawerOpen = computed<boolean>({
-  get: () => detailId.value !== null,
-  set: (value) => {
-    if (!value) closeDetail()
-  },
-})
-
-function openDetail(id: number) {
-  router.push({ query: { ...route.query, detail: String(id) } })
-}
-
-function closeDetail() {
-  const rest = { ...route.query }
-  delete rest.detail
-  router.push({ query: rest })
-}
+const {
+  detailQueryParam,
+  isOpen: detailDrawerOpen,
+  open: openDetail,
+  record: selectedStaff,
+  isLoading: detailLoading,
+} = useDetailSlide('staff', getStaffDetailAction)
 
 const searchInput = ref(query.value.search)
 let debounceTimer: ReturnType<typeof setTimeout>
@@ -123,22 +101,6 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-// Último id abierto: la query lo conserva al cerrar el slide para que no quede en blanco mientras se anima.
-const selectedId = ref<number | null>(detailId.value)
-watch(detailId, (id) => {
-  if (id !== null) selectedId.value = id
-})
-
-const { data: selectedStaff, isLoading: detailLoading } = useQuery({
-  queryKey: computed(() => ['staff', 'detail', selectedId.value]),
-  queryFn: () => {
-    const id = selectedId.value
-    if (id === null || id === undefined) throw new Error('Falta el id para cargar los datos')
-    return getStaffDetailAction(id)
-  },
-  enabled: computed(() => selectedId.value !== null),
-})
-
 function viewDetail(item: { id: number }) {
   openDetail(item.id)
 }
@@ -175,7 +137,7 @@ function openEditForm(item: { id: number }) {
   </v-alert>
 
   <v-data-table-server
-    v-if="!smAndDown"
+    mobile-breakpoint="md"
     :page="query.page"
     :items-per-page="query.size"
     :headers="headers"
@@ -217,51 +179,6 @@ function openEditForm(item: { id: number }) {
     </template>
   </v-data-table-server>
 
-  <template v-else>
-    <v-card flat border>
-      <template v-for="(item, index) in items" :key="item.id">
-        <div class="pa-4" :class="{ 'staff-block--divided': index > 0 }">
-          <span class="link-cell text-subtitle-2 font-weight-bold" @click="viewDetail(item)">{{
-            item.fullName
-          }}</span>
-          <div class="text-caption text-medium-emphasis mt-1">
-            {{ identificationTypeLabel(item.identificationType) }} {{ item.identificationNumber }}
-          </div>
-
-          <div class="d-flex flex-wrap ga-2 mt-3">
-            <v-btn size="small" variant="tonal" :prepend-icon="mdiEyeOutline" @click="viewDetail(item)">
-              Ver detalle
-            </v-btn>
-            <v-btn
-              v-if="item.actions.includes(ACTION.UPDATE)"
-              size="small"
-              variant="text"
-              :prepend-icon="mdiPencilOutline"
-              @click="openEditForm(item)"
-            >
-              Editar
-            </v-btn>
-          </div>
-        </div>
-      </template>
-
-      <AlertComponent
-        v-if="!items.length && !isError"
-        type="info"
-        message="No hay resultados para tu búsqueda."
-        class="ma-4"
-      />
-    </v-card>
-
-    <ListFooter
-      v-model:page="pageModel"
-      v-model:size="sizeModel"
-      :total="totalItems"
-      :page-count="pageCount"
-      class="mt-2"
-    />
-  </template>
-
   <StaffDetailDrawer
     v-model:open="detailDrawerOpen"
     :staff="selectedStaff ?? null"
@@ -271,10 +188,6 @@ function openEditForm(item: { id: number }) {
 </template>
 
 <style scoped>
-.staff-block--divided {
-  border-top: thin solid rgba(var(--v-theme-on-surface), 0.12);
-}
-
 :deep(.v-data-table-header__sort-icon) {
   font-size: 1.125rem;
 }

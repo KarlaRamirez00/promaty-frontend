@@ -27,14 +27,18 @@ function parseDate(value: string): Date {
   return new Date(value)
 }
 
-export function formatDate(value: string | null | undefined, fallback = 'Sin fecha'): string {
+// Texto único para un dato ausente: S/D (sin dato) en general y S/F (sin fecha) en fechas.
+export const NO_DATA = 'S/D'
+export const NO_DATE = 'S/F'
+
+export function formatDate(value: string | null | undefined, fallback = NO_DATE): string {
   if (!value) return fallback
   const date = parseDate(value)
   if (Number.isNaN(date.getTime())) return fallback
   return formatter.format(date)
 }
 
-export function formatDateTime(value: string | null | undefined, fallback = 'Sin fecha'): string {
+export function formatDateTime(value: string | null | undefined, fallback = NO_DATE): string {
   if (!value) return fallback
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return fallback
@@ -68,7 +72,7 @@ export function formatPhone(value: string): string {
 
 const currencyFormatter = new Intl.NumberFormat('es-CL')
 
-export function formatCurrency(value: number | null | undefined, fallback = '—'): string {
+export function formatCurrency(value: number | null | undefined, fallback = NO_DATA): string {
   if (value === null || value === undefined) return fallback
   return `$ ${currencyFormatter.format(value)}`
 }
