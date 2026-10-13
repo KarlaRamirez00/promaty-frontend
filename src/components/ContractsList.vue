@@ -234,8 +234,8 @@ function openRequestForm() {
     :items-length="totalItems"
     :loading="isPending"
   >
-    <template #item.fullName="{ item }">
-      <span class="link-cell" @click="viewDetail(item)">{{ item.fullName }}</span>
+    <template #item.contractTypeName="{ item }">
+      <span class="link-cell" @click="viewDetail(item)">{{ item.contractTypeName }}</span>
     </template>
 
     <template #item.statusName="{ item }">
