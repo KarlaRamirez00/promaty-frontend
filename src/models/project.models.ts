@@ -7,6 +7,7 @@ export interface ProjectRelationOption {
 
 export interface CostCenterOption {
   id: number
+  code: string
   title: string
 }
 

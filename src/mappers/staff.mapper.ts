@@ -5,9 +5,10 @@ import type {
   StaffFormPayload,
   StaffListRaw,
   StaffRaw,
+  StaffStatusPayload,
 } from '@/types/staff'
-import type { Staff, StaffForm, StaffListItem } from '@/models'
-import { formatDateTime, formatRut } from '@/utils'
+import { staffStatusColor, type Staff, type StaffBlockForm, type StaffForm, type StaffListItem } from '@/models'
+import { formatDateTime, formatRut, NO_DATA } from '@/utils'
 
 function toFullName(firstName: string, paternalLastName: string, maternalLastName: string): string {
   return `${firstName} ${paternalLastName} ${maternalLastName}`.trim()
@@ -24,6 +25,10 @@ export function mapperStaffList(items: StaffListRaw[]): StaffListItem[] {
     identificationType: item.identificationType,
     identificationNumber: toDisplayIdentificationNumber(item.identificationType, item.identificationNumber),
     fullName: toFullName(item.firstName, item.paternalLastName, item.maternalLastName),
+    costCenterCode: item.costCenterCode ?? NO_DATA,
+    statusCode: item.statusCode,
+    statusName: item.statusName,
+    statusColor: staffStatusColor(item.statusCode),
     actions: item.actions,
   }))
 }
@@ -59,6 +64,8 @@ export function mapperStaffDetail(raw: StaffRaw): Staff {
     bank: raw.bank,
     accountType: raw.accountType,
     accountNumber: raw.accountNumber,
+    status: raw.status,
+    blockReason: raw.blockReason,
     createdAt: formatDateTime(raw.createdAt),
     updatedAt: formatDateTime(raw.updatedAt),
     createdBy: raw.createdBy,
@@ -93,6 +100,14 @@ export function mapperStaffFormToPayload(form: StaffForm): StaffFormPayload {
     accountType: form.accountType as NonNullable<StaffForm['accountType']>,
     accountNumber: form.accountNumber.trim(),
   }
+}
+
+export function mapperStaffBlockPayload(blockedStatusId: number, form: StaffBlockForm): StaffStatusPayload {
+  return { statusId: blockedStatusId, blockReason: form.reason.trim() }
+}
+
+export function mapperStaffUnblockPayload(activeStatusId: number): StaffStatusPayload {
+  return { statusId: activeStatusId }
 }
 
 export function mapperStaffFormToCreatePayload(form: StaffForm): StaffCreatePayload {

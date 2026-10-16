@@ -83,6 +83,7 @@ export async function listCostCenterOptionsApi(): Promise<CostCenterOption[]> {
   })
   return response.data.data.map((item) => ({
     id: item.id,
+    code: item.costCenterCode,
     title: `${item.costCenterCode} — ${item.name}`,
   }))
 }

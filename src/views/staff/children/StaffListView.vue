@@ -2,20 +2,30 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { keepPreviousData, useQuery } from '@tanstack/vue-query'
-import { getStaffDetailAction, getStaffListAction } from '@/actions'
+import {
+  getCostCenterOptionsAction,
+  getStaffDetailAction,
+  getStaffListAction,
+  getStaffStatusOptionsAction,
+} from '@/actions'
 import { useDetailSlide } from '@/composables/useDetailSlide'
 import { usePermissions } from '@/composables/usePermissions'
+import { useStaffBlock } from '@/composables/useStaffBlock'
 import { ROUTE } from '@/router/route-names'
 import {
   identificationTypeLabel,
   parseStaffQuery,
+  STAFF_STATUS_CODE,
   staffQueryToRoute,
   type StaffListItem,
   type StaffQueryParams,
   type StaffSort,
 } from '@/models'
+import ActiveFilters from '@/components/common/ActiveFilters.vue'
+import FiltersDrawer, { type FilterField } from '@/components/common/FiltersDrawer.vue'
 import ListControls from '@/components/common/ListControls.vue'
 import StaffDetailDrawer from '@/components/detail/StaffDetailDrawer.vue'
+import BlockStaffDialog from '@/components/common/BlockStaffDialog.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
@@ -46,6 +56,16 @@ const {
   isLoading: detailLoading,
 } = useDetailSlide('staff', getStaffDetailAction)
 
+const {
+  setDialogRef: setBlockDialogRef,
+  type: blockType,
+  backendErrorFields: blockErrorFields,
+  isPending: isBlocking,
+  askBlock,
+  askUnblock,
+  confirmChange,
+} = useStaffBlock()
+
 const searchInput = ref(query.value.search)
 let debounceTimer: ReturnType<typeof setTimeout>
 watch(searchInput, (value) => {
@@ -58,6 +78,62 @@ watch(
     if (value !== searchInput.value.trim()) searchInput.value = value
   },
 )
+
+const filtersOpen = ref(false)
+
+const { data: statusOptions } = useQuery({
+  queryKey: ['staff', 'statusOptions'],
+  queryFn: getStaffStatusOptionsAction,
+})
+const { data: costCenterOptions } = useQuery({
+  queryKey: ['projects', 'options', 'costCenters'],
+  queryFn: getCostCenterOptionsAction,
+})
+
+const filterFields = computed<FilterField[]>(() => [
+  {
+    key: 'statusCode',
+    type: 'select',
+    label: 'Estado',
+    options: (statusOptions.value ?? []).map((o) => ({ title: o.name, value: o.code })),
+  },
+  {
+    key: 'costCenterCode',
+    type: 'autocomplete',
+    label: 'Centro de costo',
+    options: (costCenterOptions.value ?? []).map((o) => ({ title: o.title, value: o.code })),
+  },
+])
+
+const filterValues = computed<Record<string, unknown>>({
+  get: () => ({
+    statusCode: query.value.statusCode,
+    costCenterCode: query.value.costCenterCode,
+  }),
+  set: (value) => {
+    patchQuery({
+      statusCode: (value.statusCode as string | null) ?? null,
+      costCenterCode: (value.costCenterCode as string | null) ?? null,
+    })
+  },
+})
+
+const activeFilters = computed(() => {
+  const active: { key: string; label: string }[] = []
+  const statusName = statusOptions.value?.find((o) => o.code === query.value.statusCode)?.name
+  const costCenter = costCenterOptions.value?.find((o) => o.code === query.value.costCenterCode)?.title
+  if (statusName) active.push({ key: 'statusCode', label: `Estado: ${statusName}` })
+  if (costCenter) active.push({ key: 'costCenterCode', label: `Centro de costo: ${costCenter}` })
+  return active
+})
+
+function clearFilter(key: string) {
+  patchQuery({ [key]: null })
+}
+
+function clearAllFilters() {
+  patchQuery({ statusCode: null, costCenterCode: null })
+}
 
 const sort = computed<StaffSort>(() => query.value.sort)
 const sortBy = computed(() => [{ key: sort.value.key, order: sort.value.order }])
@@ -95,9 +171,11 @@ watch(pageCount, (count) => {
 })
 
 const headers = [
+  { title: 'CC', key: 'costCenterCode', sortable: false },
   { title: 'Nombre', key: 'firstName', sortable: true },
   { title: 'Tipo de identificación', key: 'identificationType', sortable: false },
   { title: 'N° de identificación', key: 'identificationNumber', sortable: true },
+  { title: 'Estado', key: 'statusName', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -128,9 +206,11 @@ function openEditForm(item: { id: number }) {
     new-label="Nuevo"
     :show-export="false"
     :show-new="canCreate"
-    :show-filter="false"
+    @filter="filtersOpen = true"
     @new="openCreateForm"
   />
+
+  <ActiveFilters :filters="activeFilters" @remove-filter="clearFilter" @clear-all="clearAllFilters" />
 
   <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4 text-caption">
     No se pudo cargar la lista de colaboradores.
@@ -161,11 +241,21 @@ function openEditForm(item: { id: number }) {
       {{ item.identificationNumber }}
     </template>
 
+    <template #item.statusName="{ item }">
+      <v-chip size="small" variant="tonal" :color="item.statusColor">
+        {{ item.statusName }}
+      </v-chip>
+    </template>
+
     <template #item.actions="{ item }">
       <ActionsMenu
         :record="item"
+        :blockable="item.statusCode === STAFF_STATUS_CODE.ACTIVE"
+        :unblockable="item.statusCode === STAFF_STATUS_CODE.BLOCKED"
         @view="viewDetail(item)"
         @edit="openEditForm(item)"
+        @block="askBlock(item.id)"
+        @unblock="askUnblock(item.id)"
       />
     </template>
 
@@ -179,11 +269,28 @@ function openEditForm(item: { id: number }) {
     </template>
   </v-data-table-server>
 
+  <FiltersDrawer
+    v-model:open="filtersOpen"
+    v-model:values="filterValues"
+    :fields="filterFields"
+    @clear="clearAllFilters"
+  />
+
   <StaffDetailDrawer
     v-model:open="detailDrawerOpen"
     :staff="selectedStaff ?? null"
     :loading="detailLoading"
     @edit="openEditForm"
+    @block="askBlock($event.id)"
+    @unblock="askUnblock($event.id)"
+  />
+
+  <BlockStaffDialog
+    :ref="setBlockDialogRef"
+    :type="blockType"
+    :loading="isBlocking"
+    :error-fields="blockErrorFields"
+    @confirm="confirmChange"
   />
 </template>
 

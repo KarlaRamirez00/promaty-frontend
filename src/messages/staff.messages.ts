@@ -8,6 +8,14 @@ export default {
     title: 'Colaborador editado con éxito',
     message: 'Puedes ver el colaborador actualizado desde la lista.',
   },
+  toastBlock: {
+    title: 'Colaborador bloqueado',
+    message: 'El colaborador quedó bloqueado con éxito.',
+  },
+  toastUnblock: {
+    title: 'Colaborador desbloqueado',
+    message: 'El colaborador volvió a estado activo.',
+  },
   toastError: {
     title: 'Hubo un error',
     message: 'Revisa tu conexión a internet o contacta con un administrador.',
@@ -60,5 +68,7 @@ export default {
     accountTypeRequired: 'El tipo de cuenta es obligatorio.',
     accountNumberRequired: 'El número de cuenta es obligatorio.',
     accountNumberMaxLength: 'Máximo 30 caracteres.',
+    blockReasonRequired: 'Indica el motivo del bloqueo.',
+    blockReasonMaxLength: 'Máximo 250 caracteres.',
   },
 }

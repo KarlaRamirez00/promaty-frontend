@@ -40,11 +40,26 @@ export interface StaffBankOption extends StaffCatalogOption {
   supportsRutAccount: boolean
 }
 
+const STAFF_STATUS_COLORS: Record<string, string> = {
+  PENDING_CONTRACT: 'warning',
+  ACTIVE: 'success',
+  UNLINKED: 'grey',
+  BLOCKED: 'error',
+}
+
+export function staffStatusColor(code: string): string {
+  return STAFF_STATUS_COLORS[code] ?? 'grey'
+}
+
 export interface StaffListItem {
   id: number
   identificationType: IdentificationType
   identificationNumber: string
   fullName: string
+  costCenterCode: string
+  statusCode: string
+  statusName: string
+  statusColor: string
   actions: string[]
 }
 
@@ -78,12 +93,26 @@ export interface Staff {
   bank: StaffCatalogOption
   accountType: AccountType
   accountNumber: string
+  status: StaffCatalogOption
+  blockReason: string | null
   createdAt: string
   updatedAt: string
   createdBy: string
   updatedBy: string
   actions: string[]
 }
+
+// Códigos de platformStatuses?subModule=staff; la lógica compara contra code, nunca contra id.
+export const STAFF_STATUS_CODE = {
+  ACTIVE: 'ACTIVE',
+  BLOCKED: 'BLOCKED',
+} as const
+
+export interface StaffBlockForm {
+  reason: string
+}
+
+export const createStaffBlockForm = (): StaffBlockForm => ({ reason: '' })
 
 export interface StaffForm {
   id: number | null
@@ -150,10 +179,14 @@ export const createStaffForm = (overrides: Partial<StaffForm> = {}): StaffForm =
 
 export interface StaffFilters {
   search: string
+  statusCode: string | null
+  costCenterCode: string | null
 }
 
 export const createStaffFilters = (overrides: Partial<StaffFilters> = {}): StaffFilters => ({
   search: '',
+  statusCode: null,
+  costCenterCode: null,
   ...overrides,
 })
 
@@ -198,6 +231,12 @@ export const DEFAULT_STAFF_QUERY: StaffQueryParams = {
   sort: DEFAULT_STAFF_SORT,
 }
 
+const FILTER_CODE_PATTERN = /^[\w-]{1,30}$/
+
+function toFilterCode(raw: unknown): string | null {
+  return typeof raw === 'string' && FILTER_CODE_PATTERN.test(raw) ? raw : null
+}
+
 function toPage(raw: unknown): number {
   const n = Number(raw)
   return Number.isInteger(n) && n >= 1 ? n : DEFAULT_STAFF_QUERY.page
@@ -211,6 +250,8 @@ function toPageSize(raw: unknown): number {
 export function parseStaffQuery(query: Record<string, unknown>): StaffQueryParams {
   return {
     search: typeof query.search === 'string' ? query.search : '',
+    statusCode: toFilterCode(query.statusCode),
+    costCenterCode: toFilterCode(query.costCenterCode),
     page: toPage(query.page),
     size: toPageSize(query.size),
     sort: parseStaffSort(query.sort),
@@ -221,6 +262,8 @@ export function staffQueryToRoute(params: StaffQueryParams): Record<string, stri
   const query: Record<string, string> = {}
   const search = params.search.trim()
   if (search) query.search = search
+  if (params.statusCode) query.statusCode = params.statusCode
+  if (params.costCenterCode) query.costCenterCode = params.costCenterCode
   if (params.page !== DEFAULT_STAFF_QUERY.page) query.page = String(params.page)
   if (params.size !== DEFAULT_STAFF_QUERY.size) query.size = String(params.size)
   if (!isDefaultStaffSort(params.sort)) query.sort = formatStaffSort(params.sort)

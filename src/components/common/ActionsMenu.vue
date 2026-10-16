@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
+  mdiAccountLockOpenOutline,
+  mdiAccountLockOutline,
   mdiCheck,
   mdiClose,
   mdiDotsHorizontal,
@@ -15,9 +17,14 @@ const props = withDefaults(
     record: { active?: boolean; actions: string[] }
     // false en el slide de detalle: "Ver detalle" no tiene sentido si ya estás viendo el detalle.
     showView?: boolean
+    // El estado del registro (no solo el permiso) decide si se puede bloquear.
+    blockable?: boolean
+    unblockable?: boolean
   }>(),
   {
     showView: true,
+    blockable: false,
+    unblockable: false,
   },
 )
 
@@ -28,6 +35,8 @@ const emit = defineEmits<{
   approve: []
   validate: []
   reject: []
+  block: []
+  unblock: []
 }>()
 
 // actions[] es la única fuente: backend ya lo calcula según los permisos del usuario y el estado del registro.
@@ -40,6 +49,8 @@ const showToggle = computed(
 const showApprove = computed(() => props.record.actions.includes(ACTION.APPROVE))
 const showValidate = computed(() => props.record.actions.includes(ACTION.VALIDATE))
 const showReject = computed(() => showApprove.value || showValidate.value)
+const showBlock = computed(() => props.blockable && props.record.actions.includes(ACTION.STATUS))
+const showUnblock = computed(() => props.unblockable && props.record.actions.includes(ACTION.STATUS))
 const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activar'))
 const toggleColor = computed(() => (props.record.active ? 'error' : 'success'))
 
@@ -50,6 +61,8 @@ const hasAnyAction = computed(
     props.showView ||
     showEdit.value ||
     showToggle.value ||
+    showBlock.value ||
+    showUnblock.value ||
     showApprove.value ||
     showValidate.value,
 )
@@ -103,6 +116,20 @@ const hasAnyAction = computed(
         :base-color="toggleColor"
         :title="toggleLabel"
         @click="emit('toggle')"
+      />
+      <v-list-item
+        v-if="showBlock"
+        :prepend-icon="mdiAccountLockOutline"
+        base-color="error"
+        title="Bloquear"
+        @click="emit('block')"
+      />
+      <v-list-item
+        v-if="showUnblock"
+        :prepend-icon="mdiAccountLockOpenOutline"
+        base-color="success"
+        title="Desbloquear"
+        @click="emit('unblock')"
       />
     </v-list>
   </v-menu>

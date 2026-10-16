@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { accountTypeLabel, identificationTypeLabel, type Staff } from '@/models'
-import { formatDate, formatPhone } from '@/utils'
+import {
+  accountTypeLabel,
+  identificationTypeLabel,
+  STAFF_STATUS_CODE,
+  staffStatusColor,
+  type Staff,
+} from '@/models'
+import { formatDate, formatPhone, NO_DATA } from '@/utils'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailFieldList from '@/components/common/DetailFieldList.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
@@ -15,7 +21,12 @@ const open = defineModel<boolean>('open', { default: false })
 
 const emit = defineEmits<{
   edit: [staff: Staff]
+  block: [staff: Staff]
+  unblock: [staff: Staff]
 }>()
+
+const isActive = computed(() => props.staff?.status.code === STAFF_STATUS_CODE.ACTIVE)
+const isBlocked = computed(() => props.staff?.status.code === STAFF_STATUS_CODE.BLOCKED)
 
 const fields = computed(() => {
   const s = props.staff
@@ -56,6 +67,9 @@ const fields = computed(() => {
     { key: 'createdBy', label: 'Creado por', value: s.createdBy },
     { key: 'updatedAt', label: 'Última actualización', value: s.updatedAt },
     { key: 'updatedBy', label: 'Actualizado por', value: s.updatedBy },
+    ...(isBlocked.value
+      ? [{ key: 'blockReason', label: 'Motivo del bloqueo', value: s.blockReason || NO_DATA }]
+      : []),
   ]
 })
 </script>
@@ -66,11 +80,27 @@ const fields = computed(() => {
     entity="colaborador"
     width="clamp(360px, 40vw, 480px)"
   >
+    <template #badge>
+      <v-chip
+        v-if="staff"
+        size="small"
+        variant="tonal"
+        :color="staffStatusColor(staff.status.code)"
+        class="mt-1"
+      >
+        {{ staff.status.name }}
+      </v-chip>
+    </template>
+
     <template v-if="staff" #menu>
       <ActionsMenu
         :record="staff"
         :show-view="false"
+        :blockable="isActive"
+        :unblockable="isBlocked"
         @edit="emit('edit', staff)"
+        @block="emit('block', staff)"
+        @unblock="emit('unblock', staff)"
       />
     </template>
 

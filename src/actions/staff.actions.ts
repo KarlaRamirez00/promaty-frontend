@@ -12,16 +12,20 @@ import {
   listRegionOptionsApi,
   listRegisteredSexOptionsApi,
   listStaffApi,
+  listStaffStatusOptionsApi,
   updateStaffApi,
+  updateStaffStatusApi,
 } from '@/services'
 import {
+  mapperStaffBlockPayload,
   mapperStaffDetail,
   mapperStaffFormToCreatePayload,
   mapperStaffFormToPayload,
   mapperStaffList,
+  mapperStaffUnblockPayload,
 } from '@/mappers'
-import { useGetDetail, useGetTable, useMutateForm } from '@/utils'
-import type { StaffForm, StaffQueryParams } from '@/models'
+import { useGetDetail, useGetTable, useMutateAction, useMutateForm } from '@/utils'
+import type { StaffBlockForm, StaffForm, StaffQueryParams } from '@/models'
 
 export function getStaffListAction(params: StaffQueryParams) {
   return useGetTable(listStaffApi, params, mapperStaffList)
@@ -41,6 +45,25 @@ export function updateStaffAction(form: StaffForm) {
     form,
     mapperStaffFormToPayload,
   )
+}
+
+export function blockStaffAction(id: number, blockedStatusId: number, form: StaffBlockForm) {
+  return useMutateForm(
+    (payload) => updateStaffStatusApi(id, payload),
+    form,
+    (blockForm: StaffBlockForm) => mapperStaffBlockPayload(blockedStatusId, blockForm),
+  )
+}
+
+export function unblockStaffAction(id: number, activeStatusId: number) {
+  return useMutateAction(
+    (payload) => updateStaffStatusApi(id, payload),
+    mapperStaffUnblockPayload(activeStatusId),
+  )
+}
+
+export function getStaffStatusOptionsAction() {
+  return listStaffStatusOptionsApi()
 }
 
 export function getRegisteredSexOptionsAction() {

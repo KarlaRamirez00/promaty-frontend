@@ -7,6 +7,7 @@ import type {
   StaffFormPayload,
   StaffListRaw,
   StaffRaw,
+  StaffStatusPayload,
 } from '@/types/staff'
 import type { StaffQueryParams } from '@/models'
 
@@ -14,6 +15,8 @@ export async function listStaffApi(params: StaffQueryParams): Promise<PageResult
   const response = await rrhhApi.get<ApiListResponse<StaffListRaw>>('/staff', {
     params: {
       search: params.search || undefined,
+      statusCode: params.statusCode ?? undefined,
+      costCenterCode: params.costCenterCode ?? undefined,
       page: params.page - 1,
       size: params.size,
       sort: `${params.sort.key},${params.sort.order}`,
@@ -35,6 +38,17 @@ export async function createStaffApi(payload: StaffCreatePayload): Promise<numbe
 export async function updateStaffApi(id: number, payload: StaffFormPayload): Promise<StaffRaw> {
   const response = await rrhhApi.put<ApiResponse<StaffRaw>>(`/staff/${id}`, payload)
   return unwrap(response)
+}
+
+export async function updateStaffStatusApi(id: number, payload: StaffStatusPayload): Promise<void> {
+  await rrhhApi.patch(`/staff/${id}/status`, payload)
+}
+
+export async function listStaffStatusOptionsApi(): Promise<CatalogOptionRaw[]> {
+  const response = await rrhhApi.get<ApiListResponse<CatalogOptionRaw>>('/platformStatuses', {
+    params: { subModule: 'staff' },
+  })
+  return response.data.data
 }
 
 // ==========================================

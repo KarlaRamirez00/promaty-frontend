@@ -27,6 +27,9 @@ export interface StaffListRaw {
   updatedAt: string
   createdBy: string
   updatedBy: string
+  costCenterCode: string | null
+  statusCode: string
+  statusName: string
   actions: string[]
 }
 
@@ -55,6 +58,13 @@ export interface StaffRaw extends StaffListRaw {
   bank: CatalogOptionRaw
   accountType: AccountType
   accountNumber: string
+  status: CatalogOptionRaw
+  blockReason: string | null
+}
+
+export interface StaffStatusPayload {
+  statusId: number
+  blockReason?: string
 }
 
 // La identificación (tipo + número) es inmutable tras crear — no forma parte del payload de edición.
