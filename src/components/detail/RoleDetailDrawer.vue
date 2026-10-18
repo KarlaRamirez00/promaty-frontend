@@ -93,9 +93,9 @@ const tiles = computed(() => {
         <span class="text-h6 font-weight-bold">{{ role.name }}</span>
       </div>
 
-      <div class="role-detail-description d-flex justify-space-between ga-4 text-body-2 pb-3 mb-4">
-        <span class="text-medium-emphasis">Descripción</span>
-        <span class="text-right">{{ role.description ?? 'Sin descripción' }}</span>
+      <div class="role-detail-description text-body-2 pb-3 mb-4">
+        <div class="text-medium-emphasis mb-1">Descripción</div>
+        <p class="role-detail-description__text">{{ role.description ?? 'Sin descripción' }}</p>
       </div>
 
       <v-row dense>
@@ -212,6 +212,12 @@ const tiles = computed(() => {
 <style scoped>
 .role-detail-description {
   border-bottom: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+.role-detail-description__text {
+  text-align: justify;
+  hyphens: auto;
+  word-break: break-word;
 }
 
 .role-detail-row {
