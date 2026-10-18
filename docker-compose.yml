@@ -1,0 +1,16 @@
+# Sistema completo: backend (postgres + 5 servicios) y frontend.
+# Requiere Docker Compose 2.20+ (directiva `include`) y el repo promaty-backend como carpeta hermana.
+include:
+  - path: ../promaty-backend/docker-compose.yml
+    env_file: ../promaty-backend/.env
+
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8083}
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - gateway-server

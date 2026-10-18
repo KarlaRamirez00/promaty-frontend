@@ -41,6 +41,32 @@ npm run preview   # previsualizar el build
 npm run lint      # lint del proyecto
 ```
 
+## Docker
+
+El `Dockerfile` compila la app (Node) y la sirve con nginx. El `docker-compose.yml` de este repo incluye el
+compose del backend (`../promaty-backend`, carpeta hermana) y levanta todo el sistema con un comando:
+
+```bash
+# 1. Configura el .env del backend (ver su README), con CORS_ALLOWED_ORIGINS=http://localhost:5173
+# 2. Desde este repo:
+docker compose up --build
+```
+
+Frontend en http://localhost:5173 y gateway en http://localhost:8083.
+
+| Variable | Dónde se usa | Por defecto |
+|---|---|---|
+| `VITE_API_URL` | Build del frontend. Se incrusta en el bundle: es la URL del gateway **vista desde el navegador** | `http://localhost:8083` |
+| `FRONTEND_PORT` | Puerto publicado del frontend | `5173` |
+
+Las variables del backend (`DB_*`, `JWT_SECRET`, puertos, `CORS_ALLOWED_ORIGINS`) se leen de `../promaty-backend/.env`.
+Si cambias `VITE_API_URL`, reconstruye la imagen (`docker compose build frontend`). Solo el frontend:
+
+```bash
+docker build -t promaty-frontend --build-arg VITE_API_URL=http://localhost:8083 .
+docker run -p 5173:80 promaty-frontend
+```
+
 ## Integrante
 
 | Nombre | Rol |
