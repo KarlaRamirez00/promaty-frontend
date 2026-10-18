@@ -1,6 +1,7 @@
 import type { NavigationGuardWithThis } from 'vue-router'
 import { useAuthStore } from '@/stores'
 import { ROUTE } from '@/router/route-names'
+import { safeRedirect } from '@/utils'
 
 export const authMiddleware: NavigationGuardWithThis<undefined> = (to) => {
   const auth = useAuthStore()
@@ -14,8 +15,7 @@ export const authMiddleware: NavigationGuardWithThis<undefined> = (to) => {
   }
 
   if (to.meta.public && auth.isAuthenticated) {
-    const redirect = to.query.redirect
-    return typeof redirect === 'string' && redirect.startsWith('/') ? redirect : { path: '/' }
+    return safeRedirect(to.query.redirect) ?? { path: '/' }
   }
 
   if (to.meta.module && to.meta.permission) {

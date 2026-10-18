@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
 import { useAuthStore } from '@/stores'
 import { ApiRequestError } from '@/lib/http'
+import { safeRedirect } from '@/utils'
 import PromatyLogo from '@/components/PromatyLogo.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 
@@ -20,7 +21,7 @@ const errorMessage = ref('')
 const required = (label: string) => (value: string) => !!value || `Ingresa ${label}.`
 
 const isDev = import.meta.env.DEV
-const devCredentials = { email: 'karla@promaty.cl', password: 'admin2026' }
+const devCredentials = { email: 'test@promaty.cl', password: 'Test.2026' }
 
 function fillDevCredentials() {
   email.value = devCredentials.email
@@ -28,18 +29,14 @@ function fillDevCredentials() {
 }
 
 async function submit() {
-  if (!email.value || !password.value) return
+  if (loading.value || !email.value || !password.value) return
 
-  const target =
-    typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/')
-      ? route.query.redirect
-      : '/'
+  const target = safeRedirect(route.query.redirect) ?? '/'
 
   errorMessage.value = ''
   loading.value = true
   try {
     await auth.login({ email: email.value, password: password.value })
-    await router.replace(target)
   } catch (error) {
     if (error instanceof ApiRequestError) {
       errorMessage.value =
@@ -49,6 +46,16 @@ async function submit() {
     } else {
       errorMessage.value = 'No se pudo iniciar sesión. Intenta nuevamente.'
     }
+    loading.value = false
+    return
+  }
+
+  // La sesión ya está iniciada: si la ruta guardada no carga, se entra por la raíz en vez de mostrar un error de login.
+  try {
+    await router.replace(target)
+  } catch (error) {
+    console.error('No se pudo abrir la ruta solicitada tras el login', error)
+    await router.replace('/')
   } finally {
     loading.value = false
   }

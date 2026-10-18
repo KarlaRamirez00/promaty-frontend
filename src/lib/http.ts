@@ -47,8 +47,10 @@ function redirectToLoginOnSessionExpired(client: AxiosInstance): void {
     (response) => response,
     (error: AxiosError<ApiErrorResponse>) => {
       if (error.response?.status === 401 && window.location.pathname !== '/login') {
+        const { pathname, search } = window.location
         clearToken()
-        window.location.href = '/login'
+        window.location.href =
+          pathname === '/' ? '/login' : `/login?redirect=${encodeURIComponent(pathname + search)}`
       }
       return Promise.reject(error)
     },
