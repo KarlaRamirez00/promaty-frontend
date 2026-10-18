@@ -1,4 +1,10 @@
-import { mdiDomain, mdiOfficeBuildingCogOutline, mdiShapeOutline, mdiToolboxOutline } from '@mdi/js'
+import {
+  mdiCancel,
+  mdiDomain,
+  mdiOfficeBuildingCogOutline,
+  mdiShapeOutline,
+  mdiToolboxOutline,
+} from '@mdi/js'
 import type { MenuItem } from '@/data/menu/menu.types'
 
 export const maintainersMenu: MenuItem = {
@@ -18,6 +24,13 @@ export const maintainersMenu: MenuItem = {
       icon: mdiToolboxOutline,
       to: '/project-specialties',
       module: 'projectSpecialty',
+      permission: 'read',
+    },
+    {
+      title: 'Motivos de rechazo',
+      icon: mdiCancel,
+      to: '/rejection-reasons',
+      module: 'requestRejectionReason',
       permission: 'read',
     },
   ],
