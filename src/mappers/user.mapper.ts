@@ -32,7 +32,7 @@ export function mapperUserDetail(raw: UserDetailRaw): User {
     lastName: raw.lastName,
     fullName: toFullName(raw.firstName, raw.lastName),
     email: raw.email,
-    phoneNumber: raw.phoneNumber,
+    phoneNumber: raw.phoneNumber ?? '',
     active: raw.active,
     status: toStatusBadge(raw.active),
     role: raw.role,

@@ -8,7 +8,7 @@ export interface UserRaw {
   firstName: string
   lastName: string
   email: string
-  phoneNumber: string
+  phoneNumber: string | null
   active: boolean
   role: UserRoleRaw
   createdAt: string
