@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { keepPreviousData, useQuery } from '@tanstack/vue-query'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import {
   getCostCenterOptionsAction,
   getStaffDetailAction,
   getStaffListAction,
   getStaffStatusOptionsAction,
 } from '@/actions'
+import { useActiveFilters } from '@/composables/useActiveFilters'
 import { useDetailSlide } from '@/composables/useDetailSlide'
+import { useListQuery } from '@/composables/useListQuery'
 import { usePermissions } from '@/composables/usePermissions'
 import { useStaffBlock } from '@/composables/useStaffBlock'
 import { ROUTE } from '@/router/route-names'
@@ -19,7 +21,6 @@ import {
   staffQueryToRoute,
   type StaffListItem,
   type StaffQueryParams,
-  type StaffSort,
 } from '@/models'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
 import FiltersDrawer, { type FilterField } from '@/components/common/FiltersDrawer.vue'
@@ -29,24 +30,9 @@ import BlockStaffDialog from '@/components/common/BlockStaffDialog.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const route = useRoute()
 const router = useRouter()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-
-const query = computed<StaffQueryParams>(() => parseStaffQuery(route.query))
-
-// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
-let pendingQuery: StaffQueryParams | null = null
-
-function patchQuery(patch: Partial<StaffQueryParams>) {
-  const next: StaffQueryParams = { ...(pendingQuery ?? query.value), ...patch }
-  if (!('page' in patch)) next.page = 1
-  pendingQuery = next
-  void router.replace({ query: { ...staffQueryToRoute(next), ...detailQueryParam.value } }).finally(() => {
-    pendingQuery = null
-  })
-}
 
 const {
   detailQueryParam,
@@ -66,18 +52,26 @@ const {
   confirmChange,
 } = useStaffBlock()
 
-const searchInput = ref(query.value.search)
-let debounceTimer: ReturnType<typeof setTimeout>
-watch(searchInput, (value) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
+const {
+  query,
+  patchQuery,
+  searchInput,
+  sortBy,
+  changeSort,
+  pageModel,
+  sizeModel,
+  items,
+  totalItems,
+  pageCount,
+  isPending,
+  isError,
+} = useListQuery<StaffQueryParams, StaffListItem>({
+  resource: 'staff',
+  parse: parseStaffQuery,
+  toRoute: staffQueryToRoute,
+  fetch: getStaffListAction,
+  extraRouteQuery: () => detailQueryParam.value,
 })
-watch(
-  () => query.value.search,
-  (value) => {
-    if (value !== searchInput.value.trim()) searchInput.value = value
-  },
-)
 
 const filtersOpen = ref(false)
 
@@ -118,56 +112,17 @@ const filterValues = computed<Record<string, unknown>>({
   },
 })
 
-const activeFilters = computed(() => {
-  const active: { key: string; label: string }[] = []
-  const statusName = statusOptions.value?.find((o) => o.code === query.value.statusCode)?.name
-  const costCenter = costCenterOptions.value?.find((o) => o.code === query.value.costCenterCode)?.title
-  if (statusName) active.push({ key: 'statusCode', label: `Estado: ${statusName}` })
-  if (costCenter) active.push({ key: 'costCenterCode', label: `Centro de costo: ${costCenter}` })
-  return active
-})
-
-function clearFilter(key: string) {
-  patchQuery({ [key]: null })
-}
-
-function clearAllFilters() {
-  patchQuery({ statusCode: null, costCenterCode: null })
-}
-
-const sort = computed<StaffSort>(() => query.value.sort)
-const sortBy = computed(() => [{ key: sort.value.key, order: sort.value.order }])
-
-function changeSort(value: readonly { key: string; order?: boolean | 'asc' | 'desc' }[]) {
-  const entry = value[0]
-  if (!entry) return
-  patchQuery({ sort: { key: entry.key, order: entry.order === 'desc' ? 'desc' : 'asc' } })
-}
-
-const pageModel = computed<number>({
-  get: () => query.value.page,
-  set: (value) => patchQuery({ page: value }),
-})
-
-const sizeModel = computed<number>({
-  get: () => query.value.size,
-  set: (value) => patchQuery({ size: value }),
-})
-
-const listQueryKey = computed(() => ['staff', { ...query.value }])
-
-const { data: listResult, isPending, isError } = useQuery({
-  queryKey: listQueryKey,
-  queryFn: () => getStaffListAction({ ...query.value }),
-  placeholderData: keepPreviousData,
-})
-
-const items = computed<StaffListItem[]>(() => listResult.value?.data ?? [])
-const totalItems = computed(() => listResult.value?.meta.total ?? 0)
-const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
-
-watch(pageCount, (count) => {
-  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
+const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<StaffQueryParams>({
+  patchQuery,
+  resetAll: { statusCode: null, costCenterCode: null },
+  chips: () => {
+    const chips = []
+    const statusName = statusOptions.value?.find((o) => o.code === query.value.statusCode)?.name
+    const costCenter = costCenterOptions.value?.find((o) => o.code === query.value.costCenterCode)?.title
+    if (statusName) chips.push({ key: 'statusCode', label: `Estado: ${statusName}` })
+    if (costCenter) chips.push({ key: 'costCenterCode', label: `Centro de costo: ${costCenter}` })
+    return chips
+  },
 })
 
 const headers = [

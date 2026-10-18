@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import {
   getCostCenterOptionsAction,
   getRoleOptionsAction,
@@ -9,9 +9,11 @@ import {
   getUserListAction,
   toggleUserActiveAction,
 } from '@/actions'
+import { useActiveFilters } from '@/composables/useActiveFilters'
 import { useDetailSlide } from '@/composables/useDetailSlide'
-import { useMessage } from '@/composables/useMessage'
+import { useListQuery } from '@/composables/useListQuery'
 import { usePermissions } from '@/composables/usePermissions'
+import { useToggleActive, type ToggleRecord } from '@/composables/useToggleActive'
 import { ROUTE } from '@/router/route-names'
 import messages from '@/messages'
 import {
@@ -19,7 +21,6 @@ import {
   userQueryToRoute,
   type UserListItem,
   type UserQueryParams,
-  type UserSort,
 } from '@/models'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
@@ -29,26 +30,9 @@ import ConfirmStatusDialog from '@/components/common/ConfirmStatusDialog.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const route = useRoute()
 const router = useRouter()
-const queryClient = useQueryClient()
-const { toastToggled, toastFailed } = useMessage()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-
-const query = computed<UserQueryParams>(() => parseUserQuery(route.query))
-
-// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
-let pendingQuery: UserQueryParams | null = null
-
-function patchQuery(patch: Partial<UserQueryParams>) {
-  const next: UserQueryParams = { ...(pendingQuery ?? query.value), ...patch }
-  if (!('page' in patch)) next.page = 1
-  pendingQuery = next
-  void router.replace({ query: { ...userQueryToRoute(next), ...detailQueryParam.value } }).finally(() => {
-    pendingQuery = null
-  })
-}
 
 const {
   detailQueryParam,
@@ -59,18 +43,26 @@ const {
   isLoading: detailLoading,
 } = useDetailSlide('users', getUserDetailAction)
 
-const searchInput = ref(query.value.search)
-let debounceTimer: ReturnType<typeof setTimeout>
-watch(searchInput, (value) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
+const {
+  query,
+  patchQuery,
+  searchInput,
+  sortBy,
+  changeSort,
+  pageModel,
+  sizeModel,
+  items,
+  totalItems,
+  pageCount,
+  isPending,
+  isError,
+} = useListQuery<UserQueryParams, UserListItem>({
+  resource: 'users',
+  parse: parseUserQuery,
+  toRoute: userQueryToRoute,
+  fetch: getUserListAction,
+  extraRouteQuery: () => detailQueryParam.value,
 })
-watch(
-  () => query.value.search,
-  (value) => {
-    if (value !== searchInput.value.trim()) searchInput.value = value
-  },
-)
 
 const filtersOpen = ref(false)
 
@@ -107,57 +99,18 @@ const filterValues = computed<Record<string, unknown>>({
   },
 })
 
-const activeFilters = computed(() => {
-  const active: { key: string; label: string }[] = []
-  const roleName = roleOptions.value?.find((o) => o.id === query.value.roleId)?.name
-  if (roleName) active.push({ key: 'roleId', label: `Rol: ${roleName}` })
-  if (query.value.active !== null) {
-    active.push({ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` })
-  }
-  return active
-})
-
-function clearFilter(key: string) {
-  patchQuery({ [key]: null })
-}
-
-function clearAllFilters() {
-  patchQuery({ roleId: null, active: null })
-}
-
-const sort = computed<UserSort>(() => query.value.sort)
-const sortBy = computed(() => [{ key: sort.value.key, order: sort.value.order }])
-
-function changeSort(value: readonly { key: string; order?: boolean | 'asc' | 'desc' }[]) {
-  const entry = value[0]
-  if (!entry) return
-  patchQuery({ sort: { key: entry.key, order: entry.order === 'desc' ? 'desc' : 'asc' } })
-}
-
-const pageModel = computed<number>({
-  get: () => query.value.page,
-  set: (value) => patchQuery({ page: value }),
-})
-
-const sizeModel = computed<number>({
-  get: () => query.value.size,
-  set: (value) => patchQuery({ size: value }),
-})
-
-const listQueryKey = computed(() => ['users', { ...query.value }])
-
-const { data: listResult, isPending, isError } = useQuery({
-  queryKey: listQueryKey,
-  queryFn: () => getUserListAction({ ...query.value }),
-  placeholderData: keepPreviousData,
-})
-
-const items = computed<UserListItem[]>(() => listResult.value?.data ?? [])
-const totalItems = computed(() => listResult.value?.meta.total ?? 0)
-const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
-
-watch(pageCount, (count) => {
-  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
+const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<UserQueryParams>({
+  patchQuery,
+  resetAll: { roleId: null, active: null },
+  chips: () => {
+    const chips = []
+    const roleName = roleOptions.value?.find((o) => o.id === query.value.roleId)?.name
+    if (roleName) chips.push({ key: 'roleId', label: `Rol: ${roleName}` })
+    if (query.value.active !== null) {
+      chips.push({ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` })
+    }
+    return chips
+  },
 })
 
 const headers = [
@@ -191,29 +144,21 @@ function openEditForm(item: { id: number }) {
   router.push({ name: ROUTE.USER_EDIT, params: { id: String(item.id) } })
 }
 
-const statusDialogRef = ref<InstanceType<typeof ConfirmStatusDialog> | null>(null)
-const statusRecord = ref<{ id: number; name: string; active: boolean } | null>(null)
-
-function askToggleActive(item: { id: number; fullName: string; active: boolean }) {
-  statusRecord.value = { id: item.id, name: item.fullName, active: item.active }
-  statusDialogRef.value?.open()
-}
-
-const toggleMutation = useMutation({
-  mutationFn: (id: number) => toggleUserActiveAction(id),
-  onSuccess: () => {
-    closeDetail()
-    statusDialogRef.value?.close()
-    if (statusRecord.value) toastToggled(statusRecord.value.active, messages.user)
-    return queryClient.invalidateQueries({ queryKey: ['users'] })
-  },
-  onError: () => {
-    toastFailed(messages.user)
-  },
+const {
+  setDialogRef: setToggleDialogRef,
+  record: toggleRecord,
+  isPending: isToggling,
+  ask,
+  confirm: confirmToggleActive,
+} = useToggleActive<ToggleRecord>({
+  resource: 'users',
+  toggle: (record) => toggleUserActiveAction(record.id),
+  messages: messages.user,
+  closeDetail,
 })
 
-function confirmToggleActive() {
-  if (statusRecord.value) toggleMutation.mutate(statusRecord.value.id)
+function askToggleActive(item: { id: number; fullName: string; active: boolean }) {
+  ask({ id: item.id, name: item.fullName, active: item.active })
 }
 </script>
 
@@ -308,9 +253,9 @@ function confirmToggleActive() {
   />
 
   <ConfirmStatusDialog
-    ref="statusDialogRef"
-    :record="statusRecord"
-    :loading="toggleMutation.isPending.value"
+    :ref="setToggleDialogRef"
+    :record="toggleRecord"
+    :loading="isToggling"
     entity="usuario"
     @confirm="confirmToggleActive"
   />

@@ -10,7 +10,7 @@ interface SaveMessages {
   toastUpdate: ToastText
 }
 
-interface ToggleMessages {
+export interface ToggleMessages {
   toastActivate: ToastText
   toastDeactivate: ToastText
 }
@@ -26,7 +26,7 @@ interface BlockMessages {
   toastUnblock: ToastText
 }
 
-interface ErrorMessages {
+export interface ErrorMessages {
   toastError: ToastText
 }
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { useRouter } from 'vue-router'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { mdiChevronRight, mdiContentSave } from '@mdi/js'
 import {
   getClientOptionsAction,
@@ -12,8 +12,10 @@ import {
   getProjectTypeOptionsAction,
   updateProjectStatusAction,
 } from '@/actions'
-import { usePermissions } from '@/composables/usePermissions'
+import { useActiveFilters } from '@/composables/useActiveFilters'
 import { useDetailSlide } from '@/composables/useDetailSlide'
+import { useListQuery } from '@/composables/useListQuery'
+import { usePermissions } from '@/composables/usePermissions'
 import { useMessage } from '@/composables/useMessage'
 import { useSnackbarStore } from '@/stores'
 import { ACTION } from '@/constants/actions.constants'
@@ -24,7 +26,6 @@ import {
   projectQueryToRoute,
   type ProjectListItem,
   type ProjectQueryParams,
-  type ProjectSort,
 } from '@/models'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
@@ -33,24 +34,9 @@ import ProjectDetailDrawer from '@/components/detail/ProjectDetailDrawer.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const route = useRoute()
 const router = useRouter()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-
-const query = computed<ProjectQueryParams>(() => parseProjectQuery(route.query))
-
-// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
-let pendingQuery: ProjectQueryParams | null = null
-
-function patchQuery(patch: Partial<ProjectQueryParams>) {
-  const next: ProjectQueryParams = { ...(pendingQuery ?? query.value), ...patch }
-  if (!('page' in patch)) next.page = 1
-  pendingQuery = next
-  void router.replace({ query: { ...projectQueryToRoute(next), ...detailQueryParam.value } }).finally(() => {
-    pendingQuery = null
-  })
-}
 
 const {
   detailId,
@@ -62,18 +48,26 @@ const {
   isLoading: detailLoading,
 } = useDetailSlide('projects', getProjectDetailAction)
 
-const searchInput = ref(query.value.search)
-let debounceTimer: ReturnType<typeof setTimeout>
-watch(searchInput, (value) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
+const {
+  query,
+  patchQuery,
+  searchInput,
+  sortBy,
+  changeSort,
+  pageModel,
+  sizeModel,
+  items,
+  totalItems,
+  pageCount,
+  isPending,
+  isError,
+} = useListQuery<ProjectQueryParams, ProjectListItem>({
+  resource: 'projects',
+  parse: parseProjectQuery,
+  toRoute: projectQueryToRoute,
+  fetch: getProjectListAction,
+  extraRouteQuery: () => detailQueryParam.value,
 })
-watch(
-  () => query.value.search,
-  (value) => {
-    if (value !== searchInput.value.trim()) searchInput.value = value
-  },
-)
 
 const filtersOpen = ref(false)
 
@@ -138,60 +132,21 @@ const filterValues = computed<Record<string, unknown>>({
   },
 })
 
-const activeFilters = computed(() => {
-  const active: { key: string; label: string }[] = []
-  const typeName = typeOptions.value?.find((o) => o.id === query.value.typeId)?.name
-  const specialtyName = specialtyOptions.value?.find((o) => o.id === query.value.specialtyId)?.name
-  const clientName = clientOptions.value?.find((o) => o.id === query.value.clientId)?.name
-  const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
-  if (typeName) active.push({ key: 'typeId', label: `Tipo: ${typeName}` })
-  if (specialtyName) active.push({ key: 'specialtyId', label: `Especialidad: ${specialtyName}` })
-  if (clientName) active.push({ key: 'clientId', label: `Mandante: ${clientName}` })
-  if (statusName) active.push({ key: 'statusId', label: `Estado: ${statusName}` })
-  return active
-})
-
-function clearFilter(key: string) {
-  patchQuery({ [key]: null })
-}
-
-function clearAllFilters() {
-  patchQuery({ typeId: null, specialtyId: null, clientId: null, statusId: null })
-}
-
-const sort = computed<ProjectSort>(() => query.value.sort)
-const sortBy = computed(() => [{ key: sort.value.key, order: sort.value.order }])
-
-function changeSort(value: readonly { key: string; order?: boolean | 'asc' | 'desc' }[]) {
-  const entry = value[0]
-  if (!entry) return
-  patchQuery({ sort: { key: entry.key, order: entry.order === 'desc' ? 'desc' : 'asc' } })
-}
-
-const pageModel = computed<number>({
-  get: () => query.value.page,
-  set: (value) => patchQuery({ page: value }),
-})
-
-const sizeModel = computed<number>({
-  get: () => query.value.size,
-  set: (value) => patchQuery({ size: value }),
-})
-
-const listQueryKey = computed(() => ['projects', { ...query.value }])
-
-const { data: listResult, isPending, isError } = useQuery({
-  queryKey: listQueryKey,
-  queryFn: () => getProjectListAction({ ...query.value }),
-  placeholderData: keepPreviousData,
-})
-
-const items = computed<ProjectListItem[]>(() => listResult.value?.data ?? [])
-const totalItems = computed(() => listResult.value?.meta.total ?? 0)
-const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
-
-watch(pageCount, (count) => {
-  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
+const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<ProjectQueryParams>({
+  patchQuery,
+  resetAll: { typeId: null, specialtyId: null, clientId: null, statusId: null },
+  chips: () => {
+    const chips = []
+    const typeName = typeOptions.value?.find((o) => o.id === query.value.typeId)?.name
+    const specialtyName = specialtyOptions.value?.find((o) => o.id === query.value.specialtyId)?.name
+    const clientName = clientOptions.value?.find((o) => o.id === query.value.clientId)?.name
+    const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
+    if (typeName) chips.push({ key: 'typeId', label: `Tipo: ${typeName}` })
+    if (specialtyName) chips.push({ key: 'specialtyId', label: `Especialidad: ${specialtyName}` })
+    if (clientName) chips.push({ key: 'clientId', label: `Mandante: ${clientName}` })
+    if (statusName) chips.push({ key: 'statusId', label: `Estado: ${statusName}` })
+    return chips
+  },
 })
 
 const headers = [

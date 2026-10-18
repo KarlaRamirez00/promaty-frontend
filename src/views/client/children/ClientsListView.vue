@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { getClientDetailAction, getClientListAction, toggleClientActiveAction } from '@/actions'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  getClientDetailAction,
+  getClientListAction,
+  toggleClientActiveAction,
+} from '@/actions'
+import { useActiveFilters } from '@/composables/useActiveFilters'
 import { useDetailSlide } from '@/composables/useDetailSlide'
-import { useMessage } from '@/composables/useMessage'
+import { useListQuery } from '@/composables/useListQuery'
 import { usePermissions } from '@/composables/usePermissions'
+import { useToggleActive, type ToggleRecord } from '@/composables/useToggleActive'
 import { ROUTE } from '@/router/route-names'
 import messages from '@/messages'
 import {
@@ -13,7 +18,6 @@ import {
   parseClientQuery,
   type ClientListItem,
   type ClientQueryParams,
-  type ClientSort,
 } from '@/models'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
@@ -23,26 +27,9 @@ import ConfirmStatusDialog from '@/components/common/ConfirmStatusDialog.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const route = useRoute()
 const router = useRouter()
-const queryClient = useQueryClient()
-const { toastToggled, toastFailed } = useMessage()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-
-const query = computed<ClientQueryParams>(() => parseClientQuery(route.query))
-
-// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
-let pendingQuery: ClientQueryParams | null = null
-
-function patchQuery(patch: Partial<ClientQueryParams>) {
-  const next: ClientQueryParams = { ...(pendingQuery ?? query.value), ...patch }
-  if (!('page' in patch)) next.page = 1
-  pendingQuery = next
-  void router.replace({ query: { ...clientQueryToRoute(next), ...detailQueryParam.value } }).finally(() => {
-    pendingQuery = null
-  })
-}
 
 const {
   detailQueryParam,
@@ -53,34 +40,28 @@ const {
   isLoading: detailLoading,
 } = useDetailSlide('clients', getClientDetailAction)
 
-const searchInput = ref(query.value.search)
-let debounceTimer: ReturnType<typeof setTimeout>
-watch(searchInput, (value) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
+const {
+  query,
+  patchQuery,
+  searchInput,
+  sortBy,
+  changeSort,
+  pageModel,
+  sizeModel,
+  items,
+  totalItems,
+  pageCount,
+  isPending,
+  isError,
+} = useListQuery<ClientQueryParams, ClientListItem>({
+  resource: 'clients',
+  parse: parseClientQuery,
+  toRoute: clientQueryToRoute,
+  fetch: getClientListAction,
+  extraRouteQuery: () => detailQueryParam.value,
 })
-watch(
-  () => query.value.search,
-  (value) => {
-    if (value !== searchInput.value.trim()) searchInput.value = value
-  },
-)
 
 const filtersOpen = ref(false)
-
-const activeFilter = computed<boolean | null>({
-  get: () => query.value.active,
-  set: (value) => patchQuery({ active: value }),
-})
-
-const activeFilters = computed(() => {
-  if (query.value.active === null) return []
-  return [{ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` }]
-})
-
-function clearActiveFilter() {
-  patchQuery({ active: null })
-}
 
 const filterFields: FilterField[] = [
   {
@@ -95,45 +76,17 @@ const filterFields: FilterField[] = [
 ]
 
 const filterValues = computed<Record<string, unknown>>({
-  get: () => ({ active: activeFilter.value }),
-  set: (value) => {
-    activeFilter.value = (value.active as boolean | null) ?? null
-  },
+  get: () => ({ active: query.value.active }),
+  set: (value) => patchQuery({ active: (value.active as boolean | null) ?? null }),
 })
 
-const sort = computed<ClientSort>(() => query.value.sort)
-const sortBy = computed(() => [{ key: sort.value.key, order: sort.value.order }])
-
-function changeSort(value: readonly { key: string; order?: boolean | 'asc' | 'desc' }[]) {
-  const entry = value[0]
-  if (!entry) return
-  patchQuery({ sort: { key: entry.key, order: entry.order === 'desc' ? 'desc' : 'asc' } })
-}
-
-const pageModel = computed<number>({
-  get: () => query.value.page,
-  set: (value) => patchQuery({ page: value }),
-})
-
-const sizeModel = computed<number>({
-  get: () => query.value.size,
-  set: (value) => patchQuery({ size: value }),
-})
-
-const listQueryKey = computed(() => ['clients', { ...query.value }])
-
-const { data: listResult, isPending, isError } = useQuery({
-  queryKey: listQueryKey,
-  queryFn: () => getClientListAction({ ...query.value }),
-  placeholderData: keepPreviousData,
-})
-
-const items = computed<ClientListItem[]>(() => listResult.value?.data ?? [])
-const totalItems = computed(() => listResult.value?.meta.total ?? 0)
-const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
-
-watch(pageCount, (count) => {
-  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
+const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<ClientQueryParams>({
+  patchQuery,
+  resetAll: { active: null },
+  chips: () =>
+    query.value.active === null
+      ? []
+      : [{ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` }],
 })
 
 const headers = [
@@ -154,30 +107,18 @@ function openEditForm(item: { id: number }) {
   router.push({ name: ROUTE.CLIENT_EDIT, params: { id: String(item.id) } })
 }
 
-const statusDialogRef = ref<InstanceType<typeof ConfirmStatusDialog> | null>(null)
-const statusRecord = ref<{ id: number; name: string; active: boolean } | null>(null)
-
-function askToggleActive(item: { id: number; name: string; active: boolean }) {
-  statusRecord.value = { id: item.id, name: item.name, active: item.active }
-  statusDialogRef.value?.open()
-}
-
-const toggleMutation = useMutation({
-  mutationFn: (id: number) => toggleClientActiveAction(id),
-  onSuccess: () => {
-    closeDetail()
-    statusDialogRef.value?.close()
-    if (statusRecord.value) toastToggled(statusRecord.value.active, messages.client)
-    return queryClient.invalidateQueries({ queryKey: ['clients'] })
-  },
-  onError: () => {
-    toastFailed(messages.client)
-  },
+const {
+  setDialogRef: setToggleDialogRef,
+  record: toggleRecord,
+  isPending: isToggling,
+  ask: askToggleActive,
+  confirm: confirmToggleActive,
+} = useToggleActive<ToggleRecord>({
+  resource: 'clients',
+  toggle: (record) => toggleClientActiveAction(record.id),
+  messages: messages.client,
+  closeDetail,
 })
-
-function confirmToggleActive() {
-  if (statusRecord.value) toggleMutation.mutate(statusRecord.value.id)
-}
 </script>
 
 <template>
@@ -200,8 +141,8 @@ function confirmToggleActive() {
 
   <ActiveFilters
     :filters="activeFilters"
-    @remove-filter="clearActiveFilter"
-    @clear-all="clearActiveFilter"
+    @remove-filter="clearFilter"
+    @clear-all="clearAllFilters"
   />
 
   <v-alert v-if="isError" type="error" variant="tonal" density="compact" class="mb-4 text-caption">
@@ -254,7 +195,7 @@ function confirmToggleActive() {
     v-model:open="filtersOpen"
     v-model:values="filterValues"
     :fields="filterFields"
-    @clear="clearActiveFilter"
+    @clear="clearAllFilters"
   />
 
   <ClientDetailDrawer
@@ -266,9 +207,9 @@ function confirmToggleActive() {
   />
 
   <ConfirmStatusDialog
-    ref="statusDialogRef"
-    :record="statusRecord"
-    :loading="toggleMutation.isPending.value"
+    :ref="setToggleDialogRef"
+    :record="toggleRecord"
+    :loading="isToggling"
     entity="mandante"
     @confirm="confirmToggleActive"
   />

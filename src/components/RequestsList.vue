@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { keepPreviousData, useQuery } from '@tanstack/vue-query'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import { mdiAlertCircleOutline, mdiClockOutline } from '@mdi/js'
 import {
   getCostCenterOptionsAction,
@@ -9,10 +9,11 @@ import {
   getRequestListAction,
   getRequestStatusOptionsAction,
 } from '@/actions'
+import { useActiveFilters } from '@/composables/useActiveFilters'
+import { useListQuery } from '@/composables/useListQuery'
 import {
   parseRequestQuery,
   requestQueryToRoute,
-  type RequestListItem,
   type RequestQueryParams,
 } from '@/models'
 import { ROUTE } from '@/router/route-names'
@@ -24,37 +25,26 @@ import IndicatorCard from '@/components/common/IndicatorCard.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
-const route = useRoute()
 const router = useRouter()
 
-const query = computed<RequestQueryParams>(() => parseRequestQuery(route.query))
-
-// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
-let pendingQuery: RequestQueryParams | null = null
-
-function patchQuery(patch: Partial<RequestQueryParams>) {
-  const next: RequestQueryParams = { ...(pendingQuery ?? query.value), ...patch }
-  if (!('page' in patch)) next.page = 1
-  pendingQuery = next
-  void router
-    .replace({ query: requestQueryToRoute(next) })
-    .finally(() => {
-      pendingQuery = null
-    })
-}
-
-const searchInput = ref(query.value.search)
-let debounceTimer: ReturnType<typeof setTimeout>
-watch(searchInput, (value) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
+const {
+  query,
+  patchQuery,
+  searchInput,
+  pageModel,
+  sizeModel,
+  listResult,
+  items,
+  totalItems,
+  pageCount,
+  isPending,
+  isError,
+} = useListQuery({
+  resource: 'requests',
+  parse: parseRequestQuery,
+  toRoute: requestQueryToRoute,
+  fetch: getRequestListAction,
 })
-watch(
-  () => query.value.search,
-  (value) => {
-    if (value !== searchInput.value.trim()) searchInput.value = value
-  },
-)
 
 const filtersOpen = ref(false)
 
@@ -115,71 +105,38 @@ const filterValues = computed<Record<string, unknown>>({
   },
 })
 
-const activeFilters = computed(() => {
-  const active: { key: string; label: string }[] = []
-  const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
-  if (statusName) active.push({ key: 'statusId', label: `Estado: ${statusName}` })
-  const costCenter = costCenterOptions.value?.find((o) => o.id === query.value.projectId)?.title
-  if (costCenter) active.push({ key: 'projectId', label: `Centro de costo: ${costCenter}` })
-  const requesterName = requesterOptions.value?.find(
-    (o) => o.id === query.value.requesterUserId,
-  )?.name
-  if (requesterName) active.push({ key: 'requesterUserId', label: `Solicitante: ${requesterName}` })
-  if (query.value.createdFrom && query.value.createdTo) {
-    active.push({
-      key: 'dateRange',
-      label: `Fechas: ${formatDate(query.value.createdFrom)} a ${formatDate(query.value.createdTo)}`,
-    })
-  }
-  return active
-})
-
-function clearFilter(key: string) {
-  if (key === 'dateRange') patchQuery({ createdFrom: null, createdTo: null })
-  else patchQuery({ [key]: null })
-}
-
-function clearAllFilters() {
-  patchQuery({
+const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<RequestQueryParams>({
+  patchQuery,
+  resetAll: {
     statusId: null,
     projectId: null,
     requesterUserId: null,
     createdFrom: null,
     createdTo: null,
-  })
-}
-
-const pageModel = computed<number>({
-  get: () => query.value.page,
-  set: (value) => patchQuery({ page: value }),
+  },
+  chips: () => {
+    const chips = []
+    const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
+    if (statusName) chips.push({ key: 'statusId', label: `Estado: ${statusName}` })
+    const costCenter = costCenterOptions.value?.find((o) => o.id === query.value.projectId)?.title
+    if (costCenter) chips.push({ key: 'projectId', label: `Centro de costo: ${costCenter}` })
+    const requesterName = requesterOptions.value?.find(
+      (o) => o.id === query.value.requesterUserId,
+    )?.name
+    if (requesterName) chips.push({ key: 'requesterUserId', label: `Solicitante: ${requesterName}` })
+    if (query.value.createdFrom && query.value.createdTo) {
+      chips.push({
+        key: 'dateRange',
+        label: `Fechas: ${formatDate(query.value.createdFrom)} a ${formatDate(query.value.createdTo)}`,
+        reset: { createdFrom: null, createdTo: null },
+      })
+    }
+    return chips
+  },
 })
 
-const sizeModel = computed<number>({
-  get: () => query.value.size,
-  set: (value) => patchQuery({ size: value }),
-})
-
-const listQueryKey = computed(() => ['requests', { ...query.value }])
-
-const {
-  data: listResult,
-  isPending,
-  isError,
-} = useQuery({
-  queryKey: listQueryKey,
-  queryFn: () => getRequestListAction({ ...query.value }),
-  placeholderData: keepPreviousData,
-})
-
-const items = computed<RequestListItem[]>(() => listResult.value?.data ?? [])
-const totalItems = computed(() => listResult.value?.meta.total ?? 0)
-const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
 const pendingApproval = computed(() => listResult.value?.meta.otherData?.pendingApproval ?? 0)
 const pendingValidation = computed(() => listResult.value?.meta.otherData?.pendingValidation ?? 0)
-
-watch(pageCount, (count) => {
-  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
-})
 
 function statusIdByCode(code: string): number | null {
   return statusOptions.value?.find((o) => o.code === code)?.id ?? null

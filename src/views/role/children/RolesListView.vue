@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import { mdiAccountGroupOutline, mdiSwapHorizontal } from '@mdi/js'
 import {
   getRoleDetailAction,
@@ -10,9 +10,11 @@ import {
   getRoleOptionsAction,
   toggleRoleActiveAction,
 } from '@/actions'
+import { useActiveFilters } from '@/composables/useActiveFilters'
 import { useDetailSlide } from '@/composables/useDetailSlide'
-import { useMessage } from '@/composables/useMessage'
+import { useListQuery } from '@/composables/useListQuery'
 import { usePermissions } from '@/composables/usePermissions'
+import { useToggleActive, type ToggleRecord } from '@/composables/useToggleActive'
 import { ROUTE } from '@/router/route-names'
 import messages from '@/messages'
 import {
@@ -20,7 +22,6 @@ import {
   roleQueryToRoute,
   type RoleListItem,
   type RoleQueryParams,
-  type RoleSort,
 } from '@/models'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
@@ -30,26 +31,9 @@ import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ConfirmStatusDialog from '@/components/common/ConfirmStatusDialog.vue'
 
-const route = useRoute()
 const router = useRouter()
-const queryClient = useQueryClient()
-const { toastToggled, toastFailed } = useMessage()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
-
-const query = computed<RoleQueryParams>(() => parseRoleQuery(route.query))
-
-// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
-let pendingQuery: RoleQueryParams | null = null
-
-function patchQuery(patch: Partial<RoleQueryParams>) {
-  const next: RoleQueryParams = { ...(pendingQuery ?? query.value), ...patch }
-  if (!('page' in patch)) next.page = 1
-  pendingQuery = next
-  void router.replace({ query: { ...roleQueryToRoute(next), ...detailQueryParam.value } }).finally(() => {
-    pendingQuery = null
-  })
-}
 
 const {
   detailQueryParam,
@@ -60,18 +44,26 @@ const {
   isLoading: detailLoading,
 } = useDetailSlide('roles', getRoleDetailAction)
 
-const searchInput = ref(query.value.search)
-let debounceTimer: ReturnType<typeof setTimeout>
-watch(searchInput, (value) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
+const {
+  query,
+  patchQuery,
+  searchInput,
+  sortBy,
+  changeSort,
+  pageModel,
+  sizeModel,
+  items,
+  totalItems,
+  pageCount,
+  isPending,
+  isError,
+} = useListQuery<RoleQueryParams, RoleListItem>({
+  resource: 'roles',
+  parse: parseRoleQuery,
+  toRoute: roleQueryToRoute,
+  fetch: getRoleListAction,
+  extraRouteQuery: () => detailQueryParam.value,
 })
-watch(
-  () => query.value.search,
-  (value) => {
-    if (value !== searchInput.value.trim()) searchInput.value = value
-  },
-)
 
 const filtersOpen = ref(false)
 
@@ -111,57 +103,18 @@ const filterValues = computed<Record<string, unknown>>({
   },
 })
 
-const activeFilters = computed(() => {
-  const active: { key: string; label: string }[] = []
-  if (query.value.active !== null) {
-    active.push({ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` })
-  }
-  const subModuleName = subModuleOptions.value.find((o) => o.value === query.value.subModuleId)?.title
-  if (subModuleName) active.push({ key: 'subModuleId', label: `Submódulo: ${subModuleName}` })
-  return active
-})
-
-function clearFilter(key: string) {
-  patchQuery({ [key]: null })
-}
-
-function clearAllFilters() {
-  patchQuery({ active: null, subModuleId: null })
-}
-
-const sort = computed<RoleSort>(() => query.value.sort)
-const sortBy = computed(() => [{ key: sort.value.key, order: sort.value.order }])
-
-function changeSort(value: readonly { key: string; order?: boolean | 'asc' | 'desc' }[]) {
-  const entry = value[0]
-  if (!entry) return
-  patchQuery({ sort: { key: entry.key, order: entry.order === 'desc' ? 'desc' : 'asc' } })
-}
-
-const pageModel = computed<number>({
-  get: () => query.value.page,
-  set: (value) => patchQuery({ page: value }),
-})
-
-const sizeModel = computed<number>({
-  get: () => query.value.size,
-  set: (value) => patchQuery({ size: value }),
-})
-
-const listQueryKey = computed(() => ['roles', { ...query.value }])
-
-const { data: listResult, isPending, isError } = useQuery({
-  queryKey: listQueryKey,
-  queryFn: () => getRoleListAction({ ...query.value }),
-  placeholderData: keepPreviousData,
-})
-
-const items = computed<RoleListItem[]>(() => listResult.value?.data ?? [])
-const totalItems = computed(() => listResult.value?.meta.total ?? 0)
-const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
-
-watch(pageCount, (count) => {
-  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
+const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<RoleQueryParams>({
+  patchQuery,
+  resetAll: { active: null, subModuleId: null },
+  chips: () => {
+    const chips = []
+    if (query.value.active !== null) {
+      chips.push({ key: 'active', label: `Estado: ${query.value.active ? 'Activos' : 'Inactivos'}` })
+    }
+    const subModuleName = subModuleOptions.value.find((o) => o.value === query.value.subModuleId)?.title
+    if (subModuleName) chips.push({ key: 'subModuleId', label: `Submódulo: ${subModuleName}` })
+    return chips
+  },
 })
 
 const headers = [
@@ -185,45 +138,38 @@ function openEditForm(item: { id: number }) {
 
 // Desactivar un rol con usuarios asignados exige un rol de reemplazo (backend lo valida server-side,
 // ver RoleServiceImpl.toggleRoleActive) — el diálogo pide ese selector solo cuando aplica.
-const statusDialogRef = ref<InstanceType<typeof ConfirmStatusDialog> | null>(null)
-const statusRecord = ref<{ id: number; name: string; active: boolean; totalUsers: number } | null>(null)
+interface RoleToggleRecord extends ToggleRecord {
+  totalUsers: number
+}
+
 const replacementRoleId = ref<number | null>(null)
 
+const {
+  setDialogRef: setToggleDialogRef,
+  record: toggleRecord,
+  isPending: isToggling,
+  ask,
+  confirm: confirmToggleActive,
+} = useToggleActive<RoleToggleRecord>({
+  resource: 'roles',
+  toggle: (record) => toggleRoleActiveAction(record.id, replacementRoleId.value),
+  messages: messages.role,
+  closeDetail,
+})
+
 const needsReplacement = computed(
-  () => !!statusRecord.value?.active && (statusRecord.value?.totalUsers ?? 0) > 0,
+  () => !!toggleRecord.value?.active && (toggleRecord.value?.totalUsers ?? 0) > 0,
 )
 
 const { data: replacementOptions } = useQuery({
-  queryKey: computed(() => ['roles', 'options', statusRecord.value?.id]),
-  queryFn: () => getRoleOptionsAction(statusRecord.value?.id),
+  queryKey: computed(() => ['roles', 'options', toggleRecord.value?.id]),
+  queryFn: () => getRoleOptionsAction(toggleRecord.value?.id),
   enabled: needsReplacement,
 })
 
-function askToggleActive(item: { id: number; name: string; active: boolean; totalUsers: number }) {
-  statusRecord.value = item
+function askToggleActive(item: RoleToggleRecord) {
   replacementRoleId.value = null
-  statusDialogRef.value?.open()
-}
-
-const toggleMutation = useMutation({
-  mutationFn: () => {
-    const roleId = statusRecord.value?.id
-    if (roleId === undefined) throw new Error('No hay rol seleccionado')
-    return toggleRoleActiveAction(roleId, replacementRoleId.value)
-  },
-  onSuccess: () => {
-    closeDetail()
-    statusDialogRef.value?.close()
-    if (statusRecord.value) toastToggled(statusRecord.value.active, messages.role)
-    return queryClient.invalidateQueries({ queryKey: ['roles'] })
-  },
-  onError: () => {
-    toastFailed(messages.role)
-  },
-})
-
-function confirmToggleActive() {
-  if (statusRecord.value) toggleMutation.mutate()
+  ask(item)
 }
 
 const canConfirmToggle = computed(() => !needsReplacement.value || replacementRoleId.value !== null)
@@ -316,9 +262,9 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
   />
 
   <ConfirmStatusDialog
-    ref="statusDialogRef"
-    :record="statusRecord"
-    :loading="toggleMutation.isPending.value"
+    :ref="setToggleDialogRef"
+    :record="toggleRecord"
+    :loading="isToggling"
     :confirm-disabled="!canConfirmToggle"
     entity="rol"
     @confirm="confirmToggleActive"
@@ -329,7 +275,7 @@ const canConfirmToggle = computed(() => !needsReplacement.value || replacementRo
           <v-icon :icon="mdiAccountGroupOutline" color="info" size="20" />
           Usuarios asignados
         </span>
-        <v-chip size="small" variant="outlined" label>{{ statusRecord?.totalUsers }}</v-chip>
+        <v-chip size="small" variant="outlined" label>{{ toggleRecord?.totalUsers }}</v-chip>
       </div>
     </template>
 

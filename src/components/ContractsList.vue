@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { keepPreviousData, useQuery } from '@tanstack/vue-query'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import {
   getContractDetailAction,
   getContractListAction,
@@ -9,7 +9,9 @@ import {
   getCostCenterOptionsAction,
   getRequestDetailAction,
 } from '@/actions'
+import { useActiveFilters } from '@/composables/useActiveFilters'
 import { useDetailSlide } from '@/composables/useDetailSlide'
+import { useListQuery } from '@/composables/useListQuery'
 import { usePermissions } from '@/composables/usePermissions'
 import { useRequestDecision } from '@/composables/useRequestDecision'
 import {
@@ -27,7 +29,6 @@ import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApproveRejectDialog from '@/components/common/ApproveRejectDialog.vue'
 
-const route = useRoute()
 const router = useRouter()
 const { hasPermission } = usePermissions()
 const canCreate = computed(() => hasPermission('create'))
@@ -42,22 +43,6 @@ const {
   confirmDecision,
 } = useRequestDecision()
 
-const query = computed<ContractQueryParams>(() => parseContractQuery(route.query))
-
-// Encadena patches del mismo tick sobre el último estado pedido, no sobre la ruta aún sin propagar.
-let pendingQuery: ContractQueryParams | null = null
-
-function patchQuery(patch: Partial<ContractQueryParams>) {
-  const next: ContractQueryParams = { ...(pendingQuery ?? query.value), ...patch }
-  if (!('page' in patch)) next.page = 1
-  pendingQuery = next
-  void router
-    .replace({ query: { ...contractQueryToRoute(next), ...detailQueryParam.value } })
-    .finally(() => {
-      pendingQuery = null
-    })
-}
-
 const {
   detailQueryParam,
   isOpen: detailDrawerOpen,
@@ -66,18 +51,24 @@ const {
   isLoading: detailLoading,
 } = useDetailSlide('contracts', getContractDetailAction)
 
-const searchInput = ref(query.value.search)
-let debounceTimer: ReturnType<typeof setTimeout>
-watch(searchInput, (value) => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => patchQuery({ search: value }), 350)
+const {
+  query,
+  patchQuery,
+  searchInput,
+  pageModel,
+  sizeModel,
+  items,
+  totalItems,
+  pageCount,
+  isPending,
+  isError,
+} = useListQuery<ContractQueryParams, ContractListItem>({
+  resource: 'contracts',
+  parse: parseContractQuery,
+  toRoute: contractQueryToRoute,
+  fetch: getContractListAction,
+  extraRouteQuery: () => detailQueryParam.value,
 })
-watch(
-  () => query.value.search,
-  (value) => {
-    if (value !== searchInput.value.trim()) searchInput.value = value
-  },
-)
 
 const filtersOpen = ref(false)
 
@@ -118,51 +109,17 @@ const filterValues = computed<Record<string, unknown>>({
   },
 })
 
-const activeFilters = computed(() => {
-  const active: { key: string; label: string }[] = []
-  const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
-  if (statusName) active.push({ key: 'statusId', label: `Estado: ${statusName}` })
-  const costCenter = costCenterOptions.value?.find((o) => o.id === query.value.projectId)?.title
-  if (costCenter) active.push({ key: 'projectId', label: `Centro de costo: ${costCenter}` })
-  return active
-})
-
-function clearFilter(key: string) {
-  patchQuery({ [key]: null })
-}
-
-function clearAllFilters() {
-  patchQuery({ statusId: null, projectId: null })
-}
-
-const pageModel = computed<number>({
-  get: () => query.value.page,
-  set: (value) => patchQuery({ page: value }),
-})
-
-const sizeModel = computed<number>({
-  get: () => query.value.size,
-  set: (value) => patchQuery({ size: value }),
-})
-
-const listQueryKey = computed(() => ['contracts', { ...query.value }])
-
-const {
-  data: listResult,
-  isPending,
-  isError,
-} = useQuery({
-  queryKey: listQueryKey,
-  queryFn: () => getContractListAction({ ...query.value }),
-  placeholderData: keepPreviousData,
-})
-
-const items = computed<ContractListItem[]>(() => listResult.value?.data ?? [])
-const totalItems = computed(() => listResult.value?.meta.total ?? 0)
-const pageCount = computed(() => listResult.value?.meta.pageCount ?? 1)
-
-watch(pageCount, (count) => {
-  if (count >= 1 && query.value.page > count) patchQuery({ page: count })
+const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<ContractQueryParams>({
+  patchQuery,
+  resetAll: { statusId: null, projectId: null },
+  chips: () => {
+    const chips = []
+    const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
+    if (statusName) chips.push({ key: 'statusId', label: `Estado: ${statusName}` })
+    const costCenter = costCenterOptions.value?.find((o) => o.id === query.value.projectId)?.title
+    if (costCenter) chips.push({ key: 'projectId', label: `Centro de costo: ${costCenter}` })
+    return chips
+  },
 })
 
 const headers = [
