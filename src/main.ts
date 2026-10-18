@@ -6,6 +6,11 @@ import App from '@/App.vue'
 import router from '@/router'
 import { vuetify } from '@/plugins/vuetify'
 import { vInputMask } from '@/directives/input-mask'
+import { onTokenChangedByAnotherTab } from '@/lib/authToken'
+
+// Cerrar o iniciar sesión en otra pestaña recarga esta: el guard de rutas decide el destino y la
+// memoria de la sesión anterior (caché de consultas, token) no sobrevive.
+onTokenChangedByAnotherTab(() => globalThis.location.reload())
 
 createApp(App)
   .directive('input-mask', vInputMask)

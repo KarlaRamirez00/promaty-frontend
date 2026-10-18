@@ -23,6 +23,15 @@ export function setToken(token: string): void {
   }
 }
 
+// `storage` solo se dispara en las demás pestañas, nunca en la que escribió el token.
+export function onTokenChangedByAnotherTab(handler: () => void): void {
+  globalThis.addEventListener('storage', (event) => {
+    if (event.key !== null && event.key !== STORAGE_KEY) return
+    cachedToken = readFromStorage()
+    handler()
+  })
+}
+
 export function clearToken(): void {
   cachedToken = null
   try {
