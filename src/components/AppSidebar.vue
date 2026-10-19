@@ -4,20 +4,27 @@ import { useRoute } from 'vue-router'
 import { useSidebarRail } from '@/composables/useSidebarRail'
 import { usePermissions } from '@/composables/usePermissions'
 import { mainMenu, adminMenu, type MenuItem } from '@/data/menu'
+import { useAuthStore } from '@/stores'
 import PromatyLogo from '@/components/PromatyLogo.vue'
 
 const { rail, open, mobile } = useSidebarRail()
 const route = useRoute()
 const { hasModulePermission } = usePermissions()
+const auth = useAuthStore()
 
 const isRail = computed(() => !mobile.value && rail.value)
 
 const opened = ref(['RRHH', 'Mantenedores'])
 
-// Un ítem sin module/permission siempre se muestra (grupos contenedores, o módulos aún sin RBAC
-// real como Solicitudes) — ver data/menu/menu.types.ts.
+const isSuperadmin = computed(() => auth.isSystemRole)
+
+// Superadmin ve todo el mapa, incluidos los módulos aún no construidos. El resto solo ve lo que sus
+// permisos habilitan: un grupo aparece si algún submódulo es visible, y un ítem sin permiso (módulo
+// por construir) queda oculto.
 function isVisible(item: MenuItem): boolean {
-  if (!item.module || !item.permission) return true
+  if (isSuperadmin.value) return true
+  if (item.submenu) return visibleSubmenu(item).length > 0
+  if (!item.module || !item.permission) return false
   return hasModulePermission(item.module, item.permission)
 }
 

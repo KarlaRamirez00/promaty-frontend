@@ -1,4 +1,4 @@
-// Sin module/permission, el ítem siempre se muestra (grupos contenedores, o módulos sin RBAC aún).
+// Sin module/permission (módulo por construir), el ítem solo lo ve el Superadmin; un grupo se muestra si algún submódulo es visible.
 export interface MenuItem {
   title: string
   icon: string

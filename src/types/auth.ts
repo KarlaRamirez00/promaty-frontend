@@ -4,6 +4,7 @@ export interface JwtClaims {
   role: string
   name: string
   permissions: string[]
+  isSystemRole: boolean
   allowedAllProjects: boolean
   projectIds: number[]
   iat: number

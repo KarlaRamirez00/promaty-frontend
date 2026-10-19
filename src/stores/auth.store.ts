@@ -27,6 +27,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => token.value !== null)
   const role = computed(() => claims.value?.role ?? null)
+  // Los tokens emitidos antes del claim no lo traen: sin él se trata como rol normal.
+  const isSystemRole = computed(() => claims.value?.isSystemRole === true)
   const userName = computed(() => claims.value?.name ?? null)
   const permissions = computed<string[]>(() => claims.value?.permissions ?? [])
   const allowedAllProjects = computed(() => claims.value?.allowedAllProjects ?? false)
@@ -54,6 +56,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     isAuthenticated,
     role,
+    isSystemRole,
     userName,
     permissions,
     allowedAllProjects,
