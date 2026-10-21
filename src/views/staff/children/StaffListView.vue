@@ -130,6 +130,7 @@ const headers = [
   { title: 'Nombre', key: 'firstName', sortable: true },
   { title: 'Tipo de identificación', key: 'identificationType', sortable: false },
   { title: 'N° de identificación', key: 'identificationNumber', sortable: true },
+  { title: 'Fecha ingreso', key: 'hireDate', sortable: false },
   { title: 'Estado', key: 'statusName', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]

@@ -57,6 +57,7 @@ export interface StaffListItem {
   identificationNumber: string
   fullName: string
   costCenterCode: string
+  hireDate: string
   statusCode: string
   statusName: string
   statusColor: string
@@ -93,6 +94,7 @@ export interface Staff {
   bank: StaffCatalogOption
   accountType: AccountType
   accountNumber: string
+  hireDate: string | null
   status: StaffCatalogOption
   blockReason: string | null
   createdAt: string

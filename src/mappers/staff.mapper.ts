@@ -8,7 +8,7 @@ import type {
   StaffStatusPayload,
 } from '@/types/staff'
 import { staffStatusColor, type Staff, type StaffBlockForm, type StaffForm, type StaffListItem } from '@/models'
-import { formatDateTime, formatRut, NO_DATA } from '@/utils'
+import { formatDate, formatDateTime, formatRut, NO_DATA } from '@/utils'
 
 function toFullName(firstName: string, paternalLastName: string, maternalLastName: string): string {
   return `${firstName} ${paternalLastName} ${maternalLastName}`.trim()
@@ -26,6 +26,7 @@ export function mapperStaffList(items: StaffListRaw[]): StaffListItem[] {
     identificationNumber: toDisplayIdentificationNumber(item.identificationType, item.identificationNumber),
     fullName: toFullName(item.firstName, item.paternalLastName, item.maternalLastName),
     costCenterCode: item.costCenterCode ?? NO_DATA,
+    hireDate: formatDate(item.hireDate),
     statusCode: item.statusCode,
     statusName: item.statusName,
     statusColor: staffStatusColor(item.statusCode),
@@ -64,6 +65,7 @@ export function mapperStaffDetail(raw: StaffRaw): Staff {
     bank: raw.bank,
     accountType: raw.accountType,
     accountNumber: raw.accountNumber,
+    hireDate: raw.hireDate,
     status: raw.status,
     blockReason: raw.blockReason,
     createdAt: formatDateTime(raw.createdAt),

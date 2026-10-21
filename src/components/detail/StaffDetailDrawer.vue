@@ -63,6 +63,7 @@ const fields = computed(() => {
     { key: 'bank', label: 'Banco', value: s.bank.name },
     { key: 'accountType', label: 'Tipo de cuenta', value: accountTypeLabel(s.accountType) },
     { key: 'accountNumber', label: 'Número de cuenta', value: s.accountNumber },
+    { key: 'hireDate', label: 'Fecha de ingreso', value: formatDate(s.hireDate) },
     { key: 'createdAt', label: 'Fecha de creación', value: s.createdAt },
     { key: 'createdBy', label: 'Creado por', value: s.createdBy },
     { key: 'updatedAt', label: 'Última actualización', value: s.updatedAt },

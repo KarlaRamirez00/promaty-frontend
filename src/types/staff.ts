@@ -28,6 +28,8 @@ export interface StaffListRaw {
   createdBy: string
   updatedBy: string
   costCenterCode: string | null
+  // Inicio del último contrato (yyyy-MM-dd); null si nunca tuvo uno.
+  hireDate: string | null
   statusCode: string
   statusName: string
   actions: string[]
