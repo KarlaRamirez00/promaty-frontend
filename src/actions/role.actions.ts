@@ -1,6 +1,7 @@
 import {
   createRoleApi,
   getRoleApi,
+  listAssignableRoleOptionsApi,
   listPermissionOptionsApi,
   listRolesApi,
   listRoleOptionsApi,
@@ -37,6 +38,10 @@ export function toggleRoleActiveAction(id: number, newRoleId?: number | null) {
 
 export function getPermissionOptionsAction() {
   return listPermissionOptionsApi()
+}
+
+export function getAssignableRoleOptionsAction() {
+  return listAssignableRoleOptionsApi()
 }
 
 export function getRoleOptionsAction(excludeId?: number) {

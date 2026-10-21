@@ -6,7 +6,7 @@ import { mdiArrowDownCircleOutline, mdiContentSave, mdiEye, mdiEyeOff } from '@m
 import {
   createUserAction,
   getCostCenterOptionsAction,
-  getRoleOptionsAction,
+  getAssignableRoleOptionsAction,
   getUserDetailAction,
   updateUserAction,
 } from '@/actions'
@@ -55,9 +55,21 @@ const { data: existingUser } = useQuery({
   enabled: computed(() => userId.value !== null),
 })
 
-const { data: roleOptions } = useQuery({
-  queryKey: ['roles', 'options'],
-  queryFn: () => getRoleOptionsAction(),
+const { data: assignableRoles } = useQuery({
+  queryKey: ['roles', 'assignable'],
+  queryFn: getAssignableRoleOptionsAction,
+})
+
+// El rol actual puede no ser asignable por quien edita (ej. Superadmin): se muestra deshabilitado.
+const roleOptions = computed(() => {
+  const options: { id: number; name: string; props?: { disabled: boolean } }[] = [
+    ...(assignableRoles.value ?? []),
+  ]
+  const current = existingUser.value?.role
+  if (current && !options.some((o) => o.id === current.id)) {
+    options.push({ id: current.id, name: current.name, props: { disabled: true } })
+  }
+  return options
 })
 
 const { data: costCenterOptions } = useQuery({
@@ -231,7 +243,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.roleId"
-        :items="roleOptions ?? []"
+        :items="roleOptions"
         item-title="name"
         item-value="id"
         label="Rol"

@@ -59,6 +59,12 @@ interface RoleRelationRaw {
   name: string
 }
 
+// Roles que quien consulta puede asignar a un usuario; backend omite Superadmin sin ese permiso.
+export async function listAssignableRoleOptionsApi(): Promise<RoleRelationOption[]> {
+  const response = await userApi.get<ApiListResponse<RoleRelationRaw>>('/roles/selector')
+  return response.data.data.map((item) => ({ id: item.id, name: item.name }))
+}
+
 // Reutiliza el listado paginado de roles (mismo patrón que las opciones de relación de Project),
 // filtrando client-side el rol actual ya que backend no tiene un filtro "exclude".
 export async function listRoleOptionsApi(excludeId?: number): Promise<RoleRelationOption[]> {
