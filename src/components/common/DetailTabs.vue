@@ -21,6 +21,7 @@ const activeTab = ref(props.sections[0]?.key)
     <v-tabs-window-item v-for="section in sections" :key="section.key" :value="section.key">
       <h3 class="detail-tabs__title">{{ section.title }}</h3>
       <DetailFieldList :items="section.fields" />
+      <slot :name="section.key" />
     </v-tabs-window-item>
   </v-tabs-window>
 </template>

@@ -118,6 +118,8 @@ export interface Contract {
   statusColor: string
   createdAt: string
   updatedAt: string
+  createdBy: string
+  updatedBy: string
   actions: string[]
 }
 

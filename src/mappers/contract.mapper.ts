@@ -100,6 +100,8 @@ export function mapperContractDetail(raw: ContractRaw): Contract {
     statusColor: contractStatusColor(raw.status.code),
     createdAt: formatDateTime(raw.createdAt),
     updatedAt: formatDateTime(raw.updatedAt),
+    createdBy: raw.createdBy,
+    updatedBy: raw.updatedBy,
     actions: raw.actions,
   }
 }
