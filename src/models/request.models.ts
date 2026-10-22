@@ -32,7 +32,9 @@ export interface RequestListItem {
   id: number
   entityId: number | null
   typeName: string
-  projectName: string
+  staffFullName: string
+  staffIdentificationNumber: string
+  staffPosition: string
   costCenterCode: string
   requesterName: string
   status: RequestStatusOption

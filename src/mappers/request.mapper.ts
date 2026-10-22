@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime } from '@/utils'
+import { formatDate, formatDateTime, formatRut, NO_DATA } from '@/utils'
 import type {
   RequestApprovalRaw,
   RequestDecidePayload,
@@ -18,12 +18,28 @@ const APPROVAL_LEVEL_LABELS: Record<string, string> = {
   HR: 'RRHH',
 }
 
+function toStaffFullName(item: RequestRaw): string {
+  const fullName = [item.staffFirstName, item.staffPaternalLastName, item.staffMaternalLastName]
+    .filter(Boolean)
+    .join(' ')
+  return fullName || NO_DATA
+}
+
+// El formato con puntos solo aplica a RUT; un pasaporte no tiene estructura fija.
+function toStaffIdentification(item: RequestRaw): string {
+  const number = item.staffIdentificationNumber
+  if (!number) return NO_DATA
+  return item.staffIdentificationType === 'RUT' ? formatRut(number) : number
+}
+
 export function mapperRequestList(items: RequestRaw[]): RequestListItem[] {
   return items.map((item) => ({
     id: item.id,
     entityId: item.entityId,
     typeName: item.typeName,
-    projectName: item.projectName,
+    staffFullName: toStaffFullName(item),
+    staffIdentificationNumber: toStaffIdentification(item),
+    staffPosition: item.staffPosition ?? NO_DATA,
     costCenterCode: item.costCenterCode,
     requesterName: item.requesterName,
     status: item.status,

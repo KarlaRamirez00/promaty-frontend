@@ -156,9 +156,11 @@ function toggleCounter(code: string) {
 const headers = [
   { title: 'CC', key: 'costCenterCode', sortable: false },
   { title: 'Tipo de solicitud', key: 'typeName', sortable: false },
-  { title: 'Proyecto', key: 'projectName', sortable: false },
-  { title: 'Creación', key: 'createdAt', sortable: false },
+  { title: 'Colaborador', key: 'staffFullName', sortable: false },
+  { title: 'RUT', key: 'staffIdentificationNumber', sortable: false },
+  { title: 'Cargo', key: 'staffPosition', sortable: false },
   { title: 'Solicitante', key: 'requesterName', sortable: false },
+  { title: 'Creación', key: 'createdAt', sortable: false },
   { title: 'Estado', key: 'status', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
@@ -209,7 +211,7 @@ function viewDetail(item: { entityId: number | null }) {
 
   <ListControls
     v-model:search="searchInput"
-    search-placeholder="Buscar por proyecto o centro de costo"
+    search-placeholder="Buscar por colaborador, RUT o centro de costo"
     :show-export="false"
     :show-new="false"
     @filter="filtersOpen = true"

@@ -14,6 +14,13 @@ export interface RequestRaw {
   costCenterCode: string
   requesterUserId: number
   requesterName: string
+  // Datos del colaborador de la solicitud; vienen null si la solicitud no es de un colaborador.
+  staffIdentificationType: string | null
+  staffIdentificationNumber: string | null
+  staffFirstName: string | null
+  staffPaternalLastName: string | null
+  staffMaternalLastName: string | null
+  staffPosition: string | null
   status: RequestStatusRaw
   createdAt: string
   updatedAt: string
