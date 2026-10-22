@@ -1,12 +1,8 @@
 <script setup lang="ts">
-interface Field {
-  key: string
-  label: string
-  value?: string | number
-}
+import type { DetailField } from '@/types/detail'
 
 defineProps<{
-  items: Field[]
+  items: DetailField[]
 }>()
 </script>
 

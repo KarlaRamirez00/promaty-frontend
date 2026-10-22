@@ -7,9 +7,10 @@ import {
   staffStatusColor,
   type Staff,
 } from '@/models'
+import type { DetailSection } from '@/types/detail'
 import { formatDate, formatPhone, NO_DATA } from '@/utils'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
-import DetailFieldList from '@/components/common/DetailFieldList.vue'
+import DetailTabs from '@/components/common/DetailTabs.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 
 const props = defineProps<{
@@ -28,49 +29,70 @@ const emit = defineEmits<{
 const isActive = computed(() => props.staff?.status.code === STAFF_STATUS_CODE.ACTIVE)
 const isBlocked = computed(() => props.staff?.status.code === STAFF_STATUS_CODE.BLOCKED)
 
-const fields = computed(() => {
+const sections = computed<DetailSection[]>(() => {
   const s = props.staff
   if (!s) return []
   return [
-    { key: 'fullName', label: 'Nombre completo', value: s.fullName },
     {
-      key: 'identification',
-      label: 'Identificación',
-      value: `${identificationTypeLabel(s.identificationType)} ${s.identificationNumber}`,
+      key: 'personal',
+      tab: 'Personal',
+      title: 'Datos personales',
+      fields: [
+        { key: 'fullName', label: 'Nombre completo', value: s.fullName },
+        {
+          key: 'identification',
+          label: 'Identificación',
+          value: `${identificationTypeLabel(s.identificationType)} ${s.identificationNumber}`,
+        },
+        { key: 'birthDate', label: 'Fecha de nacimiento', value: formatDate(s.birthDate) },
+        { key: 'registeredSex', label: 'Sexo registral', value: s.registeredSex.name },
+        { key: 'maritalStatus', label: 'Estado civil', value: s.maritalStatus.name },
+        { key: 'nationality', label: 'Nacionalidad', value: s.nationality.name },
+        { key: 'personalEmail', label: 'Correo personal', value: s.personalEmail },
+        { key: 'phone1', label: 'Teléfono', value: formatPhone(s.phone1) },
+        { key: 'address', label: 'Dirección', value: s.address },
+        { key: 'region', label: 'Región', value: s.region.name },
+        { key: 'provincia', label: 'Provincia', value: s.provincia.name },
+        { key: 'comuna', label: 'Comuna', value: s.comuna.name },
+        { key: 'emergencyContactName', label: 'Contacto de emergencia', value: s.emergencyContactName },
+        { key: 'emergencyPhone', label: 'Teléfono de emergencia', value: formatPhone(s.emergencyPhone) },
+        {
+          key: 'children',
+          label: 'Hijos',
+          value: s.hasChildren ? String(s.childrenCount) : 'No tiene',
+        },
+        { key: 'shoeSize', label: 'Talla de calzado', value: String(s.shoeSize) },
+        { key: 'clothingSize', label: 'Talla de ropa', value: s.clothingSize },
+        { key: 'educationLevel', label: 'Nivel educacional', value: s.educationLevel.name },
+      ],
     },
-    { key: 'birthDate', label: 'Fecha de nacimiento', value: formatDate(s.birthDate) },
-    { key: 'registeredSex', label: 'Sexo registral', value: s.registeredSex.name },
-    { key: 'maritalStatus', label: 'Estado civil', value: s.maritalStatus.name },
-    { key: 'nationality', label: 'Nacionalidad', value: s.nationality.name },
-    { key: 'personalEmail', label: 'Correo personal', value: s.personalEmail },
-    { key: 'phone1', label: 'Teléfono', value: formatPhone(s.phone1) },
-    { key: 'address', label: 'Dirección', value: s.address },
-    { key: 'region', label: 'Región', value: s.region.name },
-    { key: 'provincia', label: 'Provincia', value: s.provincia.name },
-    { key: 'comuna', label: 'Comuna', value: s.comuna.name },
-    { key: 'emergencyContactName', label: 'Contacto de emergencia', value: s.emergencyContactName },
-    { key: 'emergencyPhone', label: 'Teléfono de emergencia', value: formatPhone(s.emergencyPhone) },
     {
-      key: 'children',
-      label: 'Hijos',
-      value: s.hasChildren ? String(s.childrenCount) : 'No tiene',
+      key: 'work',
+      tab: 'Laboral',
+      title: 'Información laboral',
+      fields: [
+        { key: 'hireDate', label: 'Fecha de ingreso', value: formatDate(s.hireDate) },
+        { key: 'afp', label: 'AFP', value: s.afp.name },
+        { key: 'healthSystem', label: 'Sistema de salud', value: s.healthSystem.name },
+        { key: 'bank', label: 'Banco', value: s.bank.name },
+        { key: 'accountType', label: 'Tipo de cuenta', value: accountTypeLabel(s.accountType) },
+        { key: 'accountNumber', label: 'Número de cuenta', value: s.accountNumber },
+        ...(isBlocked.value
+          ? [{ key: 'blockReason', label: 'Motivo del bloqueo', value: s.blockReason || NO_DATA }]
+          : []),
+      ],
     },
-    { key: 'shoeSize', label: 'Talla de calzado', value: String(s.shoeSize) },
-    { key: 'clothingSize', label: 'Talla de ropa', value: s.clothingSize },
-    { key: 'educationLevel', label: 'Nivel educacional', value: s.educationLevel.name },
-    { key: 'afp', label: 'AFP', value: s.afp.name },
-    { key: 'healthSystem', label: 'Sistema de salud', value: s.healthSystem.name },
-    { key: 'bank', label: 'Banco', value: s.bank.name },
-    { key: 'accountType', label: 'Tipo de cuenta', value: accountTypeLabel(s.accountType) },
-    { key: 'accountNumber', label: 'Número de cuenta', value: s.accountNumber },
-    { key: 'hireDate', label: 'Fecha de ingreso', value: formatDate(s.hireDate) },
-    { key: 'createdAt', label: 'Fecha de creación', value: s.createdAt },
-    { key: 'createdBy', label: 'Creado por', value: s.createdBy },
-    { key: 'updatedAt', label: 'Última actualización', value: s.updatedAt },
-    { key: 'updatedBy', label: 'Actualizado por', value: s.updatedBy },
-    ...(isBlocked.value
-      ? [{ key: 'blockReason', label: 'Motivo del bloqueo', value: s.blockReason || NO_DATA }]
-      : []),
+    {
+      key: 'traceability',
+      tab: 'Trazabilidad',
+      title: 'Trazabilidad',
+      fields: [
+        { key: 'createdAt', label: 'Fecha de creación', value: s.createdAt },
+        { key: 'createdBy', label: 'Creado por', value: s.createdBy },
+        { key: 'updatedAt', label: 'Última actualización', value: s.updatedAt },
+        { key: 'updatedBy', label: 'Actualizado por', value: s.updatedBy },
+      ],
+    },
   ]
 })
 </script>
@@ -108,6 +130,6 @@ const fields = computed(() => {
     <div v-if="loading && !staff" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
-    <DetailFieldList v-else-if="staff" :items="fields" />
+    <DetailTabs v-else-if="staff" :sections="sections" />
   </DetailDrawer>
 </template>
