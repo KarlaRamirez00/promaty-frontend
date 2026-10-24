@@ -11,6 +11,7 @@ import { staffRoutes } from '@/router/staff.routes'
 import { requestRoutes } from '@/router/request.routes'
 import { contractRoutes } from '@/router/contract.routes'
 import { requestRejectionReasonRoutes } from '@/router/requestRejectionReason.routes'
+import { nonRehireReasonRoutes } from '@/router/nonRehireReason.routes'
 import { authMiddleware } from '@/middlewares/auth.middleware'
 import LoginView from '@/views/LoginView.vue'
 
@@ -46,6 +47,7 @@ const routes: RouteRecordRaw[] = [
   ...projectTypeRoutes,
   ...projectSpecialtyRoutes,
   ...requestRejectionReasonRoutes,
+  ...nonRehireReasonRoutes,
   ...projectRoutes,
   ...roleRoutes,
   ...userRoutes,

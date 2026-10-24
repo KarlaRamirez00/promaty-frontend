@@ -8,6 +8,7 @@ import staff from './staff.messages'
 import request from './request.messages'
 import contract from './contract.messages'
 import requestRejectionReason from './requestRejectionReason.messages'
+import nonRehireReason from './nonRehireReason.messages'
 
 export default {
   client,
@@ -20,4 +21,5 @@ export default {
   request,
   contract,
   requestRejectionReason,
+  nonRehireReason,
 }

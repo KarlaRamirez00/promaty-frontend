@@ -30,6 +30,9 @@ export const ROUTE = {
   REJECTION_REASON_LIST: 'requestRejectionReasons',
   REJECTION_REASON_NEW: 'requestRejectionReasons-new',
   REJECTION_REASON_EDIT: 'requestRejectionReasons-edit',
+  NON_REHIRE_REASON_LIST: 'nonRehireReasons',
+  NON_REHIRE_REASON_NEW: 'nonRehireReasons-new',
+  NON_REHIRE_REASON_EDIT: 'nonRehireReasons-edit',
 } as const
 
 export type RouteName = (typeof ROUTE)[keyof typeof ROUTE]

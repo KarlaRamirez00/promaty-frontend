@@ -1,4 +1,5 @@
 import {
+  mdiAccountCancelOutline,
   mdiCancel,
   mdiDomain,
   mdiOfficeBuildingCogOutline,
@@ -31,6 +32,13 @@ export const maintainersMenu: MenuItem = {
       icon: mdiCancel,
       to: '/rejection-reasons',
       module: 'requestRejectionReason',
+      permission: 'read',
+    },
+    {
+      title: 'No recontratación',
+      icon: mdiAccountCancelOutline,
+      to: '/non-rehire-reasons',
+      module: 'nonRehireReason',
       permission: 'read',
     },
   ],
