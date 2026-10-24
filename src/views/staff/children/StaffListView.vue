@@ -15,7 +15,6 @@ import { usePermissions } from '@/composables/usePermissions'
 import { useStaffBlock } from '@/composables/useStaffBlock'
 import { ROUTE } from '@/router/route-names'
 import {
-  identificationTypeLabel,
   parseStaffQuery,
   STAFF_STATUS_CODE,
   staffQueryToRoute,
@@ -128,7 +127,6 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<StaffQu
 const headers = [
   { title: 'CC', key: 'costCenterCode', sortable: false },
   { title: 'Nombre', key: 'firstName', sortable: true },
-  { title: 'Tipo de identificación', key: 'identificationType', sortable: false },
   { title: 'N° de identificación', key: 'identificationNumber', sortable: true },
   { title: 'Fecha ingreso', key: 'hireDate', sortable: false },
   { title: 'Estado', key: 'statusName', sortable: false },
@@ -187,10 +185,6 @@ function openEditForm(item: { id: number }) {
   >
     <template #item.firstName="{ item }">
       <span class="link-cell" @click="viewDetail(item)">{{ item.fullName }}</span>
-    </template>
-
-    <template #item.identificationType="{ item }">
-      {{ identificationTypeLabel(item.identificationType) }}
     </template>
 
     <template #item.identificationNumber="{ item }">
