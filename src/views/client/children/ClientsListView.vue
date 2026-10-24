@@ -91,6 +91,7 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<ClientQ
 
 const headers = [
   { title: 'Nombre', key: 'name', sortable: true },
+  { title: 'Actualización', key: 'updatedAt', sortable: true },
   { title: 'Estado', key: 'active', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]

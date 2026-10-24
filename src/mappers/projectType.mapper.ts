@@ -1,4 +1,4 @@
-import { formatDateTime } from '@/utils'
+import { formatDate, formatDateTime } from '@/utils'
 import type { Badge } from '@/types/badge'
 import type { ProjectTypeFormPayload, ProjectTypeListRaw, ProjectTypeRaw } from '@/types/projectType'
 import type { ProjectType, ProjectTypeForm, ProjectTypeListItem } from '@/models'
@@ -12,6 +12,7 @@ export function mapperProjectTypeList(items: ProjectTypeListRaw[]): ProjectTypeL
     id: item.id,
     name: item.name,
     active: item.active,
+    updatedAt: formatDate(item.updatedAt),
     status: toStatusBadge(item.active),
     actions: item.actions,
   }))

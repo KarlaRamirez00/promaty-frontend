@@ -4,12 +4,12 @@ export interface RequestRejectionReasonListRaw {
   description: string | null
   subModule: string
   active: boolean
+  updatedAt: string
   actions: string[]
 }
 
 export interface RequestRejectionReasonRaw extends RequestRejectionReasonListRaw {
   createdAt: string
-  updatedAt: string
   createdBy: string
   updatedBy: string
 }

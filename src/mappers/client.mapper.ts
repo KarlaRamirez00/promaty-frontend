@@ -1,4 +1,4 @@
-import { formatDateTime } from '@/utils'
+import { formatDate, formatDateTime } from '@/utils'
 import type { Badge } from '@/types/badge'
 import type { ClientFormPayload, ClientListRaw, ClientRaw } from '@/types/client'
 import type { Client, ClientForm, ClientListItem } from '@/models'
@@ -12,6 +12,7 @@ export function mapperClientList(items: ClientListRaw[]): ClientListItem[] {
     id: item.id,
     name: item.name,
     active: item.active,
+    updatedAt: formatDate(item.updatedAt),
     status: toStatusBadge(item.active),
     actions: item.actions,
   }))

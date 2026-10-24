@@ -5,6 +5,7 @@ export interface ClientListItem {
   id: number
   name: string
   active: boolean
+  updatedAt: string
   status: Badge
   actions: string[]
 }
@@ -49,7 +50,7 @@ export interface ClientSort {
   order: SortDirection
 }
 
-export const CLIENT_SORTABLE_KEYS = ['name', 'active'] as const
+export const CLIENT_SORTABLE_KEYS = ['name', 'updatedAt', 'active'] as const
 
 export const DEFAULT_CLIENT_SORT: ClientSort = { key: 'name', order: 'asc' }
 

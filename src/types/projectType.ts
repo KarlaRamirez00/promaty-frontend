@@ -13,6 +13,7 @@ export interface ProjectTypeListRaw {
   id: number
   name: string
   active: boolean
+  updatedAt: string
   actions: string[]
 }
 

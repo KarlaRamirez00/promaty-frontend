@@ -6,6 +6,7 @@ export interface RequestRejectionReasonListItem {
   name: string
   subModule: string
   active: boolean
+  updatedAt: string
   status: Badge
   actions: string[]
 }
@@ -61,7 +62,7 @@ export interface RequestRejectionReasonSort {
   order: SortDirection
 }
 
-export const REQUEST_REJECTION_REASON_SORTABLE_KEYS = ['name', 'subModule', 'active'] as const
+export const REQUEST_REJECTION_REASON_SORTABLE_KEYS = ['name', 'subModule', 'updatedAt', 'active'] as const
 
 export const DEFAULT_REQUEST_REJECTION_REASON_SORT: RequestRejectionReasonSort = {
   key: 'name',

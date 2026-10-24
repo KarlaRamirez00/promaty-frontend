@@ -1,4 +1,4 @@
-import { formatDateTime } from '@/utils'
+import { formatDate, formatDateTime } from '@/utils'
 import type { Badge } from '@/types/badge'
 import type {
   RequestRejectionReasonFormPayload,
@@ -23,6 +23,7 @@ export function mapperRequestRejectionReasonList(
     name: item.name,
     subModule: item.subModule,
     active: item.active,
+    updatedAt: formatDate(item.updatedAt),
     status: toStatusBadge(item.active),
     actions: item.actions,
   }))

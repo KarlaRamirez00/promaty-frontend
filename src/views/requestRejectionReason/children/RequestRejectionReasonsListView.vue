@@ -108,6 +108,7 @@ const { activeFilters, clearFilter, clearAllFilters } =
 const headers = [
   { title: 'Nombre', key: 'name', sortable: true },
   { title: 'Submódulo', key: 'subModule', sortable: true },
+  { title: 'Actualización', key: 'updatedAt', sortable: true },
   { title: 'Estado', key: 'active', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]

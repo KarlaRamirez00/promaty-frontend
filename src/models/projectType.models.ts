@@ -5,6 +5,7 @@ export interface ProjectTypeListItem {
   id: number
   name: string
   active: boolean
+  updatedAt: string
   status: Badge
   actions: string[]
 }
@@ -51,7 +52,7 @@ export interface ProjectTypeSort {
   order: SortDirection
 }
 
-export const PROJECT_TYPE_SORTABLE_KEYS = ['name', 'active'] as const
+export const PROJECT_TYPE_SORTABLE_KEYS = ['name', 'updatedAt', 'active'] as const
 
 export const DEFAULT_PROJECT_TYPE_SORT: ProjectTypeSort = { key: 'name', order: 'asc' }
 

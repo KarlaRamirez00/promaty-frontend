@@ -13,6 +13,7 @@ export interface ClientListRaw {
   id: number
   name: string
   active: boolean
+  updatedAt: string
   actions: string[]
 }
 
