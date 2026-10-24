@@ -132,13 +132,16 @@ html {
 
 .link-cell {
   display: inline-block;
+  /* El margen negativo iguala el relleno: el borde del fondo queda alineado con el encabezado. */
+  margin-left: -10px;
   padding: 4px 10px;
   border-radius: 8px;
+  background-color: rgba(var(--v-theme-on-surface), 0.06);
   cursor: pointer;
   transition: background-color 150ms ease;
 }
 
 .link-cell:hover {
-  background-color: rgba(var(--v-theme-on-surface), 0.08);
+  background-color: rgba(var(--v-theme-on-surface), 0.16);
 }
 </style>
