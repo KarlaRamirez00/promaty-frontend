@@ -19,6 +19,33 @@ export interface TerminationAnnulPayload {
   reason: string
 }
 
+export interface TerminationStaffOptionRaw {
+  id: number
+  name: string
+  identificationNumber: string
+  minTerminationDate: string
+  maxTerminationDate: string | null
+}
+
+export interface TerminationCatalogOptionRaw {
+  id: number
+  name: string
+}
+
+export interface TerminationUpdatePayload {
+  terminationDate: string
+  legalTerminationCauseId: number
+  definitiveTermination: boolean
+  nonRehireReasonId: number | null
+  notes: string | null
+}
+
+export interface TerminationRequestPayload {
+  entityType: 'TERMINATION'
+  action: 'CREATE'
+  terminationData: TerminationUpdatePayload & { staffId: number }
+}
+
 export interface TerminationListRaw {
   id: number
   requestId: number

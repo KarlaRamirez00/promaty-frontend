@@ -50,6 +50,7 @@ import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 import DateField from '@/components/common/DateField.vue'
+import BooleanField from '@/components/common/BooleanField.vue'
 
 const props = defineProps<{
   id?: string
@@ -404,7 +405,7 @@ function submit() {
 
   <v-row>
     <v-col cols="12" md="4">
-      <div :class="{ 'staff-identification-locked': isEditing }">
+      <div class="field-locked">
         <v-select
           v-model="form.identificationType"
           :items="IDENTIFICATION_TYPE_OPTIONS"
@@ -415,14 +416,14 @@ function submit() {
           variant="outlined"
           density="comfortable"
           persistent-placeholder
-          :disabled="isEditing"
+          disabled
           hide-details
         />
       </div>
     </v-col>
 
     <v-col cols="12" md="8">
-      <div :class="{ 'staff-identification-locked': isEditing }">
+      <div :class="{ 'field-locked': isEditing }">
         <v-text-field
           v-model="identificationNumberInput"
           v-input-mask="form.identificationType === 'RUT' ? 'rut' : 'lettersAndNumbers'"
@@ -591,26 +592,11 @@ function submit() {
     </v-col>
 
     <v-col cols="12" :md="form.hasChildren ? 4 : 6">
-      <div class="staff-boolean-field">
-        <span class="staff-boolean-field__label">¿Tiene hijos?</span>
-        <v-sheet
-          border
-          rounded
-          class="d-flex align-center justify-space-between px-4"
-          min-height="50"
-        >
-          <span class="text-body-2 text-medium-emphasis">
-            {{ form.hasChildren ? 'Sí' : 'No' }}
-          </span>
-          <v-switch
-            v-model="form.hasChildren"
-            color="primary"
-            density="compact"
-            hide-details
-            @update:model-value="(value) => { if (!value) form.childrenCount = null }"
-          />
-        </v-sheet>
-      </div>
+      <BooleanField
+        v-model="form.hasChildren"
+        label="¿Tiene hijos?"
+        @update:model-value="(value) => { if (!value) form.childrenCount = null }"
+      />
     </v-col>
 
     <v-col v-if="form.hasChildren" cols="12" md="4">
@@ -903,35 +889,3 @@ function submit() {
     </v-btn>
   </div>
 </template>
-
-<style scoped>
-/* Vuetify pone pointer-events: none en el campo deshabilitado (.v-input--disabled), así que el
-   hover nunca llega a él — el cursor se define acá, en el contenedor que sí recibe el mouse. */
-.staff-identification-locked {
-  cursor: not-allowed;
-}
-
-/* Replica el label "cortando" el borde de un v-text-field outlined, para que este v-sheet se vea
-   igual a los campos vecinos en vez de un label suelto arriba del contenedor. */
-.staff-boolean-field {
-  position: relative;
-}
-
-/* v-sheet usa el token de borde genérico (más tenue) — un v-field outlined dibuja su borde con
-   opacidad 0.38, que es la que realmente se ve en los campos vecinos como "Cantidad de hijos". */
-.staff-boolean-field :deep(.v-sheet) {
-  border-color: rgba(var(--v-theme-on-surface), 0.38) !important;
-}
-
-.staff-boolean-field__label {
-  position: absolute;
-  top: -8px;
-  left: 12px;
-  z-index: 1;
-  padding: 0 4px;
-  background: rgb(var(--v-theme-background));
-  font-size: 12px;
-  line-height: 1;
-  color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
-}
-</style>

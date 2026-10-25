@@ -38,18 +38,19 @@ const sections = computed<DetailSection[]>(() => {
       title: 'Datos del finiquito',
       fields: [
         { key: 'fullName', label: 'Colaborador', value: t.fullName },
-        { key: 'identificationNumber', label: 'Identificación', value: t.identificationNumber },
+        { key: 'identificationNumber', label: 'RUT', value: t.identificationNumber },
         ...(t.rexTerminationNumber
           ? [{ key: 'rexTerminationNumber', label: 'N° de finiquito Rex+', value: t.rexTerminationNumber }]
           : []),
         { key: 'costCenterCode', label: 'Centro de costo', value: t.costCenterCode },
         { key: 'jobTitleName', label: 'Cargo', value: t.jobTitleName },
         { key: 'contractStartDate', label: 'Inicio del contrato', value: t.contractStartDate },
-        { key: 'contractEndDate', label: 'Término del contrato', value: t.contractEndDate },
         { key: 'terminationDate', label: 'Fecha de término', value: t.terminationDate },
         { key: 'cause', label: 'Causal', value: t.legalTerminationCauseName },
         { key: 'definitive', label: 'Finiquito definitivo', value: t.definitive },
-        { key: 'nonRehireReason', label: 'Motivo de no recontratación', value: t.nonRehireReasonName },
+        ...(t.isDefinitive
+          ? [{ key: 'nonRehireReason', label: 'Motivo de no recontratación', value: t.nonRehireReasonName }]
+          : []),
         { key: 'notes', label: 'Observaciones', value: t.notes },
         ...(t.annulmentReason
           ? [{ key: 'annulmentReason', label: 'Motivo de la anulación', value: t.annulmentReason }]

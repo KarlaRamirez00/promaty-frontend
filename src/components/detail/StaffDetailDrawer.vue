@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import {
   accountTypeLabel,
-  identificationTypeLabel,
   STAFF_STATUS_CODE,
   staffStatusColor,
   type Staff,
@@ -39,11 +38,7 @@ const sections = computed<DetailSection[]>(() => {
       title: 'Datos personales',
       fields: [
         { key: 'fullName', label: 'Nombre completo', value: s.fullName },
-        {
-          key: 'identification',
-          label: 'Identificación',
-          value: `${identificationTypeLabel(s.identificationType)} ${s.identificationNumber}`,
-        },
+        { key: 'identificationNumber', label: 'RUT', value: s.identificationNumber },
         { key: 'birthDate', label: 'Fecha de nacimiento', value: formatDate(s.birthDate) },
         { key: 'registeredSex', label: 'Sexo registral', value: s.registeredSex.name },
         { key: 'maritalStatus', label: 'Estado civil', value: s.maritalStatus.name },

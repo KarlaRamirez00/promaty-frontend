@@ -6,10 +6,6 @@ export const IDENTIFICATION_TYPE_OPTIONS: { title: string; value: Identification
   { title: 'Pasaporte', value: 'PASSPORT' },
 ]
 
-export function identificationTypeLabel(type: IdentificationType): string {
-  return IDENTIFICATION_TYPE_OPTIONS.find((option) => option.value === type)?.title ?? type
-}
-
 // clothingSize y accountType son enums fijos (sin catálogo backend) — opciones hardcodeadas.
 export const CLOTHING_SIZE_OPTIONS: ClothingSize[] = ['S', 'M', 'L', 'XL', 'XXL']
 

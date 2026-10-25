@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import {
   getCostCenterOptionsAction,
@@ -12,6 +13,7 @@ import {
 import { useActiveFilters } from '@/composables/useActiveFilters'
 import { useDetailSlide } from '@/composables/useDetailSlide'
 import { useListQuery } from '@/composables/useListQuery'
+import { usePermissions } from '@/composables/usePermissions'
 import { useRequestDecision } from '@/composables/useRequestDecision'
 import { useTerminationAnnul } from '@/composables/useTerminationAnnul'
 import {
@@ -20,6 +22,7 @@ import {
   type TerminationListItem,
   type TerminationQueryParams,
 } from '@/models'
+import { ROUTE } from '@/router/route-names'
 import { formatDate } from '@/utils'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
@@ -29,6 +32,10 @@ import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApproveRejectDialog from '@/components/common/ApproveRejectDialog.vue'
 import AnnulTerminationDialog from '@/components/common/AnnulTerminationDialog.vue'
+
+const router = useRouter()
+const { hasPermission } = usePermissions()
+const canCreate = computed(() => hasPermission('create'))
 
 const {
   detailQueryParam,
@@ -167,6 +174,14 @@ const { data: selectedRequest } = useQuery({
 function viewDetail(item: { id: number }) {
   openDetail(item.id)
 }
+
+function openRequestForm() {
+  router.push({ name: ROUTE.TERMINATION_NEW })
+}
+
+function openEditForm(id: number) {
+  router.push({ name: ROUTE.TERMINATION_EDIT, params: { id } })
+}
 </script>
 
 <template>
@@ -178,9 +193,11 @@ function viewDetail(item: { id: number }) {
   <ListControls
     v-model:search="searchInput"
     search-placeholder="Buscar por RUT o nombre"
+    new-label="Solicitar"
     :show-export="false"
-    :show-new="false"
+    :show-new="canCreate"
     @filter="filtersOpen = true"
+    @new="openRequestForm"
   />
 
   <ActiveFilters
@@ -229,6 +246,7 @@ function viewDetail(item: { id: number }) {
       <ActionsMenu
         :record="item"
         @view="viewDetail(item)"
+        @edit="openEditForm(item.id)"
         @approve="askDecision(item.requestId, 'APPROVE')"
         @validate="askDecision(item.requestId, 'VALIDATE')"
         @reject="askDecision(item.requestId, 'REJECT')"
@@ -258,6 +276,7 @@ function viewDetail(item: { id: number }) {
     :termination="selectedTermination ?? null"
     :approvals="selectedRequest?.approvals"
     :loading="detailLoading"
+    @edit="openEditForm($event.id)"
     @approve="askDecision($event.requestId, 'APPROVE')"
     @validate="askDecision($event.requestId, 'VALIDATE')"
     @reject="askDecision($event.requestId, 'REJECT')"

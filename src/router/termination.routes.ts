@@ -15,4 +15,31 @@ export const terminationRoutes: RouteRecordRaw[] = [
       ],
     },
   },
+  {
+    path: '/terminations/new',
+    name: ROUTE.TERMINATION_NEW,
+    component: () => import('@/views/termination/TerminationFormView.vue'),
+    meta: {
+      module: 'termination',
+      permission: 'create',
+      breadcrumbs: [
+        { title: 'Finiquitos', to: { name: ROUTE.TERMINATION_LIST } },
+        { title: 'Nuevo finiquito', disabled: true },
+      ],
+    },
+  },
+  {
+    path: '/terminations/:id/edit',
+    name: ROUTE.TERMINATION_EDIT,
+    component: () => import('@/views/termination/TerminationFormView.vue'),
+    props: true,
+    meta: {
+      module: 'termination',
+      permission: 'update',
+      breadcrumbs: [
+        { title: 'Finiquitos', to: { name: ROUTE.TERMINATION_LIST } },
+        { title: 'Editar finiquito', disabled: true },
+      ],
+    },
+  },
 ]

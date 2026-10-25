@@ -127,7 +127,7 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<StaffQu
 const headers = [
   { title: 'CC', key: 'costCenterCode', sortable: false },
   { title: 'Nombre', key: 'firstName', sortable: true },
-  { title: 'N° de identificación', key: 'identificationNumber', sortable: true },
+  { title: 'RUT', key: 'identificationNumber', sortable: true },
   { title: 'Fecha ingreso', key: 'hireDate', sortable: false },
   { title: 'Estado', key: 'statusName', sortable: false },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },

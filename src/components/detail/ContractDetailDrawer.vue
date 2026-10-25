@@ -36,7 +36,7 @@ const sections = computed<DetailSection[]>(() => {
       title: 'Datos del contrato',
       fields: [
         { key: 'fullName', label: 'Colaborador', value: c.fullName },
-        { key: 'identificationNumber', label: 'Identificación', value: c.identificationNumber },
+        { key: 'identificationNumber', label: 'RUT', value: c.identificationNumber },
         ...(c.rexContractNumber
           ? [{ key: 'rexContractNumber', label: 'N° de contrato Rex+', value: c.rexContractNumber }]
           : []),

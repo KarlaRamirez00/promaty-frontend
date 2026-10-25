@@ -39,10 +39,10 @@ export interface Termination {
   costCenterCode: string
   jobTitleName: string
   contractStartDate: string
-  contractEndDate: string
   terminationDate: string
   legalTerminationCauseName: string
   definitive: string
+  isDefinitive: boolean
   nonRehireReasonName: string
   notes: string
   rexTerminationNumber: string | null
@@ -54,6 +54,49 @@ export interface Termination {
   createdBy: string
   updatedBy: string
   actions: string[]
+}
+
+export interface TerminationOption {
+  id: number
+  name: string
+}
+
+export interface TerminationStaffOption {
+  id: number
+  title: string
+  minDate: string
+  maxDate: string | null
+}
+
+export interface TerminationForm {
+  id: number | null
+  staffId: number | null
+  staffLabel: string
+  terminationDate: string | null
+  legalTerminationCauseId: number | null
+  definitiveTermination: boolean
+  nonRehireReasonId: number | null
+  notes: string
+}
+
+export const createTerminationForm = (overrides: Partial<TerminationForm> = {}): TerminationForm => ({
+  id: null,
+  staffId: null,
+  staffLabel: '',
+  terminationDate: null,
+  legalTerminationCauseId: null,
+  definitiveTermination: false,
+  nonRehireReasonId: null,
+  notes: '',
+  ...overrides,
+})
+
+// Datos del finiquito para editarlo: el formulario más los valores vigentes de los catálogos,
+// que pueden estar inactivos y no venir en los selectores.
+export interface TerminationEditData {
+  form: TerminationForm
+  currentCause: TerminationOption
+  currentNonRehireReason: TerminationOption | null
 }
 
 export interface TerminationAnnulForm {

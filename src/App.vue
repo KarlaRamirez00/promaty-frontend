@@ -144,4 +144,9 @@ html {
 .link-cell:hover {
   background-color: rgba(var(--v-theme-on-surface), 0.16);
 }
+
+/* El input deshabilitado no recibe el mouse; el cursor va en su contenedor. */
+.field-locked {
+  cursor: not-allowed;
+}
 </style>

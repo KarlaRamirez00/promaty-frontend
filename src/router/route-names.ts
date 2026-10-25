@@ -28,6 +28,8 @@ export const ROUTE = {
   CONTRACT_LIST: 'contracts',
   CONTRACT_NEW: 'contracts-new',
   TERMINATION_LIST: 'terminations',
+  TERMINATION_NEW: 'terminations-new',
+  TERMINATION_EDIT: 'terminations-edit',
   REJECTION_REASON_LIST: 'requestRejectionReasons',
   REJECTION_REASON_NEW: 'requestRejectionReasons-new',
   REJECTION_REASON_EDIT: 'requestRejectionReasons-edit',
