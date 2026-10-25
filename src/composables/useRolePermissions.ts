@@ -43,7 +43,8 @@ export function useRolePermissions(
   options: Ref<RolePermissionOption[] | undefined>,
   selectedIds: Ref<number[]>,
 ) {
-  const subModuleSearch = ref('')
+  // El clearable de Vuetify deja el modelo en null.
+  const subModuleSearch = ref<string | null>('')
   const selected = computed(() => new Set(selectedIds.value))
 
   const scopePermissions = computed(() => (options.value ?? []).filter(isScopePermission))
@@ -52,7 +53,7 @@ export function useRolePermissions(
   )
 
   const visibleGroups = computed(() => {
-    const query = normalizeText(subModuleSearch.value.trim())
+    const query = normalizeText((subModuleSearch.value ?? '').trim())
     if (!query) return groups.value
     return groups.value.filter((group) =>
       normalizeText(group.subModule.alias || group.subModule.name).includes(query),
@@ -60,7 +61,7 @@ export function useRolePermissions(
   })
 
   const sections = computed(() =>
-    groupIntoSections(visibleGroups.value, subModuleSearch.value.trim() ? [] : scopePermissions.value),
+    groupIntoSections(visibleGroups.value, (subModuleSearch.value ?? '').trim() ? [] : scopePermissions.value),
   )
 
   const totalAvailable = computed(() => options.value?.length ?? 0)
