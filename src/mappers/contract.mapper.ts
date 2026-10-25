@@ -18,7 +18,7 @@ import { formatCurrency, formatDate, formatDateTime, formatRut, NO_DATA, parseCu
 const RUT_PATTERN = /^\d{7,8}-[\dkK]$/
 
 // El contrato no informa el tipo de identificación: solo se formatea lo que tiene forma de RUT.
-function toDisplayIdentification(value: string): string {
+export function toDisplayIdentification(value: string): string {
   return RUT_PATTERN.test(value) ? formatRut(value) : value
 }
 

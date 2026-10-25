@@ -15,7 +15,8 @@ import {
 import { useGetDetail, useGetTable, useMutateAction, useMutateForm } from '@/utils'
 import type { RequestDecisionForm, RequestQueryParams } from '@/models'
 
-const CONTRACT_REJECTION_SUBMODULE = 'contracts'
+export const CONTRACT_REJECTION_SUBMODULE = 'contracts'
+export const TERMINATION_REJECTION_SUBMODULE = 'terminations'
 
 export function getRequestListAction(params: RequestQueryParams) {
   return useGetTable(listRequestsApi, params, mapperRequestList)
@@ -44,8 +45,8 @@ export function getRequestStatusOptionsAction() {
   return listRequestStatusOptionsApi()
 }
 
-export function getRejectionReasonOptionsAction() {
-  return listRejectionReasonOptionsApi(CONTRACT_REJECTION_SUBMODULE)
+export function getRejectionReasonOptionsAction(subModule: string) {
+  return listRejectionReasonOptionsApi(subModule)
 }
 
 export function getRequesterOptionsAction() {

@@ -5,6 +5,7 @@ export const ACTION = {
   STATUS: 'STATUS',
   APPROVE: 'APPROVE',
   VALIDATE: 'VALIDATE',
+  ANNUL: 'ANNUL',
 } as const
 
 export type Action = (typeof ACTION)[keyof typeof ACTION]

@@ -35,6 +35,7 @@ function toStaffIdentification(item: RequestRaw): string {
 export function mapperRequestList(items: RequestRaw[]): RequestListItem[] {
   return items.map((item) => ({
     id: item.id,
+    entityType: item.entityType,
     entityId: item.entityId,
     typeName: item.typeName,
     staffFullName: toStaffFullName(item),

@@ -165,10 +165,11 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-// El detalle es único: vive en Contratos y se abre con ?detail={id del contrato}.
-function viewDetail(item: { entityId: number | null }) {
+// El detalle vive en la lista de la entidad (Contratos o Finiquitos) y se abre con ?detail={id}.
+function viewDetail(item: { entityType: string; entityId: number | null }) {
   if (item.entityId === null) return
-  router.push({ name: ROUTE.CONTRACT_LIST, query: { detail: String(item.entityId) } })
+  const name = item.entityType === 'TERMINATION' ? ROUTE.TERMINATION_LIST : ROUTE.CONTRACT_LIST
+  router.push({ name, query: { detail: String(item.entityId) } })
 }
 </script>
 

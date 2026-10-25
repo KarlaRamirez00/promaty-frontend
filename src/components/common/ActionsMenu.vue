@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import {
   mdiAccountLockOpenOutline,
   mdiAccountLockOutline,
+  mdiCancel,
   mdiCheck,
   mdiClose,
   mdiDotsHorizontal,
@@ -35,6 +36,7 @@ const emit = defineEmits<{
   approve: []
   validate: []
   reject: []
+  annul: []
   block: []
   unblock: []
 }>()
@@ -49,6 +51,7 @@ const showToggle = computed(
 const showApprove = computed(() => props.record.actions.includes(ACTION.APPROVE))
 const showValidate = computed(() => props.record.actions.includes(ACTION.VALIDATE))
 const showReject = computed(() => showApprove.value || showValidate.value)
+const showAnnul = computed(() => props.record.actions.includes(ACTION.ANNUL))
 const showBlock = computed(() => props.blockable && props.record.actions.includes(ACTION.STATUS))
 const showUnblock = computed(() => props.unblockable && props.record.actions.includes(ACTION.STATUS))
 const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activar'))
@@ -64,7 +67,8 @@ const hasAnyAction = computed(
     showBlock.value ||
     showUnblock.value ||
     showApprove.value ||
-    showValidate.value,
+    showValidate.value ||
+    showAnnul.value,
 )
 </script>
 
@@ -102,6 +106,13 @@ const hasAnyAction = computed(
         base-color="error"
         title="Rechazar"
         @click="emit('reject')"
+      />
+      <v-list-item
+        v-if="showAnnul"
+        :prepend-icon="mdiCancel"
+        base-color="error"
+        title="Anular"
+        @click="emit('annul')"
       />
       <v-list-item
         v-if="showEdit"

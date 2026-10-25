@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import {
   approveRequestAction,
+  CONTRACT_REJECTION_SUBMODULE,
   getRejectionReasonOptionsAction,
   rejectRequestAction,
 } from '@/actions'
@@ -17,8 +18,9 @@ interface DecisionVariables {
   form: RequestDecisionForm
 }
 
-// Aprobar, validar o rechazar una solicitud: compartido por Solicitudes y el detalle de Contrato.
-export function useRequestDecision() {
+// Aprobar, validar o rechazar una solicitud: compartido por Solicitudes, Contratos y Finiquitos.
+// El submódulo define de qué catálogo salen los motivos de rechazo.
+export function useRequestDecision(rejectionSubModule: string = CONTRACT_REJECTION_SUBMODULE) {
   const queryClient = useQueryClient()
   const { toastDecided, toastFailed } = useMessage()
   const { backendErrorFields, setFromError, clear: clearBackendErrors } = useBackendFieldErrors()
@@ -28,8 +30,8 @@ export function useRequestDecision() {
   const requestId = ref<number | null>(null)
 
   const { data: rejectionReasons } = useQuery({
-    queryKey: ['requestRejectionReasons', 'selector', 'contracts'],
-    queryFn: getRejectionReasonOptionsAction,
+    queryKey: ['requestRejectionReasons', 'selector', rejectionSubModule],
+    queryFn: () => getRejectionReasonOptionsAction(rejectionSubModule),
     enabled: computed(() => type.value === 'REJECT'),
   })
 

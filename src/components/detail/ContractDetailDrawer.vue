@@ -5,6 +5,7 @@ import type { DetailSection } from '@/types/detail'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailTabs from '@/components/common/DetailTabs.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
+import ApprovalHistory from '@/components/common/ApprovalHistory.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -101,42 +102,8 @@ const sections = computed<DetailSection[]>(() => {
 
     <DetailTabs v-else-if="contract" :sections="sections">
       <template #traceability>
-        <h3 class="approvals__title">Historial de aprobaciones</h3>
-
-        <p v-if="!approvals.length" class="text-body-2 text-medium-emphasis px-2">
-          Aún no hay decisiones registradas.
-        </p>
-
-        <div v-else class="d-flex flex-column ga-3">
-          <v-sheet v-for="approval in approvals" :key="approval.id" border rounded class="px-4 py-3">
-            <div class="d-flex align-center justify-space-between ga-2">
-              <span class="text-subtitle-2 font-weight-bold">{{ approval.levelLabel }}</span>
-              <v-chip size="small" variant="tonal" :color="approval.approved ? 'success' : 'error'">
-                {{ approval.approved ? 'Aprobó' : 'Rechazó' }}
-              </v-chip>
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              {{ approval.approverName }} · {{ approval.createdAt }}
-            </div>
-            <div v-if="approval.rejectionReasonName" class="text-body-2 mt-2">
-              <span class="font-weight-medium">Motivo:</span> {{ approval.rejectionReasonName }}
-            </div>
-            <div v-if="approval.comment" class="text-body-2 mt-1">
-              <span class="font-weight-medium">Observaciones:</span> {{ approval.comment }}
-            </div>
-          </v-sheet>
-        </div>
+        <ApprovalHistory :approvals="approvals" />
       </template>
     </DetailTabs>
   </DetailDrawer>
 </template>
-
-<style scoped>
-.approvals__title {
-  margin: 24px 0 8px;
-  padding: 0 8px;
-  font-size: 1rem;
-  font-weight: 700;
-  color: rgb(var(--v-theme-primary));
-}
-</style>
