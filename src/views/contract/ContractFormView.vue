@@ -111,10 +111,6 @@ const alert = computed(() =>
   hasValidationError.value ? contractMessages.alertError : contractMessages.alertInfo,
 )
 
-function goToRequests() {
-  router.push({ name: ROUTE.REQUEST_LIST })
-}
-
 function goToContracts() {
   router.push({ name: ROUTE.CONTRACT_LIST })
 }
@@ -180,7 +176,7 @@ const saveMutation = useMutation({
   mutationFn: createContractRequestAction,
   onSuccess: () => {
     toastSaved(null, messages.contract)
-    goToRequests()
+    goToContracts()
     return queryClient.invalidateQueries({
       predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
       refetchType: 'none',
