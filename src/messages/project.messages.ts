@@ -35,5 +35,6 @@ export default {
     specialtyRequired: 'La especialidad es obligatoria.',
     clientRequired: 'El mandante es obligatorio.',
     startDateRequired: 'La fecha de inicio es obligatoria.',
+    endDateBeforeStart: 'La fecha de término no puede ser anterior a la de inicio.',
   },
 }

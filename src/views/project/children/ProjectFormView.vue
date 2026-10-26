@@ -94,6 +94,14 @@ const costCenterCodeModel = computed<string>({
 })
 const fieldErrors = ref<Record<string, string>>({})
 
+watch(
+  () => form.value.startDate,
+  (startDate) => {
+    const { endDate } = form.value
+    if (startDate && endDate && endDate < startDate) form.value.endDate = null
+  },
+)
+
 function hasError(field: string): boolean {
   return !!fieldErrors.value[field] || hasBackendError(field)
 }
@@ -138,7 +146,11 @@ function validate(): boolean {
   if (!form.value.typeId) errors.typeId = projectMessages.rules.typeRequired
   if (!form.value.specialtyId) errors.specialtyId = projectMessages.rules.specialtyRequired
   if (!form.value.clientId) errors.clientId = projectMessages.rules.clientRequired
-  if (!form.value.startDate) errors.startDate = projectMessages.rules.startDateRequired
+  const { startDate, endDate } = form.value
+  if (!startDate) errors.startDate = projectMessages.rules.startDateRequired
+  if (startDate && endDate && endDate < startDate) {
+    errors.endDate = projectMessages.rules.endDateBeforeStart
+  }
 
   fieldErrors.value = errors
   return Object.keys(errors).length === 0
@@ -234,9 +246,11 @@ function submit() {
         v-model="form.endDate"
         label="Fecha de término (opcional)"
         :min-date="form.startDate"
+        :error="hasError('endDate')"
         clearable
         hide-details
       />
+      <FieldErrorComponent :message="fieldErrors.endDate" />
     </v-col>
 
     <v-col cols="12">

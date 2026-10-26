@@ -118,20 +118,22 @@ const minDateValue = computed(() => (props.minDate ? toDate(props.minDate) : und
 const maxDateValue = computed(() => (props.maxDate ? toDate(props.maxDate) : undefined))
 
 // Con una fecha máxima en el pasado el calendario abriría en un mes deshabilitado: parte en la fecha
-// elegida o, si no hay, en la máxima. Sin fecha máxima no se controla la vista.
+// elegida o, si no hay, en la máxima. Con un máximo futuro o sin máximo no se controla la vista.
 const viewYear = ref<number>()
 const viewMonth = ref<number>()
 
 function syncView(value: DateFieldValue) {
-  const anchor = typeof value === 'string' ? toDate(value) : maxDateValue.value
+  const max = maxDateValue.value
+  const fallback = max && max < new Date() ? max : undefined
+  const anchor = typeof value === 'string' ? toDate(value) : fallback
   viewYear.value = anchor?.getFullYear()
   viewMonth.value = anchor?.getMonth()
 }
 
-watch(model, syncView, { immediate: true })
+watch([model, maxDateValue], () => syncView(model.value as DateFieldValue), { immediate: true })
 
 const viewBindings = computed(() =>
-  maxDateValue.value
+  maxDateValue.value && viewYear.value !== undefined && viewMonth.value !== undefined
     ? {
         year: viewYear.value,
         month: viewMonth.value,

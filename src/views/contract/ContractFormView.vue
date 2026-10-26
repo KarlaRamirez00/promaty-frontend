@@ -94,6 +94,14 @@ watch(isFixedTerm, (fixedTerm) => {
   }
 })
 
+watch(
+  () => form.value.startDate,
+  (startDate) => {
+    const { endDate } = form.value
+    if (startDate && endDate && endDate < startDate) form.value.endDate = null
+  },
+)
+
 function hasError(field: string): boolean {
   return !!fieldErrors.value[field] || hasBackendError(field)
 }

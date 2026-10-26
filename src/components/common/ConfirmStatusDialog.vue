@@ -50,7 +50,7 @@ const alertMessage = computed(
 <template>
   <v-dialog v-model="isOpen" max-width="420">
     <v-card>
-      <v-card-title class="d-flex align-center ga-2 px-6 pt-6 text-h6">
+      <v-card-title class="d-flex align-center ga-2 px-6 pt-6 text-h6 text-wrap">
         <v-icon :icon="mdiPower" :color="actionColor" size="24" />
         {{ actionLabel }} {{ entity }}
       </v-card-title>

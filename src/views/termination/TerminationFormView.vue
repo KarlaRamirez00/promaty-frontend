@@ -124,10 +124,6 @@ const alert = computed(() => {
   return isEditing.value ? terminationMessages.alertEdit : terminationMessages.alertInfo
 })
 
-function goToRequests() {
-  router.push({ name: ROUTE.REQUEST_LIST })
-}
-
 function goToTerminations() {
   router.push({ name: ROUTE.TERMINATION_LIST })
 }
@@ -162,8 +158,7 @@ const saveMutation = useMutation({
   mutationFn: saveTermination,
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.termination)
-    if (value.id) goToTerminations()
-    else goToRequests()
+    goToTerminations()
     return queryClient.invalidateQueries({
       predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
       refetchType: 'none',
