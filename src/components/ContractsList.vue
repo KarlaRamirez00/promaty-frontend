@@ -6,6 +6,7 @@ import {
   getContractDetailAction,
   getContractListAction,
   getContractStatusOptionsAction,
+  getContractTypeOptionsAction,
   getCostCenterOptionsAction,
   getRequestDetailAction,
 } from '@/actions'
@@ -76,6 +77,10 @@ const { data: statusOptions } = useQuery({
   queryKey: ['contracts', 'options', 'statuses'],
   queryFn: getContractStatusOptionsAction,
 })
+const { data: contractTypeOptions } = useQuery({
+  queryKey: ['contractTypes', 'options'],
+  queryFn: getContractTypeOptionsAction,
+})
 const { data: costCenterOptions } = useQuery({
   queryKey: ['projects', 'options', 'costCenters'],
   queryFn: getCostCenterOptionsAction,
@@ -89,6 +94,12 @@ const filterFields = computed<FilterField[]>(() => [
     options: (statusOptions.value ?? []).map((o) => ({ title: o.name, value: o.id })),
   },
   {
+    key: 'contractTypeId',
+    type: 'select',
+    label: 'Tipo de contrato',
+    options: (contractTypeOptions.value ?? []).map((o) => ({ title: o.name, value: o.id })),
+  },
+  {
     key: 'projectId',
     type: 'autocomplete',
     label: 'Centro de costo',
@@ -99,11 +110,13 @@ const filterFields = computed<FilterField[]>(() => [
 const filterValues = computed<Record<string, unknown>>({
   get: () => ({
     statusId: query.value.statusId,
+    contractTypeId: query.value.contractTypeId,
     projectId: query.value.projectId,
   }),
   set: (value) => {
     patchQuery({
       statusId: (value.statusId as number | null) ?? null,
+      contractTypeId: (value.contractTypeId as number | null) ?? null,
       projectId: (value.projectId as number | null) ?? null,
     })
   },
@@ -111,11 +124,17 @@ const filterValues = computed<Record<string, unknown>>({
 
 const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<ContractQueryParams>({
   patchQuery,
-  resetAll: { statusId: null, projectId: null },
+  resetAll: { statusId: null, contractTypeId: null, projectId: null },
   chips: () => {
     const chips = []
     const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
     if (statusName) chips.push({ key: 'statusId', label: `Estado: ${statusName}` })
+    const contractTypeName = contractTypeOptions.value?.find(
+      (o) => o.id === query.value.contractTypeId,
+    )?.name
+    if (contractTypeName) {
+      chips.push({ key: 'contractTypeId', label: `Tipo de contrato: ${contractTypeName}` })
+    }
     const costCenter = costCenterOptions.value?.find((o) => o.id === query.value.projectId)?.title
     if (costCenter) chips.push({ key: 'projectId', label: `Centro de costo: ${costCenter}` })
     return chips

@@ -70,6 +70,7 @@ export async function listContractsApi(
       search: params.search || undefined,
       statusId: params.statusId ?? undefined,
       projectId: params.projectId ?? undefined,
+      contractTypeId: params.contractTypeId ?? undefined,
       page: params.page - 1,
       size: params.size,
     },
