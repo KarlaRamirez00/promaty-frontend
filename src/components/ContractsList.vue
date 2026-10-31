@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
+import { mdiCalendarClockOutline, mdiCalendarRemoveOutline } from '@mdi/js'
 import {
   getContractDetailAction,
   getContractListAction,
@@ -21,11 +22,13 @@ import {
   type ContractListItem,
   type ContractQueryParams,
 } from '@/models'
+import type { ContractCountersRaw } from '@/types/contract'
 import { ROUTE } from '@/router/route-names'
 import ListControls from '@/components/common/ListControls.vue'
 import ActiveFilters from '@/components/common/ActiveFilters.vue'
 import FiltersDrawer, { type FilterField } from '@/components/common/FiltersDrawer.vue'
 import ContractDetailDrawer from '@/components/detail/ContractDetailDrawer.vue'
+import IndicatorCard from '@/components/common/IndicatorCard.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApproveRejectDialog from '@/components/common/ApproveRejectDialog.vue'
@@ -58,12 +61,13 @@ const {
   searchInput,
   pageModel,
   sizeModel,
+  listResult,
   items,
   totalItems,
   pageCount,
   isPending,
   isError,
-} = useListQuery<ContractQueryParams, ContractListItem>({
+} = useListQuery<ContractQueryParams, ContractListItem, ContractCountersRaw>({
   resource: 'contracts',
   parse: parseContractQuery,
   toRoute: contractQueryToRoute,
@@ -124,9 +128,12 @@ const filterValues = computed<Record<string, unknown>>({
 
 const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<ContractQueryParams>({
   patchQuery,
-  resetAll: { statusId: null, contractTypeId: null, projectId: null },
+  resetAll: { statusId: null, contractTypeId: null, projectId: null, expiringSoon: false },
   chips: () => {
     const chips = []
+    if (query.value.expiringSoon) {
+      chips.push({ key: 'expiringSoon', label: `Por vencer en ${expiringSoonDays.value} días` })
+    }
     const statusName = statusOptions.value?.find((o) => o.id === query.value.statusId)?.name
     if (statusName) chips.push({ key: 'statusId', label: `Estado: ${statusName}` })
     const contractTypeName = contractTypeOptions.value?.find(
@@ -140,6 +147,26 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<Contrac
     return chips
   },
 })
+
+const expiredCount = computed(() => listResult.value?.meta.otherData?.expired ?? 0)
+const expiringSoonCount = computed(() => listResult.value?.meta.otherData?.expiringSoon ?? 0)
+const expiringSoonDays = computed(() => listResult.value?.meta.otherData?.expiringSoonDays)
+
+const expiredStatusId = computed(
+  () => statusOptions.value?.find((o) => o.code === 'EXPIRED')?.id ?? null,
+)
+const isExpiredActive = computed(
+  () => expiredStatusId.value !== null && query.value.statusId === expiredStatusId.value,
+)
+
+function toggleExpired() {
+  if (expiredStatusId.value === null) return
+  patchQuery({ statusId: isExpiredActive.value ? null : expiredStatusId.value, expiringSoon: false })
+}
+
+function toggleExpiringSoon() {
+  patchQuery({ expiringSoon: !query.value.expiringSoon, statusId: null })
+}
 
 const headers = [
   { title: 'CC', key: 'costCenterCode', sortable: false },
@@ -176,9 +203,39 @@ function openRequestForm() {
 </script>
 
 <template>
-  <div class="mb-6">
-    <h1 class="text-h5 font-weight-bold">Lista de contratos</h1>
-    <p class="text-body-2 text-medium-emphasis mt-1">Contratos de los colaboradores registrados en el sistema.</p>
+  <div class="list-header mb-6">
+    <div class="list-header__text">
+      <h1 class="text-h5 font-weight-bold">Lista de contratos</h1>
+      <p class="text-body-2 text-medium-emphasis mt-1">Contratos de los colaboradores registrados en el sistema.</p>
+    </div>
+
+    <div class="list-header__indicators">
+      <IndicatorCard
+        :icon="mdiCalendarClockOutline"
+        color="warning"
+        title="Por vencer"
+        :subtitle="expiringSoonDays ? `En los próximos ${expiringSoonDays} días` : undefined"
+        :count="expiringSoonCount"
+        :class="['indicator', { 'indicator--active': query.expiringSoon }]"
+        role="button"
+        tabindex="0"
+        @click="toggleExpiringSoon"
+        @keydown.enter="toggleExpiringSoon"
+        @keydown.space.prevent="toggleExpiringSoon"
+      />
+      <IndicatorCard
+        :icon="mdiCalendarRemoveOutline"
+        color="error"
+        title="Vencidos"
+        :count="expiredCount"
+        :class="['indicator', { 'indicator--active': isExpiredActive }]"
+        role="button"
+        tabindex="0"
+        @click="toggleExpired"
+        @keydown.enter="toggleExpired"
+        @keydown.space.prevent="toggleExpired"
+      />
+    </div>
   </div>
 
   <ListControls
@@ -266,4 +323,50 @@ function openRequestForm() {
     @confirm="confirmDecision"
   />
 </template>
+
+<style scoped>
+.list-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.list-header__indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.indicator {
+  cursor: pointer;
+  user-select: none;
+}
+
+.indicator--active {
+  outline: 2px solid rgba(var(--v-theme-on-surface), 0.38);
+}
+
+@media (min-width: 600px) {
+  .list-header__indicators {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .list-header {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .list-header__text {
+    flex: 1 1 auto;
+  }
+
+  .list-header__indicators {
+    flex: 0 1 560px;
+  }
+}
+</style>
 

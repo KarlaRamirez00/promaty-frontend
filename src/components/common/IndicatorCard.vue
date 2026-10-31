@@ -15,7 +15,7 @@ defineProps<{
         <v-icon :icon="icon" size="28" />
         <div>
           <div class="text-subtitle-2 font-weight-bold">{{ title }}</div>
-          <div v-if="subtitle" class="text-caption text-medium-emphasis">{{ subtitle }}</div>
+          <div v-if="subtitle" class="text-caption text-medium-emphasis text-no-wrap">{{ subtitle }}</div>
         </div>
       </div>
       <v-chip :color="color" size="small" variant="flat">{{ count }}</v-chip>

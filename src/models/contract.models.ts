@@ -128,6 +128,7 @@ export interface ContractFilters {
   statusId: number | null
   projectId: number | null
   contractTypeId: number | null
+  expiringSoon: boolean
 }
 
 export const createContractFilters = (
@@ -137,6 +138,7 @@ export const createContractFilters = (
   statusId: null,
   projectId: null,
   contractTypeId: null,
+  expiringSoon: false,
   ...overrides,
 })
 
@@ -165,6 +167,7 @@ export function parseContractQuery(query: Record<string, unknown>): ContractQuer
     statusId: toPositiveInt(query.statusId),
     projectId: toPositiveInt(query.projectId),
     contractTypeId: toPositiveInt(query.contractTypeId),
+    expiringSoon: query.expiringSoon === 'true',
     page: toPositiveInt(query.page) ?? DEFAULT_CONTRACT_QUERY.page,
     size: (CONTRACT_PAGE_SIZES as readonly number[]).includes(size)
       ? size
@@ -179,6 +182,7 @@ export function contractQueryToRoute(params: ContractQueryParams): Record<string
   if (params.statusId !== null) query.statusId = String(params.statusId)
   if (params.projectId !== null) query.projectId = String(params.projectId)
   if (params.contractTypeId !== null) query.contractTypeId = String(params.contractTypeId)
+  if (params.expiringSoon) query.expiringSoon = 'true'
   if (params.page !== DEFAULT_CONTRACT_QUERY.page) query.page = String(params.page)
   if (params.size !== DEFAULT_CONTRACT_QUERY.size) query.size = String(params.size)
   return query

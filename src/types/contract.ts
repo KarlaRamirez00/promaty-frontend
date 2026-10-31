@@ -51,6 +51,12 @@ export interface ContractStaffRaw {
   identificationNumber: string
 }
 
+export interface ContractCountersRaw {
+  expired: number
+  expiringSoon: number
+  expiringSoonDays: number
+}
+
 export interface ContractListRaw {
   id: number
   requestId: number

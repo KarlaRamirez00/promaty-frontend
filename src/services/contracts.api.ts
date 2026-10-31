@@ -2,6 +2,7 @@ import { rrhhApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
 import type {
   ContractCatalogOptionRaw,
+  ContractCountersRaw,
   ContractListRaw,
   ContractProjectOptionRaw,
   ContractRaw,
@@ -64,13 +65,14 @@ export async function createContractRequestApi(payload: ContractRequestPayload):
 
 export async function listContractsApi(
   params: ContractQueryParams,
-): Promise<PageResult<ContractListRaw>> {
-  const response = await rrhhApi.get<ApiListResponse<ContractListRaw>>('/contracts', {
+): Promise<PageResult<ContractListRaw, ContractCountersRaw>> {
+  const response = await rrhhApi.get<ApiListResponse<ContractListRaw, ContractCountersRaw>>('/contracts', {
     params: {
       search: params.search || undefined,
       statusId: params.statusId ?? undefined,
       projectId: params.projectId ?? undefined,
       contractTypeId: params.contractTypeId ?? undefined,
+      expiringSoon: params.expiringSoon || undefined,
       page: params.page - 1,
       size: params.size,
     },
