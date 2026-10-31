@@ -28,6 +28,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# Playwright
+test-results/
+playwright-report/
+tests/.demo-state.json
+
 # Documentación interna
 docs/
 CLAUDE.md

@@ -19,4 +19,13 @@ export default defineConfigWithVueTs(
       'vue/valid-v-slot': 'off',
     },
   },
+  {
+    // Scripts de demo end-to-end: recorren el flujo sin verificar resultados y usan azar solo
+    // para generar datos de prueba (RUT, nombres), no para nada sensible.
+    files: ['tests/**/*.ts'],
+    rules: {
+      'sonarjs/assertions-in-tests': 'off',
+      'sonarjs/pseudo-random': 'off',
+    },
+  },
 )
