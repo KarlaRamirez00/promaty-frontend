@@ -107,6 +107,7 @@ function submit() {
         <template v-if="isBlock">
           <v-textarea
             v-model="form.reason"
+            data-testid="block-reason"
             v-input-mask="'freeText'"
             label="Motivo del bloqueo"
             placeholder="Indica el motivo"
@@ -127,7 +128,13 @@ function submit() {
       <v-card-actions class="px-6 pb-6">
         <v-spacer />
         <v-btn variant="text" :disabled="loading" @click="close">Cancelar</v-btn>
-        <v-btn :color="config.color" variant="flat" :loading="loading" @click="submit">
+        <v-btn
+          :color="config.color"
+          variant="flat"
+          :loading="loading"
+          data-testid="block-confirm"
+          @click="submit"
+        >
           {{ config.label }}
         </v-btn>
       </v-card-actions>

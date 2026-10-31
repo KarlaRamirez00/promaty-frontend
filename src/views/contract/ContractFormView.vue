@@ -210,6 +210,7 @@ function submit() {
     <v-col cols="12">
       <v-autocomplete
         v-model="form.staffId"
+        data-testid="contract-staff"
         :items="staffOptions ?? []"
         item-title="title"
         item-value="id"
@@ -232,6 +233,7 @@ function submit() {
     <v-col cols="12" :md="isFixedTerm ? 4 : 6">
       <v-select
         v-model="form.contractTypeId"
+        data-testid="contract-type"
         :items="contractTypeOptions ?? []"
         item-title="name"
         item-value="id"
@@ -249,6 +251,7 @@ function submit() {
     <v-col cols="12" :md="isFixedTerm ? 4 : 6">
       <DateField
         v-model="form.startDate"
+        data-testid="contract-start-date"
         label="Fecha de inicio"
         :min-date="todayIso()"
         :error="hasError('startDate')"
@@ -260,6 +263,7 @@ function submit() {
     <v-col v-if="isFixedTerm" cols="12" md="4">
       <DateField
         v-model="form.endDate"
+        data-testid="contract-end-date"
         label="Fecha de término"
         :min-date="form.startDate ?? todayIso()"
         :error="hasError('endDate')"
@@ -292,6 +296,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-autocomplete
         v-model="form.projectId"
+        data-testid="contract-cost-center"
         :items="projectOptions ?? []"
         item-title="name"
         item-value="id"
@@ -309,6 +314,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.companyId"
+        data-testid="contract-company"
         :items="companyOptions ?? []"
         item-title="name"
         item-value="id"
@@ -326,6 +332,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.jobTitleId"
+        data-testid="contract-job-title"
         :items="jobTitleOptions ?? []"
         item-title="name"
         item-value="id"
@@ -343,6 +350,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.siteId"
+        data-testid="contract-site"
         :items="siteOptions ?? []"
         item-title="name"
         item-value="id"
@@ -364,6 +372,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.baseSalary"
+        data-testid="contract-base-salary"
         v-input-mask="'currency'"
         label="Sueldo base"
         prefix="$"
@@ -404,6 +413,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.weeklyWorkHours"
+        data-testid="contract-weekly-hours"
         :items="WEEKLY_WORK_HOURS_OPTIONS"
         item-title="title"
         item-value="value"
@@ -421,6 +431,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.workDays"
+        data-testid="contract-work-days"
         :items="WORK_DAYS_OPTIONS"
         item-title="title"
         item-value="value"
@@ -481,6 +492,7 @@ function submit() {
       variant="flat"
       :prepend-icon="mdiContentSave"
       :loading="saveMutation.isPending.value"
+      data-testid="contract-submit"
       @click="submit"
     >
       Enviar

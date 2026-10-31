@@ -225,6 +225,13 @@ function logout() {
   opacity: 1;
 }
 
+/* El crumb deshabilitado no recibe eventos del mouse, así que el cursor de texto lo decide el
+   contenedor: se fija en flecha y se impide seleccionar el texto de la ruta. */
+:deep(.v-breadcrumbs) {
+  cursor: default;
+  user-select: none;
+}
+
 :deep(.v-breadcrumbs-item--link) {
   border-radius: 4px;
   padding: 2px 6px;

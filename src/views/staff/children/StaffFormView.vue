@@ -426,6 +426,7 @@ function submit() {
       <div :class="{ 'field-locked': isEditing }">
         <v-text-field
           v-model="identificationNumberInput"
+          data-testid="staff-rut"
           v-input-mask="form.identificationType === 'RUT' ? 'rut' : 'lettersAndNumbers'"
           :label="form.identificationType === 'RUT' ? 'RUT' : 'Número de identificación'"
           :placeholder="form.identificationType === 'RUT' ? '99.999.999-9' : 'Ingresa el número'"
@@ -451,6 +452,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.firstName"
+        data-testid="staff-first-name"
         v-input-mask="'onlyLetters'"
         label="Nombre"
         placeholder="Ingresa el nombre"
@@ -467,6 +469,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.paternalLastName"
+        data-testid="staff-paternal-last-name"
         v-input-mask="'onlyLetters'"
         label="Apellido paterno"
         placeholder="Ingresa el apellido paterno"
@@ -483,6 +486,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.maternalLastName"
+        data-testid="staff-maternal-last-name"
         v-input-mask="'onlyLetters'"
         label="Apellido materno"
         placeholder="Ingresa el apellido materno"
@@ -499,6 +503,7 @@ function submit() {
     <v-col cols="12" md="4">
       <DateField
         v-model="form.birthDate"
+        data-testid="staff-birth-date"
         label="Fecha de nacimiento"
         :max-date="adultBirthDateLimit"
         :error="hasError('birthDate')"
@@ -510,6 +515,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.personalEmail"
+        data-testid="staff-email"
         v-input-mask="'email'"
         label="Correo personal"
         placeholder="Ingresa el correo"
@@ -526,6 +532,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="form.phone1"
+        data-testid="staff-phone"
         v-input-mask="'phone'"
         label="Teléfono"
         prefix="+56"
@@ -543,6 +550,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-select
         v-model="form.registeredSexId"
+        data-testid="staff-registered-sex"
         :items="registeredSexOptions ?? []"
         item-title="name"
         item-value="id"
@@ -560,6 +568,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-select
         v-model="form.maritalStatusId"
+        data-testid="staff-marital-status"
         :items="maritalStatusOptions ?? []"
         item-title="name"
         item-value="id"
@@ -577,6 +586,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-select
         v-model="form.nationalityId"
+        data-testid="staff-nationality"
         :items="nationalityOptions ?? []"
         item-title="name"
         item-value="id"
@@ -618,6 +628,7 @@ function submit() {
     <v-col cols="12" :md="form.hasChildren ? 4 : 6">
       <v-select
         v-model="form.educationLevelId"
+        data-testid="staff-education-level"
         :items="educationLevelOptions ?? []"
         item-title="name"
         item-value="id"
@@ -639,6 +650,7 @@ function submit() {
     <v-col cols="12">
       <v-text-field
         v-model="form.address"
+        data-testid="staff-address"
         v-input-mask="'freeText'"
         label="Dirección"
         placeholder="Ingresa la calle y número"
@@ -655,6 +667,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-select
         v-model="form.regionId"
+        data-testid="staff-region"
         :items="regionOptions ?? []"
         item-title="name"
         item-value="id"
@@ -673,6 +686,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-select
         v-model="form.provinciaId"
+        data-testid="staff-provincia"
         :items="provinciaOptions ?? []"
         item-title="name"
         item-value="id"
@@ -692,6 +706,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-select
         v-model="form.comunaId"
+        data-testid="staff-comuna"
         :items="comunaOptions ?? []"
         item-title="name"
         item-value="id"
@@ -714,6 +729,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.emergencyContactName"
+        data-testid="staff-emergency-name"
         v-input-mask="'onlyLetters'"
         label="Nombre del contacto"
         placeholder="Ingresa el nombre completo"
@@ -730,6 +746,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-text-field
         v-model="form.emergencyPhone"
+        data-testid="staff-emergency-phone"
         v-input-mask="'phone'"
         label="Teléfono de emergencia"
         prefix="+56"
@@ -751,6 +768,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.shoeSize"
+        data-testid="staff-shoe-size"
         :items="SHOE_SIZE_OPTIONS"
         label="Talla de calzado"
         placeholder="Seleccionar"
@@ -766,6 +784,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.clothingSize"
+        data-testid="staff-clothing-size"
         :items="CLOTHING_SIZE_OPTIONS"
         label="Talla de ropa"
         placeholder="Seleccionar"
@@ -787,6 +806,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.afpId"
+        data-testid="staff-afp"
         :items="afpOptions ?? []"
         item-title="name"
         item-value="id"
@@ -804,6 +824,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.healthSystemId"
+        data-testid="staff-health-system"
         :items="healthSystemOptions ?? []"
         item-title="name"
         item-value="id"
@@ -825,6 +846,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-select
         v-model="form.bankId"
+        data-testid="staff-bank"
         :items="bankOptions ?? []"
         item-title="name"
         item-value="id"
@@ -842,6 +864,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-select
         v-model="form.accountType"
+        data-testid="staff-account-type"
         :items="accountTypeOptions"
         item-title="title"
         item-value="value"
@@ -859,6 +882,7 @@ function submit() {
     <v-col cols="12" md="4">
       <v-text-field
         v-model="accountNumberInput"
+        data-testid="staff-account-number"
         v-input-mask="'bankAccount'"
         label="Número de cuenta"
         placeholder="Ingresa el número de cuenta"
@@ -883,6 +907,7 @@ function submit() {
       variant="flat"
       :prepend-icon="mdiContentSave"
       :loading="saveMutation.isPending.value"
+      data-testid="staff-submit"
       @click="submit"
     >
       Guardar

@@ -48,6 +48,7 @@ const BORDER_STYLE = 'border-color: rgba(var(--v-theme-on-surface), 0.33)'
 
     <v-text-field
       v-model="search"
+      data-testid="list-search"
       v-input-mask="'freeText'"
       :placeholder="searchPlaceholder"
       :aria-label="searchPlaceholder"
@@ -85,6 +86,7 @@ const BORDER_STYLE = 'border-color: rgba(var(--v-theme-on-surface), 0.33)'
       color="primary"
       density="compact"
       :height="CONTROL_HEIGHT"
+      data-testid="list-new"
       @click="emit('new')"
     >
       <template #prepend>

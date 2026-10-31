@@ -75,7 +75,13 @@ const hasAnyAction = computed(
 <template>
   <v-menu v-if="hasAnyAction">
     <template #activator="{ props: menuProps }">
-      <v-btn :icon="mdiDotsHorizontal" variant="text" size="small" v-bind="menuProps" />
+      <v-btn
+        :icon="mdiDotsHorizontal"
+        variant="text"
+        size="small"
+        data-testid="row-actions"
+        v-bind="menuProps"
+      />
     </template>
 
     <v-list class="actions-list" density="compact" nav>
@@ -84,6 +90,7 @@ const hasAnyAction = computed(
         :prepend-icon="mdiEyeOutline"
         base-color="info"
         title="Ver detalle"
+        data-testid="action-view"
         @click="emit('view')"
       />
       <v-list-item
@@ -91,6 +98,7 @@ const hasAnyAction = computed(
         :prepend-icon="mdiCheck"
         base-color="success"
         title="Aprobar"
+        data-testid="action-approve"
         @click="emit('approve')"
       />
       <v-list-item
@@ -98,6 +106,7 @@ const hasAnyAction = computed(
         :prepend-icon="mdiCheck"
         base-color="success"
         title="Validar"
+        data-testid="action-validate"
         @click="emit('validate')"
       />
       <v-list-item
@@ -105,6 +114,7 @@ const hasAnyAction = computed(
         :prepend-icon="mdiClose"
         base-color="error"
         title="Rechazar"
+        data-testid="action-reject"
         @click="emit('reject')"
       />
       <v-list-item
@@ -112,6 +122,7 @@ const hasAnyAction = computed(
         :prepend-icon="mdiCancel"
         base-color="error"
         title="Anular"
+        data-testid="action-annul"
         @click="emit('annul')"
       />
       <v-list-item
@@ -133,6 +144,7 @@ const hasAnyAction = computed(
         :prepend-icon="mdiAccountLockOutline"
         base-color="error"
         title="Bloquear"
+        data-testid="action-block"
         @click="emit('block')"
       />
       <v-list-item

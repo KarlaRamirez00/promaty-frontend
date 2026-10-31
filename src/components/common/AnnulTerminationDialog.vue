@@ -70,6 +70,7 @@ function submit() {
 
         <v-textarea
           v-model="form.reason"
+          data-testid="annul-reason"
           v-input-mask="'freeText'"
           label="Motivo de la anulación"
           placeholder="Indica el motivo"
@@ -89,7 +90,15 @@ function submit() {
       <v-card-actions class="px-6 pb-6">
         <v-spacer />
         <v-btn variant="text" :disabled="loading" @click="close">Cancelar</v-btn>
-        <v-btn color="error" variant="flat" :loading="loading" @click="submit">Anular</v-btn>
+        <v-btn
+          color="error"
+          variant="flat"
+          :loading="loading"
+          data-testid="annul-confirm"
+          @click="submit"
+        >
+          Anular
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

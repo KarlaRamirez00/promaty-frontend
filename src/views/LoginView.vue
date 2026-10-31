@@ -80,6 +80,7 @@ async function submit() {
         <v-text-field
           v-model="email"
           v-input-mask="'email'"
+          data-testid="login-email"
           label="Correo"
           type="email"
           autocomplete="email"
@@ -91,6 +92,7 @@ async function submit() {
 
         <v-text-field
           v-model="password"
+          data-testid="login-password"
           label="Contraseña"
           :type="showPassword ? 'text' : 'password'"
           autocomplete="current-password"
@@ -103,6 +105,7 @@ async function submit() {
 
         <v-btn
           type="submit"
+          data-testid="login-submit"
           color="primary"
           size="large"
           block
@@ -121,7 +124,7 @@ async function submit() {
         @click="fillDevCredentials"
       >
         <strong>Admin →</strong> correo: <code>{{ devCredentials.email }}</code>
-        · clave: <code>{{ devCredentials.password }}</code>
+        · clave: <code>••••••••</code>
       </v-sheet>
     </v-card>
   </div>

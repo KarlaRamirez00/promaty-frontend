@@ -206,6 +206,7 @@ function submit() {
       <template v-else>
         <v-autocomplete
           v-model="form.staffId"
+          data-testid="termination-staff"
           :items="staffOptions ?? []"
           item-title="title"
           item-value="id"
@@ -229,6 +230,7 @@ function submit() {
     <v-col cols="12" md="6">
       <DateField
         v-model="form.terminationDate"
+        data-testid="termination-date"
         label="Fecha de término"
         :min-date="minTerminationDate"
         :max-date="maxTerminationDate"
@@ -241,6 +243,7 @@ function submit() {
     <v-col cols="12" md="6">
       <v-select
         v-model="form.legalTerminationCauseId"
+        data-testid="termination-cause"
         :items="causeItems"
         item-title="name"
         item-value="id"
@@ -262,6 +265,7 @@ function submit() {
     <v-col v-if="form.definitiveTermination" cols="12" md="6">
       <v-select
         v-model="form.nonRehireReasonId"
+        data-testid="termination-non-rehire-reason"
         :items="nonRehireReasonItems"
         item-title="name"
         item-value="id"
@@ -279,6 +283,7 @@ function submit() {
     <v-col cols="12">
       <v-textarea
         v-model="form.notes"
+        data-testid="termination-notes"
         v-input-mask="'freeText'"
         label="Observaciones (opcional)"
         placeholder="Agrega observaciones del finiquito"
@@ -304,6 +309,7 @@ function submit() {
       variant="flat"
       :prepend-icon="mdiContentSave"
       :loading="saveMutation.isPending.value"
+      data-testid="termination-submit"
       @click="submit"
     >
       {{ isEditing ? 'Guardar' : 'Enviar' }}

@@ -88,6 +88,7 @@ function submit() {
         <template v-if="isReject">
           <v-select
             v-model="form.rejectionReasonId"
+            data-testid="decision-reason"
             :items="reasonOptions"
             item-title="name"
             item-value="id"
@@ -104,6 +105,7 @@ function submit() {
 
           <v-textarea
             v-model="form.comment"
+            data-testid="decision-comment"
             v-input-mask="'freeText'"
             label="Observaciones (opcional)"
             placeholder="Agrega una observación"
@@ -122,7 +124,13 @@ function submit() {
       <v-card-actions class="px-6 pb-6">
         <v-spacer />
         <v-btn variant="text" :disabled="loading" @click="close">Cancelar</v-btn>
-        <v-btn :color="config.color" variant="flat" :loading="loading" @click="submit">
+        <v-btn
+          :color="config.color"
+          variant="flat"
+          :loading="loading"
+          data-testid="decision-confirm"
+          @click="submit"
+        >
           {{ config.label }}
         </v-btn>
       </v-card-actions>
