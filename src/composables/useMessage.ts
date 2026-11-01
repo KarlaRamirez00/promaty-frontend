@@ -30,6 +30,10 @@ interface AnnulMessages {
   toastAnnul: ToastText
 }
 
+interface UpdateMessages {
+  toastUpdate: ToastText
+}
+
 export interface ErrorMessages {
   toastError: ToastText
 }
@@ -62,9 +66,21 @@ export function useMessage() {
     snackbar.success(messages.toastAnnul)
   }
 
+  function toastUpdated(messages: UpdateMessages, detail?: string) {
+    snackbar.success(detail ? { ...messages.toastUpdate, message: detail } : messages.toastUpdate)
+  }
+
   function toastFailed(messages: ErrorMessages) {
     snackbar.error(messages.toastError)
   }
 
-  return { toastSaved, toastToggled, toastDecided, toastBlocked, toastAnnulled, toastFailed }
+  return {
+    toastSaved,
+    toastToggled,
+    toastDecided,
+    toastBlocked,
+    toastAnnulled,
+    toastUpdated,
+    toastFailed,
+  }
 }

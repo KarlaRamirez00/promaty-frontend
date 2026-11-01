@@ -130,6 +130,13 @@ html {
   font-size: 0.8125rem !important;
 }
 
+.v-btn.v-btn--disabled.v-btn--variant-flat,
+.v-btn.v-btn--disabled.v-btn--variant-elevated {
+  background-color: rgba(var(--v-theme-on-surface), 0.12) !important;
+  color: rgba(var(--v-theme-on-surface), 0.26) !important;
+  opacity: 1;
+}
+
 .link-cell {
   display: inline-block;
   /* El margen negativo iguala el relleno: el borde del fondo queda alineado con el encabezado. */

@@ -14,6 +14,7 @@ import {
   mdiWeatherNight,
   mdiWeatherSunny,
 } from '@mdi/js'
+import { usePermissions } from '@/composables/usePermissions'
 import { useSidebarRail } from '@/composables/useSidebarRail'
 import { useAuthStore } from '@/stores'
 import { ROUTE } from '@/router/route-names'
@@ -30,7 +31,9 @@ const theme = useTheme()
 const router = useRouter()
 const auth = useAuthStore()
 const queryClient = useQueryClient()
+const { hasModulePermission } = usePermissions()
 
+const canViewSettings = computed(() => hasModulePermission('setting', 'read'))
 const isDark = computed(() => theme.global.name.value === 'dark')
 
 const userInitials = computed(() => {
@@ -129,7 +132,12 @@ function logout() {
           </v-list-item>
           <v-divider class="my-1" />
           <v-list-item :prepend-icon="mdiBellOutline" title="Notificaciones" />
-          <v-list-item :prepend-icon="mdiCogOutline" title="Configuración" />
+          <v-list-item
+            v-if="canViewSettings"
+            :prepend-icon="mdiCogOutline"
+            title="Configuración"
+            :to="{ name: ROUTE.SETTING_LIST }"
+          />
           <v-list-item
             :prepend-icon="isDark ? mdiWeatherSunny : mdiWeatherNight"
             :title="isDark ? 'Tema claro' : 'Tema oscuro'"
@@ -158,7 +166,13 @@ function logout() {
         <v-icon :icon="mdiBellOutline" size="20" color="grey-darken-1" />
       </v-btn>
 
-      <v-btn icon variant="text" aria-label="Configuración">
+      <v-btn
+        v-if="canViewSettings"
+        icon
+        variant="text"
+        aria-label="Configuración"
+        :to="{ name: ROUTE.SETTING_LIST }"
+      >
         <v-icon :icon="mdiCogOutline" size="20" color="grey-darken-1" />
       </v-btn>
 

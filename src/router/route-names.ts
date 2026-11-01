@@ -36,6 +36,7 @@ export const ROUTE = {
   NON_REHIRE_REASON_LIST: 'nonRehireReasons',
   NON_REHIRE_REASON_NEW: 'nonRehireReasons-new',
   NON_REHIRE_REASON_EDIT: 'nonRehireReasons-edit',
+  SETTING_LIST: 'settings',
 } as const
 
 export type RouteName = (typeof ROUTE)[keyof typeof ROUTE]
