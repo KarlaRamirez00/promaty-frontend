@@ -2,6 +2,9 @@
 export const ROUTE = {
   HOME: 'home',
   LOGIN: 'login',
+  FIRST_LOGIN: 'first-login',
+  RECOVERY: 'password-recovery',
+  RESET_CREDENTIALS: 'reset-password',
   FORBIDDEN: 'forbidden',
   REQUEST_LIST: 'requests',
   CLIENT_LIST: 'clients',

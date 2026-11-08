@@ -14,6 +14,7 @@ import { requestRejectionReasonRoutes } from '@/router/requestRejectionReason.ro
 import { nonRehireReasonRoutes } from '@/router/nonRehireReason.routes'
 import { terminationRoutes } from '@/router/termination.routes'
 import { settingRoutes } from '@/router/setting.routes'
+import { authRoutes } from '@/router/auth.routes'
 import { authMiddleware } from '@/middlewares/auth.middleware'
 import LoginView from '@/views/LoginView.vue'
 
@@ -43,6 +44,7 @@ const routes: RouteRecordRaw[] = [
     name: ROUTE.HOME,
     component: () => import('@/views/HomeView.vue'),
   },
+  ...authRoutes,
   ...requestRoutes,
   ...contractRoutes,
   ...terminationRoutes,
