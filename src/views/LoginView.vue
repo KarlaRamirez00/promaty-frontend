@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
 import { useAuthStore, usePasswordFlowStore } from '@/stores'
@@ -10,6 +10,7 @@ import AuthCard from '@/components/auth/AuthCard.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 
 const PASSWORD_CHANGE_REQUIRED = 428
+const TOO_MANY_ATTEMPTS = 429
 const TEMPORARY_KEY_EXPIRED = 'TEMPORARY_PASSWORD_EXPIRED'
 
 const router = useRouter()
@@ -24,6 +25,37 @@ const showPassword = ref(false)
 const remember = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
+
+const lockedUntil = ref<number | null>(null)
+const now = ref(Date.now())
+let lockTimer: ReturnType<typeof setInterval> | undefined
+
+const secondsLeft = computed(() =>
+  lockedUntil.value === null ? 0 : Math.max(0, Math.ceil((lockedUntil.value - now.value) / 1000)),
+)
+const isLocked = computed(() => secondsLeft.value > 0)
+const countdown = computed(() => {
+  const minutes = Math.floor(secondsLeft.value / 60)
+  const seconds = secondsLeft.value % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+})
+
+function stopLockTimer() {
+  clearInterval(lockTimer)
+  lockTimer = undefined
+}
+
+function startLock(seconds: number) {
+  stopLockTimer()
+  now.value = Date.now()
+  lockedUntil.value = now.value + seconds * 1000
+  lockTimer = setInterval(() => {
+    now.value = Date.now()
+    if (!isLocked.value) stopLockTimer()
+  }, 1000)
+}
+
+onBeforeUnmount(stopLockTimer)
 
 const required = (label: string) => (value: string) => !!value || `Ingresa ${label}.`
 
@@ -53,11 +85,16 @@ async function handleLoginError(error: unknown) {
     return
   }
 
+  if (error.status === TOO_MANY_ATTEMPTS && error.retryAfterSeconds) {
+    startLock(error.retryAfterSeconds)
+    return
+  }
+
   errorMessage.value = error.status === 401 ? 'Correo o contraseña incorrectos.' : error.message
 }
 
 async function submit() {
-  if (loading.value || !email.value || !password.value) return
+  if (loading.value || isLocked.value || !email.value || !password.value) return
 
   const target = safeRedirect(route.query.redirect) ?? '/'
 
@@ -87,6 +124,16 @@ async function submit() {
   <AuthCard title="Iniciar sesión" subtitle="Ingresa tus credenciales para continuar.">
     <AlertComponent v-if="errorMessage" type="error" :message="errorMessage" />
 
+    <v-alert
+      v-if="isLocked"
+      type="warning"
+      variant="tonal"
+      density="compact"
+      class="mb-4 text-caption"
+    >
+      Demasiados intentos fallidos. Intenta de nuevo en <strong>{{ countdown }}</strong>.
+    </v-alert>
+
     <v-form @submit.prevent="submit">
       <v-text-field
         v-model="email"
@@ -95,6 +142,7 @@ async function submit() {
         label="Correo"
         type="email"
         autocomplete="email"
+        maxlength="254"
         :rules="[required('tu correo')]"
         variant="outlined"
         density="comfortable"
@@ -135,6 +183,7 @@ async function submit() {
         size="large"
         block
         class="mt-4"
+        :disabled="isLocked"
         :loading="loading"
       >
         Ingresar

@@ -9,7 +9,7 @@ import PasswordResetForm from '@/components/auth/PasswordResetForm.vue'
     title="Crea tu contraseña"
     subtitle="Por seguridad, reemplaza tu clave temporal por una contraseña nueva."
   >
-    <PasswordResetForm code-label="Clave temporal" />
+    <PasswordResetForm code-label="Clave temporal" submit-label="Crear" />
 
     <v-btn variant="text" block class="mt-2" :to="{ name: ROUTE.LOGIN }">
       Volver a iniciar sesión

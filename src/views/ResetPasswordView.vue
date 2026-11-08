@@ -9,7 +9,7 @@ import PasswordResetForm from '@/components/auth/PasswordResetForm.vue'
     title="Restablecer contraseña"
     subtitle="Ingresa el código que enviamos a tu correo y elige una contraseña nueva."
   >
-    <PasswordResetForm code-label="Código de recuperación" />
+    <PasswordResetForm code-label="Código de recuperación" submit-label="Actualizar" />
 
     <v-btn variant="text" block class="mt-2" :to="{ name: ROUTE.RECOVERY }">
       Solicitar un nuevo código

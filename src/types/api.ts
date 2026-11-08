@@ -8,6 +8,7 @@ export interface Pagination {
 export interface ApiMeta<TOtherData = undefined> {
   pagination?: Pagination
   otherData?: TOtherData
+  retryAfterSeconds?: number
 }
 
 export type ApiErrorFields = Record<string, string>

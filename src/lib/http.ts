@@ -4,6 +4,7 @@ import type {
   ApiErrorFields,
   ApiErrorResponse,
   ApiListResponse,
+  ApiMeta,
   ApiResponse,
   PageResult,
 } from '@/types/api'
@@ -13,20 +14,22 @@ export class ApiRequestError extends Error {
   readonly status: number
   readonly apiName: string
   readonly errorFields: ApiErrorFields | null
+  readonly retryAfterSeconds: number | null
 
-  constructor(error: ApiError) {
+  constructor(error: ApiError, meta?: ApiMeta) {
     super(error.message)
     this.name = 'ApiRequestError'
     this.status = error.status
     this.apiName = error.name
     this.errorFields = error.errorFields ?? null
+    this.retryAfterSeconds = meta?.retryAfterSeconds ?? null
   }
 }
 
 function normalizeError(error: AxiosError<ApiErrorResponse>): ApiRequestError {
   const apiError = error.response?.data?.error
   if (apiError) {
-    return new ApiRequestError(apiError)
+    return new ApiRequestError(apiError, error.response?.data?.meta)
   }
 
   const offline = error.code === 'ERR_NETWORK' || !error.response

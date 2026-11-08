@@ -15,6 +15,7 @@ import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 
 defineProps<{
   codeLabel: string
+  submitLabel: string
 }>()
 
 const router = useRouter()
@@ -176,7 +177,7 @@ async function submit() {
       :disabled="!canSubmit"
       :loading="loading"
     >
-      Guardar
+      {{ submitLabel }}
     </v-btn>
   </v-form>
 </template>
