@@ -8,6 +8,7 @@ import { ApiRequestError } from '@/lib/http'
 import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { usePasswordPolicy } from '@/composables/usePasswordPolicy'
 import { ROUTE } from '@/router/route-names'
+import { firstError, userEmailRules } from '@/rules'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
@@ -35,6 +36,7 @@ const code = ref(flow.temporaryPassword)
 const password = ref('')
 const confirmation = ref('')
 const showPassword = ref(false)
+const showCode = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
 
@@ -43,7 +45,8 @@ const { requirements, matches, isValid } = usePasswordPolicy(password, confirmat
 const mismatchMessage = computed(() =>
   confirmation.value && !matches.value ? 'Las contraseñas no coinciden.' : '',
 )
-const canSubmit = computed(() => isValid.value && !!email.value && !!code.value)
+const isEmailValid = computed(() => !firstError(email.value, userEmailRules))
+const canSubmit = computed(() => isValid.value && isEmailValid.value && !!code.value)
 
 async function submit() {
   if (loading.value || !canSubmit.value) return
@@ -111,12 +114,15 @@ async function submit() {
       v-model="code"
       v-input-mask="'lettersAndNumbers'"
       :label="codeLabel"
+      :type="showCode ? 'text' : 'password'"
       autocomplete="one-time-code"
       maxlength="12"
+      :append-inner-icon="showCode ? mdiEyeOff : mdiEye"
       variant="outlined"
       density="comfortable"
       class="mb-2"
       :error="hasBackendError('resetCode')"
+      @click:append-inner="showCode = !showCode"
     />
 
     <v-text-field
@@ -132,20 +138,9 @@ async function submit() {
       @click:append-inner="showPassword = !showPassword"
     />
 
-    <ul class="requirements mt-2 mb-4">
-      <li
-        v-for="requirement in requirements"
-        :key="requirement.label"
-        class="d-flex align-center ga-2 text-body-2"
-        :class="requirement.met ? 'text-success' : 'text-medium-emphasis'"
-      >
-        <v-icon :icon="requirement.met ? mdiCheckCircle : mdiCircleOutline" size="16" />
-        {{ requirement.label }}
-      </li>
-    </ul>
-
     <v-text-field
       v-model="confirmation"
+      class="mt-4"
       label="Confirmar contraseña"
       :type="showPassword ? 'text' : 'password'"
       autocomplete="new-password"
@@ -157,6 +152,18 @@ async function submit() {
       @click:append-inner="showPassword = !showPassword"
     />
     <FieldErrorComponent :message="mismatchMessage" />
+
+    <ul class="requirements mt-3">
+      <li
+        v-for="requirement in requirements"
+        :key="requirement.label"
+        class="d-flex align-center ga-2 text-body-2"
+        :class="requirement.met ? 'text-success' : 'text-medium-emphasis'"
+      >
+        <v-icon :icon="requirement.met ? mdiCheckCircle : mdiCircleOutline" size="16" />
+        {{ requirement.label }}
+      </li>
+    </ul>
 
     <ErrorComponent :error-fields="backendErrorFields" class="mt-4" />
 

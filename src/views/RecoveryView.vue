@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { requestPasswordRecovery } from '@/services'
 import { usePasswordFlowStore } from '@/stores'
 import { ApiRequestError } from '@/lib/http'
 import { ROUTE } from '@/router/route-names'
+import { firstError, userEmailRules } from '@/rules'
 import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import AuthCard from '@/components/auth/AuthCard.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
@@ -18,8 +19,10 @@ const email = ref(flow.email)
 const loading = ref(false)
 const errorMessage = ref('')
 
+const isEmailValid = computed(() => !firstError(email.value, userEmailRules))
+
 async function submit() {
-  if (loading.value || !email.value) return
+  if (loading.value || !isEmailValid.value) return
 
   clearBackendErrors()
   errorMessage.value = ''
@@ -72,7 +75,7 @@ async function submit() {
         size="large"
         block
         class="mt-4"
-        :disabled="!email"
+        :disabled="!isEmailValid"
         :loading="loading"
       >
         Enviar
