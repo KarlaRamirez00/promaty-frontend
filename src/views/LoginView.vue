@@ -2,19 +2,26 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { mdiEye, mdiEyeOff } from '@mdi/js'
-import { useAuthStore } from '@/stores'
+import { useAuthStore, usePasswordFlowStore } from '@/stores'
 import { ApiRequestError } from '@/lib/http'
+import { ROUTE } from '@/router/route-names'
 import { safeRedirect } from '@/utils'
-import PromatyLogo from '@/components/PromatyLogo.vue'
+import AuthCard from '@/components/auth/AuthCard.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
+
+const PASSWORD_CHANGE_REQUIRED = 428
+const TEMPORARY_KEY_EXPIRED = 'TEMPORARY_PASSWORD_EXPIRED'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const flow = usePasswordFlowStore()
+flow.clear()
 
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
+const remember = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
 
@@ -28,6 +35,27 @@ function fillDevCredentials() {
   password.value = devCredentials.password
 }
 
+async function handleLoginError(error: unknown) {
+  if (!(error instanceof ApiRequestError)) {
+    errorMessage.value = 'No se pudo iniciar sesión. Intenta nuevamente.'
+    return
+  }
+
+  if (error.status === PASSWORD_CHANGE_REQUIRED) {
+    flow.start({ email: email.value, temporaryPassword: password.value })
+    await router.push({ name: ROUTE.FIRST_LOGIN })
+    return
+  }
+
+  if (error.apiName === TEMPORARY_KEY_EXPIRED) {
+    flow.start({ email: email.value, notice: error.message })
+    await router.push({ name: ROUTE.RECOVERY })
+    return
+  }
+
+  errorMessage.value = error.status === 401 ? 'Correo o contraseña incorrectos.' : error.message
+}
+
 async function submit() {
   if (loading.value || !email.value || !password.value) return
 
@@ -36,16 +64,9 @@ async function submit() {
   errorMessage.value = ''
   loading.value = true
   try {
-    await auth.login({ email: email.value, password: password.value })
+    await auth.login({ email: email.value, password: password.value }, remember.value)
   } catch (error) {
-    if (error instanceof ApiRequestError) {
-      errorMessage.value =
-        error.status === 401
-          ? 'Correo o contraseña incorrectos.'
-          : error.message
-    } else {
-      errorMessage.value = 'No se pudo iniciar sesión. Intenta nuevamente.'
-    }
+    await handleLoginError(error)
     loading.value = false
     return
   }
@@ -63,85 +84,84 @@ async function submit() {
 </script>
 
 <template>
-  <div class="login-wrapper">
-    <v-card class="login-card pa-6 pa-sm-8" elevation="2" rounded="lg">
-      <div class="d-flex justify-center mb-6">
-        <PromatyLogo />
+  <AuthCard title="Iniciar sesión" subtitle="Ingresa tus credenciales para continuar.">
+    <AlertComponent v-if="errorMessage" type="error" :message="errorMessage" />
+
+    <v-form @submit.prevent="submit">
+      <v-text-field
+        v-model="email"
+        v-input-mask="'email'"
+        data-testid="login-email"
+        label="Correo"
+        type="email"
+        autocomplete="email"
+        :rules="[required('tu correo')]"
+        variant="outlined"
+        density="comfortable"
+        class="mb-2"
+      />
+
+      <v-text-field
+        v-model="password"
+        data-testid="login-password"
+        label="Contraseña"
+        :type="showPassword ? 'text' : 'password'"
+        autocomplete="current-password"
+        :rules="[required('tu contraseña')]"
+        :append-inner-icon="showPassword ? mdiEyeOff : mdiEye"
+        variant="outlined"
+        density="comfortable"
+        @click:append-inner="showPassword = !showPassword"
+      />
+
+      <div class="d-flex align-center justify-space-between">
+        <v-checkbox
+          v-model="remember"
+          data-testid="login-remember"
+          label="Recordarme"
+          density="compact"
+          class="remember-me"
+          hide-details
+        />
+        <router-link :to="{ name: ROUTE.RECOVERY }" class="text-body-2 text-primary">
+          ¿Olvidaste tu contraseña?
+        </router-link>
       </div>
 
-      <h1 class="text-h6 text-center mb-1">Iniciar sesión</h1>
-      <p class="text-body-2 text-medium-emphasis text-center mb-6">
-        Ingresa tus credenciales para continuar.
-      </p>
-
-      <AlertComponent v-if="errorMessage" type="error" :message="errorMessage" />
-
-      <v-form @submit.prevent="submit">
-        <v-text-field
-          v-model="email"
-          v-input-mask="'email'"
-          data-testid="login-email"
-          label="Correo"
-          type="email"
-          autocomplete="email"
-          :rules="[required('tu correo')]"
-          variant="outlined"
-          density="comfortable"
-          class="mb-2"
-        />
-
-        <v-text-field
-          v-model="password"
-          data-testid="login-password"
-          label="Contraseña"
-          :type="showPassword ? 'text' : 'password'"
-          autocomplete="current-password"
-          :rules="[required('tu contraseña')]"
-          :append-inner-icon="showPassword ? mdiEyeOff : mdiEye"
-          variant="outlined"
-          density="comfortable"
-          @click:append-inner="showPassword = !showPassword"
-        />
-
-        <v-btn
-          type="submit"
-          data-testid="login-submit"
-          color="primary"
-          size="large"
-          block
-          class="mt-4"
-          :loading="loading"
-        >
-          Ingresar
-        </v-btn>
-      </v-form>
-
-      <v-sheet
-        v-if="isDev"
-        border
-        rounded
-        class="dev-credentials mt-4 pa-3 text-center text-caption text-medium-emphasis"
-        @click="fillDevCredentials"
+      <v-btn
+        type="submit"
+        data-testid="login-submit"
+        color="primary"
+        size="large"
+        block
+        class="mt-4"
+        :loading="loading"
       >
-        <strong>Admin →</strong> correo: <code>{{ devCredentials.email }}</code>
-        · clave: <code>••••••••</code>
-      </v-sheet>
-    </v-card>
-  </div>
+        Ingresar
+      </v-btn>
+    </v-form>
+
+    <v-sheet
+      v-if="isDev"
+      border
+      rounded
+      class="dev-credentials mt-4 pa-3 text-center text-caption text-medium-emphasis"
+      @click="fillDevCredentials"
+    >
+      <strong>Admin →</strong> correo: <code>{{ devCredentials.email }}</code>
+      · clave: <code>••••••••</code>
+    </v-sheet>
+  </AuthCard>
 </template>
 
 <style scoped>
-.login-wrapper {
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+.remember-me :deep(.v-label) {
+  font-size: 0.875rem;
+  opacity: 1;
 }
 
-.login-card {
-  width: 100%;
-  max-width: 400px;
+.remember-me :deep(.v-selection-control__input .v-icon) {
+  font-size: 18px;
 }
 
 .dev-credentials {

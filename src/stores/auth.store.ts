@@ -34,9 +34,9 @@ export const useAuthStore = defineStore('auth', () => {
   const allowedAllProjects = computed(() => claims.value?.allowedAllProjects ?? false)
   const projectIds = computed<number[]>(() => claims.value?.projectIds ?? [])
 
-  async function login(credentials: LoginCredentials): Promise<void> {
+  async function login(credentials: LoginCredentials, remember = false): Promise<void> {
     const issuedToken = await requestLogin(credentials)
-    setToken(issuedToken)
+    setToken(issuedToken, remember)
     token.value = issuedToken
     claims.value = claimsFromToken(issuedToken)
   }
