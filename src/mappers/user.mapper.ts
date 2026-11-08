@@ -1,6 +1,6 @@
 import { formatDateTime } from '@/utils'
 import type { Badge } from '@/types/badge'
-import type { UserCreatePayload, UserDetailRaw, UserFormPayload, UserRaw } from '@/types/user'
+import type { UserDetailRaw, UserFormPayload, UserRaw } from '@/types/user'
 import type { User, UserForm, UserListItem } from '@/models'
 
 function toStatusBadge(active: boolean): Badge {
@@ -53,12 +53,5 @@ export function mapperUserFormToPayload(form: UserForm): UserFormPayload {
     phoneNumber: form.phoneNumber.replaceAll(' ', ''),
     roleId: form.roleId as number,
     projectIds: form.projectIds,
-  }
-}
-
-export function mapperUserFormToCreatePayload(form: UserForm): UserCreatePayload {
-  return {
-    ...mapperUserFormToPayload(form),
-    password: form.password,
   }
 }

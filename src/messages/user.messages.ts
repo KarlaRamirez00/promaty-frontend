@@ -37,8 +37,6 @@ export default {
     lastNameRequired: 'El apellido es obligatorio.',
     emailRequired: 'El correo es obligatorio.',
     emailInvalid: 'Ingresa un correo válido.',
-    passwordRequired: 'La contraseña es obligatoria.',
-    passwordMinLength: 'La contraseña debe tener al menos 8 caracteres.',
     roleRequired: 'El rol es obligatorio.',
   },
 }

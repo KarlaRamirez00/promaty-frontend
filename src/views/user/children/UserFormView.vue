@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { mdiArrowDownCircleOutline, mdiContentSave, mdiEye, mdiEyeOff } from '@mdi/js'
+import { mdiArrowDownCircleOutline, mdiContentSave } from '@mdi/js'
 import {
   createUserAction,
   getCostCenterOptionsAction,
@@ -22,7 +22,6 @@ import {
   userEmailRules,
   userFirstNameRules,
   userLastNameRules,
-  userPasswordRules,
 } from '@/rules'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
@@ -79,7 +78,6 @@ const { data: costCenterOptions } = useQuery({
 
 const form = ref<UserForm>(createUserForm())
 const fieldErrors = ref<Record<string, string>>({})
-const showPassword = ref(false)
 
 function hasError(field: string): boolean {
   return !!fieldErrors.value[field] || hasBackendError(field)
@@ -125,11 +123,6 @@ function validate(): boolean {
   if (emailError) errors.email = emailError
 
   if (!form.value.roleId) errors.roleId = userMessages.rules.roleRequired
-
-  if (!isEditing.value) {
-    const passwordError = firstError(form.value.password, userPasswordRules)
-    if (passwordError) errors.password = passwordError
-  }
 
   fieldErrors.value = errors
   return Object.keys(errors).length === 0
@@ -257,25 +250,7 @@ function submit() {
       <FieldErrorComponent :message="fieldErrors.roleId" />
     </v-col>
 
-    <v-col v-if="!isEditing" cols="12" md="6">
-      <v-text-field
-        v-model="form.password"
-        label="Contraseña"
-        placeholder="Ingresa la contraseña"
-        :type="showPassword ? 'text' : 'password'"
-        autocomplete="new-password"
-        variant="outlined"
-        density="comfortable"
-        :error="hasError('password')"
-        :append-inner-icon="showPassword ? mdiEyeOff : mdiEye"
-        hide-details="auto"
-        persistent-placeholder
-        @click:append-inner="showPassword = !showPassword"
-      />
-      <FieldErrorComponent :message="fieldErrors.password" />
-    </v-col>
-
-    <v-col cols="12" :md="isEditing ? 6 : 12">
+    <v-col cols="12" md="6">
       <v-autocomplete
         v-model="form.projectIds"
         :items="costCenterOptions ?? []"

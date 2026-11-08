@@ -30,9 +30,3 @@ export interface UserFormPayload {
   roleId: number
   projectIds: number[]
 }
-
-// El campo password en creación va a desaparecer con HU-B80 (clave temporal generada por el
-// sistema) — no es parte del payload de edición.
-export interface UserCreatePayload extends UserFormPayload {
-  password: string
-}

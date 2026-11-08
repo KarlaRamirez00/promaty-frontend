@@ -44,7 +44,6 @@ export interface UserForm {
   phoneNumber: string
   roleId: number | null
   projectIds: number[]
-  password: string
 }
 
 export const createUserForm = (overrides: Partial<UserForm> = {}): UserForm => ({
@@ -55,7 +54,6 @@ export const createUserForm = (overrides: Partial<UserForm> = {}): UserForm => (
   phoneNumber: '',
   roleId: null,
   projectIds: [],
-  password: '',
   ...overrides,
 })
 

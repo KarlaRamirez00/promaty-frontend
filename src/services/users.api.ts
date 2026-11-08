@@ -1,6 +1,6 @@
 import { userApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
-import type { UserCreatePayload, UserDetailRaw, UserFormPayload, UserRaw } from '@/types/user'
+import type { UserDetailRaw, UserFormPayload, UserRaw } from '@/types/user'
 import type { UserQueryParams } from '@/models'
 
 export async function listUsersApi(params: UserQueryParams): Promise<PageResult<UserRaw>> {
@@ -22,7 +22,7 @@ export async function getUserApi(id: number): Promise<UserDetailRaw> {
   return unwrap(response)
 }
 
-export async function createUserApi(payload: UserCreatePayload): Promise<number> {
+export async function createUserApi(payload: UserFormPayload): Promise<number> {
   const response = await userApi.post<ApiResponse<number>>('/users', payload)
   return unwrap(response)
 }

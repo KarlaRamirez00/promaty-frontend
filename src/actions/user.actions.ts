@@ -7,7 +7,6 @@ import {
 } from '@/services'
 import {
   mapperUserDetail,
-  mapperUserFormToCreatePayload,
   mapperUserFormToPayload,
   mapperUserList,
 } from '@/mappers'
@@ -23,7 +22,7 @@ export function getUserDetailAction(id: number) {
 }
 
 export function createUserAction(form: UserForm) {
-  return useMutateForm(createUserApi, form, mapperUserFormToCreatePayload)
+  return useMutateForm(createUserApi, form, mapperUserFormToPayload)
 }
 
 export function updateUserAction(form: UserForm) {
