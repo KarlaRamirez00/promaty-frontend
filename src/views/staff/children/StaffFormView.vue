@@ -379,10 +379,11 @@ const savedAttachments = computed(() =>
 // de guardar, para no chocar con el límite de archivos al reemplazar.
 async function saveStaff(value: StaffForm): Promise<void> {
   const file = pendingFiles.value[0] ?? null
-  if (value.id) {
-    for (const attachmentId of removedAttachmentIds.value) {
-      await deleteStaffAttachmentAction(value.id, attachmentId)
-    }
+  const id = value.id
+  if (id) {
+    await Promise.all(
+      removedAttachmentIds.value.map((attachmentId) => deleteStaffAttachmentAction(id, attachmentId)),
+    )
     await updateStaffAction(value, file)
   } else {
     await createStaffAction(value, file)
