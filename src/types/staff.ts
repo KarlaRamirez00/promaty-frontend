@@ -1,3 +1,5 @@
+import type { FileAttachmentRaw } from '@/types/attachment'
+
 export type IdentificationType = 'RUT' | 'PASSPORT'
 export type ClothingSize = 'S' | 'M' | 'L' | 'XL' | 'XXL'
 export type AccountType = 'CHECKING' | 'SIGHT' | 'SAVINGS' | 'RUT'
@@ -62,6 +64,7 @@ export interface StaffRaw extends StaffListRaw {
   accountNumber: string
   status: CatalogOptionRaw
   blockReason: string | null
+  attachments: FileAttachmentRaw[]
 }
 
 export interface StaffStatusPayload {

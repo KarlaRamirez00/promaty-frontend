@@ -1,5 +1,6 @@
 import {
   createStaffApi,
+  deleteStaffAttachmentApi,
   getStaffApi,
   listAfpOptionsApi,
   listBankOptionsApi,
@@ -35,13 +36,13 @@ export function getStaffDetailAction(id: number) {
   return useGetDetail(getStaffApi, id, mapperStaffDetail)
 }
 
-export function createStaffAction(form: StaffForm) {
-  return useMutateForm(createStaffApi, form, mapperStaffFormToCreatePayload)
+export function createStaffAction(form: StaffForm, file: File | null) {
+  return useMutateForm((payload) => createStaffApi(payload, file), form, mapperStaffFormToCreatePayload)
 }
 
-export function updateStaffAction(form: StaffForm) {
+export function updateStaffAction(form: StaffForm, file: File | null) {
   return useMutateForm(
-    (payload) => updateStaffApi(form.id as number, payload),
+    (payload) => updateStaffApi(form.id as number, payload, file),
     form,
     mapperStaffFormToPayload,
   )
@@ -104,4 +105,8 @@ export function getComunaOptionsAction(provinciaId: number) {
 
 export function getBankOptionsAction() {
   return listBankOptionsApi()
+}
+
+export function deleteStaffAttachmentAction(id: number, attachmentId: number) {
+  return deleteStaffAttachmentApi(id, attachmentId)
 }

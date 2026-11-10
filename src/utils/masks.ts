@@ -8,6 +8,7 @@ export type InputMaskType =
   | 'decimalNumbers'
   | 'onlyLetters'
   | 'lettersAndNumbers'
+  | 'lettersNumbersAndSeparators'
   | 'freeText'
   | 'rut'
   | 'phone'
@@ -28,6 +29,7 @@ export const INPUT_MASKS: Record<InputMaskType, (raw: string) => string> = {
   },
   onlyLetters: (raw) => raw.replaceAll(/[^\p{L} ]/gu, ''),
   lettersAndNumbers: (raw) => raw.replaceAll(/[^\p{L}\d]/gu, ''),
+  lettersNumbersAndSeparators: (raw) => raw.replaceAll(/[^\p{L}\d._-]/gu, ''),
   freeText: (raw) => raw.replaceAll(/[^\p{L}\d .,_()/$°-]/gu, ''),
   rut: (raw) => maskRut(raw),
   phone: (raw) => maskPhone(raw),

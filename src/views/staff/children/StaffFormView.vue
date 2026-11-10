@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { mdiArrowDownCircleOutline, mdiContentSave } from '@mdi/js'
 import {
   createStaffAction,
+  deleteStaffAttachmentAction,
+  downloadAttachmentAction,
   getAfpOptionsAction,
   getBankOptionsAction,
   getComunaOptionsAction,
@@ -30,6 +32,7 @@ import {
   createStaffForm,
   IDENTIFICATION_TYPE_OPTIONS,
   SHOE_SIZE_OPTIONS,
+  STAFF_ATTACHMENT_RULE,
   type StaffForm,
 } from '@/models'
 import {
@@ -51,6 +54,7 @@ import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 import DateField from '@/components/common/DateField.vue'
 import BooleanField from '@/components/common/BooleanField.vue'
+import AttachmentField from '@/components/common/AttachmentField.vue'
 
 const props = defineProps<{
   id?: string
@@ -362,11 +366,26 @@ function validate(): boolean {
   return Object.keys(errors).length === 0
 }
 
+const pendingFiles = ref<File[]>([])
+const removedAttachmentIds = ref<number[]>([])
+
+const savedAttachments = computed(() =>
+  (existingStaff.value?.attachments ?? []).filter(
+    (attachment) => !removedAttachmentIds.value.includes(attachment.id),
+  ),
+)
+
+// El archivo nuevo viaja junto al formulario; solo los adjuntos quitados se eliminan aparte, antes
+// de guardar, para no chocar con el límite de archivos al reemplazar.
 async function saveStaff(value: StaffForm): Promise<void> {
+  const file = pendingFiles.value[0] ?? null
   if (value.id) {
-    await updateStaffAction(value)
+    for (const attachmentId of removedAttachmentIds.value) {
+      await deleteStaffAttachmentAction(value.id, attachmentId)
+    }
+    await updateStaffAction(value, file)
   } else {
-    await createStaffAction(value)
+    await createStaffAction(value, file)
   }
 }
 
@@ -897,6 +916,16 @@ function submit() {
       <FieldErrorComponent :message="fieldErrors.accountNumber" />
     </v-col>
   </v-row>
+
+  <h2 class="text-subtitle-1 font-weight-bold text-primary mt-6 mb-4">Documentos</h2>
+
+  <AttachmentField
+    v-model="pendingFiles"
+    :rule="STAFF_ATTACHMENT_RULE"
+    :saved="savedAttachments"
+    @remove-saved="(attachment) => removedAttachmentIds.push(attachment.id)"
+    @download="downloadAttachmentAction"
+  />
 
   <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 

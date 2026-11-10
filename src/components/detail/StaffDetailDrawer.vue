@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import {
   accountTypeLabel,
+  STAFF_ATTACHMENT_RULE,
   STAFF_STATUS_CODE,
   staffStatusColor,
   type Staff,
@@ -11,6 +12,8 @@ import { formatDate, formatPhone, NO_DATA } from '@/utils'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailTabs from '@/components/common/DetailTabs.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
+import AttachmentField from '@/components/common/AttachmentField.vue'
+import { downloadAttachmentAction } from '@/actions'
 
 const props = defineProps<{
   staff: Staff | null
@@ -78,6 +81,12 @@ const sections = computed<DetailSection[]>(() => {
       ],
     },
     {
+      key: 'documents',
+      tab: 'Documentos',
+      title: 'Documentos',
+      fields: [],
+    },
+    {
       key: 'traceability',
       tab: 'Trazabilidad',
       title: 'Trazabilidad',
@@ -125,6 +134,15 @@ const sections = computed<DetailSection[]>(() => {
     <div v-if="loading && !staff" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />
     </div>
-    <DetailTabs v-else-if="staff" :sections="sections" />
+    <DetailTabs v-else-if="staff" :sections="sections">
+      <template #documents>
+        <AttachmentField
+                :rule="STAFF_ATTACHMENT_RULE"
+          :saved="staff.attachments"
+          readonly
+          @download="downloadAttachmentAction"
+        />
+      </template>
+    </DetailTabs>
   </DetailDrawer>
 </template>

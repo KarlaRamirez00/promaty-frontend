@@ -30,18 +30,38 @@ export async function getStaffApi(id: number): Promise<StaffRaw> {
   return unwrap(response)
 }
 
-export async function createStaffApi(payload: StaffCreatePayload): Promise<number> {
-  const response = await rrhhApi.post<ApiResponse<number>>('/staff', payload)
+// Crear y editar viajan como multipart: `data` lleva el JSON del formulario y `file` el adjunto, si hay.
+// Sin Content-Type explícito, el navegador agrega el boundary.
+function toStaffFormData(payload: StaffFormPayload, file: File | null): FormData {
+  const body = new FormData()
+  body.append('data', new Blob([JSON.stringify(payload)], { type: 'application/json' }))
+  if (file) body.append('file', file)
+  return body
+}
+
+export async function createStaffApi(payload: StaffCreatePayload, file: File | null): Promise<number> {
+  const response = await rrhhApi.post<ApiResponse<number>>('/staff', toStaffFormData(payload, file))
   return unwrap(response)
 }
 
-export async function updateStaffApi(id: number, payload: StaffFormPayload): Promise<StaffRaw> {
-  const response = await rrhhApi.put<ApiResponse<StaffRaw>>(`/staff/${id}`, payload)
+export async function updateStaffApi(
+  id: number,
+  payload: StaffFormPayload,
+  file: File | null,
+): Promise<StaffRaw> {
+  const response = await rrhhApi.put<ApiResponse<StaffRaw>>(
+    `/staff/${id}`,
+    toStaffFormData(payload, file),
+  )
   return unwrap(response)
 }
 
 export async function updateStaffStatusApi(id: number, payload: StaffStatusPayload): Promise<void> {
   await rrhhApi.patch(`/staff/${id}/status`, payload)
+}
+
+export async function deleteStaffAttachmentApi(id: number, attachmentId: number): Promise<void> {
+  await rrhhApi.delete(`/staff/${id}/attachments/${attachmentId}`)
 }
 
 export async function listStaffStatusOptionsApi(): Promise<CatalogOptionRaw[]> {

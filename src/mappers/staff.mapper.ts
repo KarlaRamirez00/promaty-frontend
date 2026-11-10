@@ -8,6 +8,7 @@ import type {
   StaffStatusPayload,
 } from '@/types/staff'
 import { staffStatusColor, type Staff, type StaffBlockForm, type StaffForm, type StaffListItem } from '@/models'
+import { mapperAttachments } from './attachment.mapper'
 import { formatDate, formatDateTime, formatRut, NO_DATA } from '@/utils'
 
 function toFullName(firstName: string, paternalLastName: string, maternalLastName: string): string {
@@ -68,6 +69,7 @@ export function mapperStaffDetail(raw: StaffRaw): Staff {
     hireDate: raw.hireDate,
     status: raw.status,
     blockReason: raw.blockReason,
+    attachments: mapperAttachments(raw.attachments),
     createdAt: formatDateTime(raw.createdAt),
     updatedAt: formatDateTime(raw.updatedAt),
     createdBy: raw.createdBy,

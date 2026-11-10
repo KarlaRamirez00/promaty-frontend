@@ -76,3 +76,16 @@ export function formatCurrency(value: number | null | undefined, fallback = NO_D
   if (value === null || value === undefined) return fallback
   return `$ ${currencyFormatter.format(value)}`
 }
+
+const FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB']
+
+export function formatFileSize(bytes: number): string {
+  let size = bytes
+  let unit = 0
+  while (size >= 1024 && unit < FILE_SIZE_UNITS.length - 1) {
+    size /= 1024
+    unit++
+  }
+  const text = unit === 0 ? String(size) : new Intl.NumberFormat('es-CL', { maximumFractionDigits: 1 }).format(size)
+  return `${text} ${FILE_SIZE_UNITS[unit]}`
+}

@@ -1,3 +1,4 @@
+import type { FileAttachment } from './attachment.models'
 import type { SortDirection } from '@/types/sort'
 import type { AccountType, ClothingSize, IdentificationType } from '@/types/staff'
 
@@ -93,6 +94,7 @@ export interface Staff {
   hireDate: string | null
   status: StaffCatalogOption
   blockReason: string | null
+  attachments: FileAttachment[]
   createdAt: string
   updatedAt: string
   createdBy: string
