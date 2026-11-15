@@ -59,6 +59,8 @@ const {
   query,
   patchQuery,
   searchInput,
+  sortBy,
+  changeSort,
   pageModel,
   sizeModel,
   listResult,
@@ -169,15 +171,15 @@ function toggleExpiringSoon() {
 }
 
 const headers = [
-  { title: 'CC', key: 'costCenterCode', sortable: false },
-  { title: 'Tipo de contrato', key: 'contractTypeName', sortable: false },
-  { title: 'Cargo', key: 'jobTitleName', sortable: false },
-  { title: 'RUT', key: 'identificationNumber', sortable: false },
-  { title: 'Nombre', key: 'fullName', sortable: false },
-  { title: 'Fecha de inicio', key: 'startDate', sortable: false },
-  { title: 'Fecha de término', key: 'endDate', sortable: false },
-  { title: 'Sueldo pactado', key: 'agreedSalary', sortable: false },
-  { title: 'Estado', key: 'statusName', sortable: false },
+  { title: 'CC', key: 'costCenterCode', sortable: true },
+  { title: 'Tipo de contrato', key: 'contractTypeName', sortable: true },
+  { title: 'Cargo', key: 'jobTitleName', sortable: true },
+  { title: 'RUT', key: 'identificationNumber', sortable: true },
+  { title: 'Nombre', key: 'fullName', sortable: true },
+  { title: 'Fecha de inicio', key: 'startDate', sortable: true },
+  { title: 'Fecha de término', key: 'endDate', sortable: true },
+  { title: 'Sueldo pactado', key: 'agreedSalary', sortable: true },
+  { title: 'Estado', key: 'statusName', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -198,7 +200,7 @@ function viewDetail(item: { id: number }) {
 
 
 function openRequestForm() {
-  router.push({ name: ROUTE.CONTRACT_NEW })
+  void router.push({ name: ROUTE.CONTRACT_NEW })
 }
 </script>
 
@@ -266,6 +268,10 @@ function openRequestForm() {
     :items="items"
     :items-length="totalItems"
     :loading="isPending"
+    :sort-by="sortBy"
+    :multi-sort="false"
+    must-sort
+    @update:sort-by="changeSort"
   >
     <template #item.contractTypeName="{ item }">
       <span class="link-cell" @click="viewDetail(item)">{{ item.contractTypeName }}</span>

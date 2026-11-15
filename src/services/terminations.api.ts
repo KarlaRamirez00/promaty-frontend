@@ -6,10 +6,18 @@ import type {
   TerminationListRaw,
   TerminationRaw,
   TerminationRequestPayload,
+  TerminationRequestResponse,
   TerminationStaffOptionRaw,
   TerminationUpdatePayload,
 } from '@/types/termination'
 import type { TerminationQueryParams, TerminationStatusOption } from '@/models'
+import { toSortParam } from '@/utils/sort'
+
+const TERMINATION_SORT_FIELDS: Record<string, string> = {
+  fullName: 'staffName',
+  identificationNumber: 'staffIdentificationNumber',
+  definitive: 'definitiveTermination',
+}
 
 export async function listTerminationsApi(
   params: TerminationQueryParams,
@@ -23,6 +31,7 @@ export async function listTerminationsApi(
       terminationDateTo: params.terminationDateTo ?? undefined,
       page: params.page - 1,
       size: params.size,
+      sort: toSortParam(params.sort, TERMINATION_SORT_FIELDS),
     },
   })
   return unwrapPage(response)
@@ -59,8 +68,23 @@ export async function listNonRehireReasonOptionsApi(): Promise<TerminationCatalo
   return response.data.data
 }
 
-export async function createTerminationRequestApi(payload: TerminationRequestPayload): Promise<void> {
-  await rrhhApi.post('/requests', payload)
+export async function createTerminationRequestApi(
+  payload: TerminationRequestPayload,
+): Promise<TerminationRequestResponse> {
+  const response = await rrhhApi.post<ApiResponse<TerminationRequestResponse>>('/requests', payload)
+  return unwrap(response)
+}
+
+export async function uploadTerminationAttachmentApi(id: number, file: File): Promise<void> {
+  const formData = new FormData()
+  formData.append('file', file)
+  await rrhhApi.post(`/terminations/${id}/attachments`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export async function deleteTerminationAttachmentApi(id: number, attachmentId: number): Promise<void> {
+  await rrhhApi.delete(`/terminations/${id}/attachments/${attachmentId}`)
 }
 
 export async function updateTerminationApi(

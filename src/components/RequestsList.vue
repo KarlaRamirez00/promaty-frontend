@@ -31,6 +31,8 @@ const {
   query,
   patchQuery,
   searchInput,
+  sortBy,
+  changeSort,
   pageModel,
   sizeModel,
   listResult,
@@ -154,14 +156,14 @@ function toggleCounter(code: string) {
 }
 
 const headers = [
-  { title: 'CC', key: 'costCenterCode', sortable: false },
-  { title: 'Tipo de solicitud', key: 'typeName', sortable: false },
-  { title: 'Colaborador', key: 'staffFullName', sortable: false },
-  { title: 'RUT', key: 'staffIdentificationNumber', sortable: false },
-  { title: 'Cargo', key: 'staffPosition', sortable: false },
-  { title: 'Solicitante', key: 'requesterName', sortable: false },
-  { title: 'Creación', key: 'createdAt', sortable: false },
-  { title: 'Estado', key: 'status', sortable: false },
+  { title: 'CC', key: 'costCenterCode', sortable: true },
+  { title: 'Tipo de solicitud', key: 'typeName', sortable: true },
+  { title: 'Colaborador', key: 'staffFullName', sortable: true },
+  { title: 'RUT', key: 'staffIdentificationNumber', sortable: true },
+  { title: 'Cargo', key: 'staffPosition', sortable: true },
+  { title: 'Solicitante', key: 'requesterName', sortable: true },
+  { title: 'Creación', key: 'createdAt', sortable: true },
+  { title: 'Estado', key: 'status', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -169,7 +171,7 @@ const headers = [
 function viewDetail(item: { entityType: string; entityId: number | null }) {
   if (item.entityId === null) return
   const name = item.entityType === 'TERMINATION' ? ROUTE.TERMINATION_LIST : ROUTE.CONTRACT_LIST
-  router.push({ name, query: { detail: String(item.entityId) } })
+  void router.push({ name, query: { detail: String(item.entityId) } })
 }
 </script>
 
@@ -236,6 +238,10 @@ function viewDetail(item: { entityType: string; entityId: number | null }) {
     :items="items"
     :items-length="totalItems"
     :loading="isPending"
+    :sort-by="sortBy"
+    :multi-sort="false"
+    must-sort
+    @update:sort-by="changeSort"
   >
     <template #item.typeName="{ item }">
       <span class="link-cell" @click="viewDetail(item)">{{ item.typeName }}</span>

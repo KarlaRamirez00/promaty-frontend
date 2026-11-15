@@ -99,7 +99,7 @@ export interface RoleSort {
   order: SortDirection
 }
 
-export const ROLE_SORTABLE_KEYS = ['name', 'totalUsers'] as const
+export const ROLE_SORTABLE_KEYS = ['name', 'totalUsers', 'active'] as const
 
 export const DEFAULT_ROLE_SORT: RoleSort = { key: 'name', order: 'asc' }
 

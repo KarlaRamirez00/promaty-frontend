@@ -47,6 +47,9 @@ export interface Termination {
   notes: string
   rexTerminationNumber: string | null
   annulmentReason: string | null
+  attachments: TerminationAttachment[]
+  requiredAttachmentLabel: string | null
+  missingRequiredAttachment: boolean
   status: TerminationStatusOption
   statusColor: string
   createdAt: string
@@ -59,6 +62,20 @@ export interface Termination {
 export interface TerminationOption {
   id: number
   name: string
+}
+
+export interface TerminationCauseOption extends TerminationOption {
+  requiresAttachment: boolean
+  attachmentLabel: string
+}
+
+export interface TerminationAttachment {
+  id: number
+  name: string
+  fileType: string
+  fileSizeLabel: string
+  mediaFileId: string
+  updatedAt: string
 }
 
 export interface TerminationStaffOption {
@@ -95,7 +112,7 @@ export const createTerminationForm = (overrides: Partial<TerminationForm> = {}):
 // que pueden estar inactivos y no venir en los selectores.
 export interface TerminationEditData {
   form: TerminationForm
-  currentCause: TerminationOption
+  currentCause: TerminationCauseOption
   currentNonRehireReason: TerminationOption | null
 }
 
@@ -127,6 +144,7 @@ export const createTerminationFilters = (
 export interface TerminationQueryParams extends TerminationFilters {
   page: number
   size: number
+  sort?: { key: string; order: 'asc' | 'desc' }
 }
 
 const TERMINATION_PAGE_SIZES = [10, 25, 50, 100] as const
@@ -148,6 +166,13 @@ function toIsoDate(raw: unknown): string | null {
   return typeof raw === 'string' && ISO_DATE_PATTERN.test(raw) ? raw : null
 }
 
+function toSort(raw: unknown): { key: string; order: 'asc' | 'desc' } | undefined {
+  if (typeof raw !== 'string') return undefined
+  const [key, order] = raw.split(',')
+  if (!key) return undefined
+  return { key, order: order === 'desc' ? 'desc' : 'asc' }
+}
+
 export function parseTerminationQuery(query: Record<string, unknown>): TerminationQueryParams {
   const size = Number(query.size)
   return {
@@ -160,6 +185,7 @@ export function parseTerminationQuery(query: Record<string, unknown>): Terminati
     size: (TERMINATION_PAGE_SIZES as readonly number[]).includes(size)
       ? size
       : DEFAULT_TERMINATION_QUERY.size,
+    sort: toSort(query.sort),
   }
 }
 
@@ -173,5 +199,6 @@ export function terminationQueryToRoute(params: TerminationQueryParams): Record<
   if (params.terminationDateTo) query.terminationDateTo = params.terminationDateTo
   if (params.page !== DEFAULT_TERMINATION_QUERY.page) query.page = String(params.page)
   if (params.size !== DEFAULT_TERMINATION_QUERY.size) query.size = String(params.size)
+  if (params.sort) query.sort = `${params.sort.key},${params.sort.order}`
   return query
 }

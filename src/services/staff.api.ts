@@ -10,6 +10,11 @@ import type {
   StaffStatusPayload,
 } from '@/types/staff'
 import type { StaffQueryParams } from '@/models'
+import { toSortParam } from '@/utils/sort'
+
+const STAFF_SORT_FIELDS: Record<string, string> = {
+  firstName: 'staffName',
+}
 
 export async function listStaffApi(params: StaffQueryParams): Promise<PageResult<StaffListRaw>> {
   const response = await rrhhApi.get<ApiListResponse<StaffListRaw>>('/staff', {
@@ -19,7 +24,7 @@ export async function listStaffApi(params: StaffQueryParams): Promise<PageResult
       costCenterCode: params.costCenterCode ?? undefined,
       page: params.page - 1,
       size: params.size,
-      sort: `${params.sort.key},${params.sort.order}`,
+      sort: toSortParam(params.sort, STAFF_SORT_FIELDS),
     },
   })
   return unwrapPage(response)

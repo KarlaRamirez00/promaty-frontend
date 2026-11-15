@@ -125,11 +125,11 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<StaffQu
 })
 
 const headers = [
-  { title: 'CC', key: 'costCenterCode', sortable: false },
+  { title: 'CC', key: 'costCenterCode', sortable: true },
   { title: 'Nombre', key: 'firstName', sortable: true },
   { title: 'RUT', key: 'identificationNumber', sortable: true },
-  { title: 'Fecha ingreso', key: 'hireDate', sortable: false },
-  { title: 'Estado', key: 'statusName', sortable: false },
+  { title: 'Fecha ingreso', key: 'hireDate', sortable: true },
+  { title: 'Estado', key: 'statusName', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -138,11 +138,11 @@ function viewDetail(item: { id: number }) {
 }
 
 function openCreateForm() {
-  router.push({ name: ROUTE.STAFF_NEW })
+  void router.push({ name: ROUTE.STAFF_NEW })
 }
 
 function openEditForm(item: { id: number }) {
-  router.push({ name: ROUTE.STAFF_EDIT, params: { id: String(item.id) } })
+  void router.push({ name: ROUTE.STAFF_EDIT, params: { id: String(item.id) } })
 }
 </script>
 

@@ -102,6 +102,7 @@ export const createRequestFilters = (overrides: Partial<RequestFilters> = {}): R
 export interface RequestQueryParams extends RequestFilters {
   page: number
   size: number
+  sort?: { key: string; order: 'asc' | 'desc' }
 }
 
 const REQUEST_PAGE_SIZES = [10, 25, 50, 100] as const
@@ -132,6 +133,13 @@ function toIsoDate(raw: unknown): string | null {
   return typeof raw === 'string' && ISO_DATE_PATTERN.test(raw) ? raw : null
 }
 
+function toSort(raw: unknown): { key: string; order: 'asc' | 'desc' } | undefined {
+  if (typeof raw !== 'string') return undefined
+  const [key, order] = raw.split(',')
+  if (!key) return undefined
+  return { key, order: order === 'desc' ? 'desc' : 'asc' }
+}
+
 export function parseRequestQuery(query: Record<string, unknown>): RequestQueryParams {
   return {
     search: typeof query.search === 'string' ? query.search : '',
@@ -142,6 +150,7 @@ export function parseRequestQuery(query: Record<string, unknown>): RequestQueryP
     createdTo: toIsoDate(query.createdTo),
     page: toPage(query.page),
     size: toPageSize(query.size),
+    sort: toSort(query.sort),
   }
 }
 
@@ -156,5 +165,6 @@ export function requestQueryToRoute(params: RequestQueryParams): Record<string, 
   if (params.createdTo) query.createdTo = params.createdTo
   if (params.page !== DEFAULT_REQUEST_QUERY.page) query.page = String(params.page)
   if (params.size !== DEFAULT_REQUEST_QUERY.size) query.size = String(params.size)
+  if (params.sort) query.sort = `${params.sort.key},${params.sort.order}`
   return query
 }

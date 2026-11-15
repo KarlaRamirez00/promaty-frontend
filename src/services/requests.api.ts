@@ -7,6 +7,12 @@ import type {
   RequestRaw,
 } from '@/types/request'
 import type { RequestQueryParams, RequestRelationOption, RequestStatusOption } from '@/models'
+import { toSortParam } from '@/utils/sort'
+
+const REQUEST_SORT_FIELDS: Record<string, string> = {
+  staffFullName: 'staffName',
+  status: 'statusName',
+}
 
 export async function listRequestsApi(
   params: RequestQueryParams,
@@ -21,6 +27,7 @@ export async function listRequestsApi(
       createdTo: params.createdTo ?? undefined,
       page: params.page - 1,
       size: params.size,
+      sort: toSortParam(params.sort, REQUEST_SORT_FIELDS),
     },
   })
   return unwrapPage(response)

@@ -2,6 +2,11 @@ import { userApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
 import type { UserDetailRaw, UserFormPayload, UserRaw } from '@/types/user'
 import type { UserQueryParams } from '@/models'
+import { toSortParam } from '@/utils/sort'
+
+const USER_SORT_FIELDS: Record<string, string> = {
+  role: 'roleName',
+}
 
 export async function listUsersApi(params: UserQueryParams): Promise<PageResult<UserRaw>> {
   const response = await userApi.get<ApiListResponse<UserRaw>>('/users', {
@@ -11,7 +16,7 @@ export async function listUsersApi(params: UserQueryParams): Promise<PageResult<
       roleId: params.roleId ?? undefined,
       page: params.page - 1,
       size: params.size,
-      sort: `${params.sort.key},${params.sort.order}`,
+      sort: toSortParam(params.sort, USER_SORT_FIELDS),
     },
   })
   return unwrapPage(response)

@@ -75,7 +75,7 @@ export interface UserSort {
   order: SortDirection
 }
 
-export const USER_SORTABLE_KEYS = ['firstName', 'lastName', 'email'] as const
+export const USER_SORTABLE_KEYS = ['firstName', 'lastName', 'email', 'role', 'active'] as const
 
 export const DEFAULT_USER_SORT: UserSort = { key: 'firstName', order: 'asc' }
 

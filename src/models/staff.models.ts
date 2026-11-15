@@ -1,5 +1,4 @@
 import type { FileAttachment } from './attachment.models'
-import type { SortDirection } from '@/types/sort'
 import type { AccountType, ClothingSize, IdentificationType } from '@/types/staff'
 
 export const IDENTIFICATION_TYPE_OPTIONS: { title: string; value: IdentificationType }[] = [
@@ -190,36 +189,10 @@ export const createStaffFilters = (overrides: Partial<StaffFilters> = {}): Staff
   ...overrides,
 })
 
-export interface StaffSort {
-  key: string
-  order: SortDirection
-}
-
-export const STAFF_SORTABLE_KEYS = ['firstName', 'paternalLastName', 'identificationNumber'] as const
-
-export const DEFAULT_STAFF_SORT: StaffSort = { key: 'firstName', order: 'asc' }
-
-export function parseStaffSort(raw: unknown): StaffSort {
-  if (typeof raw !== 'string') return { ...DEFAULT_STAFF_SORT }
-  const [key, order] = raw.split(',')
-  if (!STAFF_SORTABLE_KEYS.includes(key as (typeof STAFF_SORTABLE_KEYS)[number])) {
-    return { ...DEFAULT_STAFF_SORT }
-  }
-  return { key, order: order === 'desc' ? 'desc' : 'asc' }
-}
-
-export function formatStaffSort(sort: StaffSort): string {
-  return `${sort.key},${sort.order}`
-}
-
-export function isDefaultStaffSort(sort: StaffSort): boolean {
-  return sort.key === DEFAULT_STAFF_SORT.key && sort.order === DEFAULT_STAFF_SORT.order
-}
-
 export interface StaffQueryParams extends StaffFilters {
   page: number
   size: number
-  sort: StaffSort
+  sort?: { key: string; order: 'asc' | 'desc' }
 }
 
 const STAFF_PAGE_SIZES = [10, 25, 50, 100] as const
@@ -228,7 +201,6 @@ export const DEFAULT_STAFF_QUERY: StaffQueryParams = {
   ...createStaffFilters(),
   page: 1,
   size: 10,
-  sort: DEFAULT_STAFF_SORT,
 }
 
 const FILTER_CODE_PATTERN = /^[\w-]{1,30}$/
@@ -247,6 +219,13 @@ function toPageSize(raw: unknown): number {
   return (STAFF_PAGE_SIZES as readonly number[]).includes(n) ? n : DEFAULT_STAFF_QUERY.size
 }
 
+function toSort(raw: unknown): { key: string; order: 'asc' | 'desc' } | undefined {
+  if (typeof raw !== 'string') return undefined
+  const [key, order] = raw.split(',')
+  if (!key) return undefined
+  return { key, order: order === 'desc' ? 'desc' : 'asc' }
+}
+
 export function parseStaffQuery(query: Record<string, unknown>): StaffQueryParams {
   return {
     search: typeof query.search === 'string' ? query.search : '',
@@ -254,7 +233,7 @@ export function parseStaffQuery(query: Record<string, unknown>): StaffQueryParam
     costCenterCode: toFilterCode(query.costCenterCode),
     page: toPage(query.page),
     size: toPageSize(query.size),
-    sort: parseStaffSort(query.sort),
+    sort: toSort(query.sort),
   }
 }
 
@@ -266,6 +245,6 @@ export function staffQueryToRoute(params: StaffQueryParams): Record<string, stri
   if (params.costCenterCode) query.costCenterCode = params.costCenterCode
   if (params.page !== DEFAULT_STAFF_QUERY.page) query.page = String(params.page)
   if (params.size !== DEFAULT_STAFF_QUERY.size) query.size = String(params.size)
-  if (!isDefaultStaffSort(params.sort)) query.sort = formatStaffSort(params.sort)
+  if (params.sort) query.sort = `${params.sort.key},${params.sort.order}`
   return query
 }

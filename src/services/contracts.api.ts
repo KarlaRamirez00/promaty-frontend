@@ -7,9 +7,16 @@ import type {
   ContractProjectOptionRaw,
   ContractRaw,
   ContractRequestPayload,
+  ContractRequestResponse,
   ContractStaffOptionRaw,
 } from '@/types/contract'
 import type { ContractQueryParams, ContractStatusOption } from '@/models'
+import { toSortParam } from '@/utils/sort'
+
+const CONTRACT_SORT_FIELDS: Record<string, string> = {
+  fullName: 'staffName',
+  identificationNumber: 'staffIdentificationNumber',
+}
 
 const OPTIONS_PARAMS = { size: 200, page: 0 }
 
@@ -59,8 +66,31 @@ export async function listContractStaffOptionsApi(): Promise<ContractStaffOption
   return response.data.data
 }
 
-export async function createContractRequestApi(payload: ContractRequestPayload): Promise<void> {
-  await rrhhApi.post('/requests', payload)
+export async function createContractRequestApi(
+  payload: ContractRequestPayload,
+): Promise<ContractRequestResponse> {
+  const response = await rrhhApi.post<ApiResponse<ContractRequestResponse>>('/requests', payload)
+  return unwrap(response)
+}
+
+export async function uploadContractAttachmentApi(
+  id: number,
+  type: string,
+  file: File,
+): Promise<void> {
+  const formData = new FormData()
+  formData.append('file', file)
+  await rrhhApi.post(`/contracts/${id}/attachments`, formData, {
+    params: { type },
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
+
+export async function deleteContractAttachmentApi(
+  id: number,
+  attachmentId: number,
+): Promise<void> {
+  await rrhhApi.delete(`/contracts/${id}/attachments/${attachmentId}`)
 }
 
 export async function listContractsApi(
@@ -75,6 +105,7 @@ export async function listContractsApi(
       expiringSoon: params.expiringSoon || undefined,
       page: params.page - 1,
       size: params.size,
+      sort: toSortParam(params.sort, CONTRACT_SORT_FIELDS),
     },
   })
   return unwrapPage(response)

@@ -49,6 +49,8 @@ const {
   query,
   patchQuery,
   searchInput,
+  sortBy,
+  changeSort,
   pageModel,
   sizeModel,
   items,
@@ -150,13 +152,13 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<Termina
 })
 
 const headers = [
-  { title: 'CC', key: 'costCenterCode', sortable: false },
-  { title: 'Colaborador', key: 'fullName', sortable: false },
-  { title: 'RUT', key: 'identificationNumber', sortable: false },
-  { title: 'Causal', key: 'legalTerminationCauseName', sortable: false },
-  { title: 'Fecha de término', key: 'terminationDate', sortable: false },
-  { title: 'Definitivo', key: 'definitive', sortable: false, align: 'center' as const },
-  { title: 'Estado', key: 'statusName', sortable: false },
+  { title: 'CC', key: 'costCenterCode', sortable: true },
+  { title: 'Colaborador', key: 'fullName', sortable: true },
+  { title: 'RUT', key: 'identificationNumber', sortable: true },
+  { title: 'Causal', key: 'legalTerminationCauseName', sortable: true },
+  { title: 'Fecha de término', key: 'terminationDate', sortable: true },
+  { title: 'Definitivo', key: 'definitive', sortable: true, align: 'center' as const },
+  { title: 'Estado', key: 'statusName', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -176,11 +178,11 @@ function viewDetail(item: { id: number }) {
 }
 
 function openRequestForm() {
-  router.push({ name: ROUTE.TERMINATION_NEW })
+  void router.push({ name: ROUTE.TERMINATION_NEW })
 }
 
 function openEditForm(id: number) {
-  router.push({ name: ROUTE.TERMINATION_EDIT, params: { id } })
+  void router.push({ name: ROUTE.TERMINATION_EDIT, params: { id } })
 }
 </script>
 
@@ -218,6 +220,10 @@ function openEditForm(id: number) {
     :items="items"
     :items-length="totalItems"
     :loading="isPending"
+    :sort-by="sortBy"
+    :multi-sort="false"
+    must-sort
+    @update:sort-by="changeSort"
   >
     <template #item.fullName="{ item }">
       <span class="link-cell" @click="viewDetail(item)">{{ item.fullName }}</span>

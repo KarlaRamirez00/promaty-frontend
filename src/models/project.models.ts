@@ -108,7 +108,16 @@ export interface ProjectSort {
   order: SortDirection
 }
 
-export const PROJECT_SORTABLE_KEYS = ['name', 'startDate'] as const
+export const PROJECT_SORTABLE_KEYS = [
+  'name',
+  'costCenterCode',
+  'typeName',
+  'specialtyName',
+  'clientName',
+  'startDate',
+  'endDate',
+  'statusName',
+] as const
 
 export const DEFAULT_PROJECT_SORT: ProjectSort = { key: 'name', order: 'asc' }
 

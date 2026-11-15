@@ -94,6 +94,39 @@ export interface ContractListItem {
   actions: string[]
 }
 
+export type ContractAttachmentType =
+  | 'CEDULA_FRONTAL'
+  | 'CEDULA_REVERSO'
+  | 'CERT_AFP'
+  | 'CERT_SALUD'
+  | 'CERT_ANTECEDENTES'
+
+export const CONTRACT_ATTACHMENT_TYPES: ContractAttachmentType[] = [
+  'CEDULA_FRONTAL',
+  'CEDULA_REVERSO',
+  'CERT_AFP',
+  'CERT_SALUD',
+  'CERT_ANTECEDENTES',
+]
+
+export const CONTRACT_ATTACHMENT_TYPE_LABELS: Record<ContractAttachmentType, string> = {
+  CEDULA_FRONTAL: 'Cédula de identidad (frente)',
+  CEDULA_REVERSO: 'Cédula de identidad (reverso)',
+  CERT_AFP: 'Certificado AFP',
+  CERT_SALUD: 'Certificado de salud',
+  CERT_ANTECEDENTES: 'Certificado de antecedentes',
+}
+
+export interface ContractAttachment {
+  id: number
+  attachmentType: ContractAttachmentType
+  name: string
+  fileType: string
+  fileSizeLabel: string
+  mediaFileId: string
+  updatedAt: string
+}
+
 export interface Contract {
   id: number
   requestId: number
@@ -114,6 +147,8 @@ export interface Contract {
   mealTypeName: string
   transportTypeName: string
   rexContractNumber: string | null
+  attachments: ContractAttachment[]
+  missingAttachmentTypes: ContractAttachmentType[]
   status: ContractStatusOption
   statusColor: string
   createdAt: string
@@ -145,6 +180,7 @@ export const createContractFilters = (
 export interface ContractQueryParams extends ContractFilters {
   page: number
   size: number
+  sort?: { key: string; order: 'asc' | 'desc' }
 }
 
 const CONTRACT_PAGE_SIZES = [10, 25, 50, 100] as const
@@ -160,6 +196,13 @@ function toPositiveInt(raw: unknown): number | null {
   return typeof raw === 'string' && Number.isInteger(n) && n > 0 ? n : null
 }
 
+function toSort(raw: unknown): { key: string; order: 'asc' | 'desc' } | undefined {
+  if (typeof raw !== 'string') return undefined
+  const [key, order] = raw.split(',')
+  if (!key) return undefined
+  return { key, order: order === 'desc' ? 'desc' : 'asc' }
+}
+
 export function parseContractQuery(query: Record<string, unknown>): ContractQueryParams {
   const size = Number(query.size)
   return {
@@ -172,6 +215,7 @@ export function parseContractQuery(query: Record<string, unknown>): ContractQuer
     size: (CONTRACT_PAGE_SIZES as readonly number[]).includes(size)
       ? size
       : DEFAULT_CONTRACT_QUERY.size,
+    sort: toSort(query.sort),
   }
 }
 
@@ -185,5 +229,6 @@ export function contractQueryToRoute(params: ContractQueryParams): Record<string
   if (params.expiringSoon) query.expiringSoon = 'true'
   if (params.page !== DEFAULT_CONTRACT_QUERY.page) query.page = String(params.page)
   if (params.size !== DEFAULT_CONTRACT_QUERY.size) query.size = String(params.size)
+  if (params.sort) query.sort = `${params.sort.key},${params.sort.order}`
   return query
 }
