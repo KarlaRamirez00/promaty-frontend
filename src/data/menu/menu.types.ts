@@ -6,4 +6,5 @@ export interface MenuItem {
   module?: string
   permission?: string
   submenu?: MenuItem[]
+  hidden?: boolean
 }

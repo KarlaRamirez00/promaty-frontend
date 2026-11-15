@@ -22,6 +22,7 @@ const isSuperadmin = computed(() => auth.isSystemRole)
 // permisos habilitan: un grupo aparece si algún submódulo es visible, y un ítem sin permiso (módulo
 // por construir) queda oculto.
 function isVisible(item: MenuItem): boolean {
+  if (item.hidden) return false
   if (isSuperadmin.value) return true
   if (item.submenu) return visibleSubmenu(item).length > 0
   if (!item.module || !item.permission) return false
