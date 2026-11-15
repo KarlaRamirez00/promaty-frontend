@@ -81,6 +81,15 @@ interface ContractNamedRaw {
   name: string
 }
 
+export interface ContractAttachmentRaw {
+  id: number
+  attachmentType: string
+  fileName: string
+  fileSize: number
+  mediaFileId: string
+  uploadedAt: string
+}
+
 export interface ContractRaw {
   id: number
   requestId: number
@@ -101,9 +110,15 @@ export interface ContractRaw {
   transportType: ContractNamedRaw | null
   status: ContractStatusRaw
   rexContractNumber: string | null
+  attachments: ContractAttachmentRaw[]
+  missingAttachmentTypes: string[]
   createdAt: string
   updatedAt: string
   createdBy: string
   updatedBy: string
   actions: string[]
+}
+
+export interface ContractRequestResponse {
+  id: number
 }

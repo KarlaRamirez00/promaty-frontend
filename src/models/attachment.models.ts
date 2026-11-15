@@ -19,3 +19,13 @@ export const STAFF_ATTACHMENT_RULE: AttachmentRule = {
   maxFiles: 1,
   formats: ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
 }
+
+export const CONTRACT_ATTACHMENT_RULE: AttachmentRule = {
+  maxFiles: 1,
+  formats: ['pdf', 'jpg', 'jpeg', 'png', 'xls', 'xlsx'],
+}
+
+export const TERMINATION_ATTACHMENT_RULE: AttachmentRule = {
+  maxFiles: 1,
+  formats: ['pdf', 'jpg', 'jpeg', 'png'],
+}

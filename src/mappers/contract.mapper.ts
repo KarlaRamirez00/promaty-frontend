@@ -1,4 +1,5 @@
 import type {
+  ContractAttachmentRaw,
   ContractCatalogOptionRaw,
   ContractListRaw,
   ContractRaw,
@@ -7,13 +8,15 @@ import type {
 } from '@/types/contract'
 import type {
   Contract,
+  ContractAttachment,
+  ContractAttachmentType,
   ContractCatalogOption,
   ContractForm,
   ContractListItem,
   ContractStaffOption,
 } from '@/models'
 import { contractStatusColor } from '@/models'
-import { formatCurrency, formatDate, formatDateTime, formatRut, NO_DATA, parseCurrency } from '@/utils'
+import { formatCurrency, formatDate, formatDateTime, formatFileSize, formatRut, NO_DATA, parseCurrency } from '@/utils'
 
 const RUT_PATTERN = /^\d{7,8}-[\dkK]$/
 
@@ -75,6 +78,19 @@ export function mapperContractList(items: ContractListRaw[]): ContractListItem[]
   }))
 }
 
+function mapAttachment(a: ContractAttachmentRaw): ContractAttachment {
+  const dot = a.fileName.lastIndexOf('.')
+  return {
+    id: a.id,
+    attachmentType: a.attachmentType as ContractAttachmentType,
+    name: a.fileName,
+    fileType: dot === -1 ? '' : a.fileName.slice(dot + 1).toLowerCase(),
+    fileSizeLabel: formatFileSize(a.fileSize),
+    mediaFileId: a.mediaFileId,
+    updatedAt: a.uploadedAt,
+  }
+}
+
 export function mapperContractDetail(raw: ContractRaw): Contract {
   return {
     id: raw.id,
@@ -96,6 +112,8 @@ export function mapperContractDetail(raw: ContractRaw): Contract {
     mealTypeName: raw.mealType?.name ?? NO_DATA,
     transportTypeName: raw.transportType?.name ?? NO_DATA,
     rexContractNumber: raw.rexContractNumber,
+    attachments: (raw.attachments ?? []).map(mapAttachment),
+    missingAttachmentTypes: (raw.missingAttachmentTypes ?? []) as ContractAttachmentType[],
     status: raw.status,
     statusColor: contractStatusColor(raw.status.code),
     createdAt: formatDateTime(raw.createdAt),

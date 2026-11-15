@@ -1,11 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { Contract, RequestApproval } from '@/models'
+import { computed, ref } from 'vue'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import {
+  deleteContractAttachmentAction,
+  downloadAttachmentAction,
+  uploadContractAttachmentAction,
+} from '@/actions'
+import {
+  CONTRACT_ATTACHMENT_RULE,
+  CONTRACT_ATTACHMENT_TYPE_LABELS,
+  CONTRACT_ATTACHMENT_TYPES,
+  type Contract,
+  type ContractAttachment,
+  type ContractAttachmentType,
+  type FileAttachment,
+  type RequestApproval,
+} from '@/models'
+import { useMessage } from '@/composables/useMessage'
+import messages from '@/messages'
 import type { DetailSection } from '@/types/detail'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailTabs from '@/components/common/DetailTabs.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApprovalHistory from '@/components/common/ApprovalHistory.vue'
+import AttachmentField from '@/components/common/AttachmentField.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -26,10 +44,64 @@ const emit = defineEmits<{
   reject: [contract: Contract]
 }>()
 
+const queryClient = useQueryClient()
+const { toastSaved, toastFailed } = useMessage()
+
+const canEditAttachments = computed(
+  () => props.contract?.actions.includes('contract.update') ?? false,
+)
+
+const pendingByType = ref<Record<ContractAttachmentType, File[]>>(
+  Object.fromEntries(CONTRACT_ATTACHMENT_TYPES.map((t) => [t, [] as File[]])) as Record<ContractAttachmentType, File[]>,
+)
+
+function attachmentsForType(type: ContractAttachmentType): ContractAttachment[] {
+  return (props.contract?.attachments ?? []).filter((a) => a.attachmentType === type)
+}
+
+function refreshDetail() {
+  if (props.contract) {
+    void queryClient.invalidateQueries({ queryKey: ['contracts', 'detail', props.contract.id] })
+  }
+}
+
+const uploadMutation = useMutation({
+  mutationFn: ({ type, file }: { type: ContractAttachmentType; file: File }) =>
+    uploadContractAttachmentAction(props.contract!.id, type, file),
+  onSuccess: () => {
+    toastSaved(null, messages.contract)
+    refreshDetail()
+  },
+  onError: () => toastFailed(messages.contract),
+})
+
+const deleteMutation = useMutation({
+  mutationFn: (attachmentId: number) =>
+    deleteContractAttachmentAction(props.contract!.id, attachmentId),
+  onSuccess: refreshDetail,
+  onError: () => toastFailed(messages.contract),
+})
+
+function onPendingChange(type: ContractAttachmentType, files: File[]) {
+  if (files.length === 0) return
+  pendingByType.value[type] = []
+  uploadMutation.mutate({ type, file: files[0] })
+}
+
+function deleteAttachment(attachment: FileAttachment) {
+  deleteMutation.mutate(attachment.id)
+}
+
 const sections = computed<DetailSection[]>(() => {
   const c = props.contract
   if (!c) return []
   return [
+    {
+      key: 'documents',
+      tab: 'Documentos',
+      title: 'Documentos adjuntos',
+      fields: [],
+    },
     {
       key: 'contract',
       tab: 'Contrato',
@@ -101,6 +173,23 @@ const sections = computed<DetailSection[]>(() => {
     </div>
 
     <DetailTabs v-else-if="contract" :sections="sections">
+      <template #documents>
+        <div class="d-flex flex-column ga-6">
+          <AttachmentField
+            v-for="type in CONTRACT_ATTACHMENT_TYPES"
+            :key="type"
+            :label="CONTRACT_ATTACHMENT_TYPE_LABELS[type]"
+            :rule="CONTRACT_ATTACHMENT_RULE"
+            :saved="attachmentsForType(type)"
+            :model-value="pendingByType[type]"
+            :readonly="!canEditAttachments"
+            @update:model-value="(files) => onPendingChange(type, files)"
+            @remove-saved="deleteAttachment"
+            @download="downloadAttachmentAction"
+          />
+        </div>
+      </template>
+
       <template #traceability>
         <ApprovalHistory :approvals="approvals" />
       </template>

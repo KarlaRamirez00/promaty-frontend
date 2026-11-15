@@ -1,5 +1,6 @@
 import {
   createContractRequestApi,
+  deleteContractAttachmentApi,
   getContractApi,
   listCompanyOptionsApi,
   listContractsApi,
@@ -11,6 +12,7 @@ import {
   listMealTypeOptionsApi,
   listSiteOptionsApi,
   listTransportTypeOptionsApi,
+  uploadContractAttachmentApi,
 } from '@/services'
 import {
   mapperContractCatalogOptions,
@@ -36,6 +38,14 @@ export function getContractStatusOptionsAction() {
 
 export function createContractRequestAction(form: ContractForm) {
   return useMutateForm(createContractRequestApi, form, mapperContractFormToPayload)
+}
+
+export function uploadContractAttachmentAction(id: number, type: string, file: File) {
+  return uploadContractAttachmentApi(id, type, file)
+}
+
+export function deleteContractAttachmentAction(id: number, attachmentId: number) {
+  return deleteContractAttachmentApi(id, attachmentId)
 }
 
 export function getContractProjectOptionsAction() {

@@ -13,6 +13,7 @@ import {
   getMealTypeOptionsAction,
   getSiteOptionsAction,
   getTransportTypeOptionsAction,
+  uploadContractAttachmentAction,
 } from '@/actions'
 import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
@@ -21,17 +22,22 @@ import messages from '@/messages'
 import contractMessages from '@/messages/contract.messages'
 import { ROUTE } from '@/router/route-names'
 import {
+  CONTRACT_ATTACHMENT_RULE,
+  CONTRACT_ATTACHMENT_TYPE_LABELS,
+  CONTRACT_ATTACHMENT_TYPES,
   CONTRACT_TYPE_FIXED_TERM_CODE,
   createContractForm,
   WEEKLY_WORK_HOURS_OPTIONS,
   WORK_DAYS_OPTIONS,
   WORKFLOW_QUERY_KEYS,
+  type ContractAttachmentType,
   type ContractForm,
 } from '@/models'
 import { contractDetailRules, firstError, isBeforeToday, todayIso } from '@/rules'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
+import AttachmentField from '@/components/common/AttachmentField.vue'
 import DateField from '@/components/common/DateField.vue'
 
 const router = useRouter()
@@ -112,7 +118,7 @@ const alert = computed(() =>
 )
 
 function goToContracts() {
-  router.push({ name: ROUTE.CONTRACT_LIST })
+  void router.push({ name: ROUTE.CONTRACT_LIST })
 }
 
 function validateRequiredSelects(): Record<string, string> {
@@ -168,16 +174,45 @@ function validate(): boolean {
   const detailError = firstError(form.value.contractDetail, contractDetailRules)
   if (detailError) errors.contractDetail = detailError
 
+  for (const type of CONTRACT_ATTACHMENT_TYPES) {
+    if (pendingByType.value[type].length === 0) {
+      errors[type] = contractMessages.rules.attachmentRequired
+    }
+  }
+
   fieldErrors.value = errors
   return Object.keys(errors).length === 0
 }
 
+const pendingByType = ref<Record<ContractAttachmentType, File[]>>(
+  Object.fromEntries(CONTRACT_ATTACHMENT_TYPES.map((t) => [t, [] as File[]])) as Record<ContractAttachmentType, File[]>,
+)
+
+for (const type of CONTRACT_ATTACHMENT_TYPES) {
+  watch(
+    () => pendingByType.value[type],
+    (files) => {
+      if (files.length > 0) delete fieldErrors.value[type]
+    },
+  )
+}
+
+async function uploadPendingAttachments(contractId: number) {
+  const uploads = CONTRACT_ATTACHMENT_TYPES.flatMap((type) =>
+    pendingByType.value[type].map((file) => uploadContractAttachmentAction(contractId, type, file)),
+  )
+  await Promise.all(uploads)
+}
+
 const saveMutation = useMutation({
-  mutationFn: createContractRequestAction,
+  mutationFn: async (formValue: ContractForm) => {
+    const result = await createContractRequestAction(formValue)
+    await uploadPendingAttachments(result.id)
+  },
   onSuccess: () => {
     toastSaved(null, messages.contract)
     goToContracts()
-    return queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
       refetchType: 'none',
     })
@@ -482,6 +517,27 @@ function submit() {
       />
     </v-col>
   </v-row>
+
+  <v-expansion-panels :model-value="[0]" class="mt-6">
+    <v-expansion-panel>
+      <v-expansion-panel-title>
+        <span class="text-subtitle-1 font-weight-bold text-primary">Documentos adjuntos</span>
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
+        <div class="d-flex flex-column ga-4 pt-2">
+          <AttachmentField
+            v-for="type in CONTRACT_ATTACHMENT_TYPES"
+            :key="type"
+            v-model="pendingByType[type]"
+            :label="CONTRACT_ATTACHMENT_TYPE_LABELS[type]"
+            :rule="CONTRACT_ATTACHMENT_RULE"
+            :saved="[]"
+            :external-error="fieldErrors[type]"
+          />
+        </div>
+      </v-expansion-panel-text>
+    </v-expansion-panel>
+  </v-expansion-panels>
 
   <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 

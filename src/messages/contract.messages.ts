@@ -36,5 +36,6 @@ export default {
     weeklyWorkHoursRequired: 'Selecciona las horas semanales.',
     workDaysRequired: 'Selecciona los días de trabajo.',
     contractDetailMaxLength: 'Máximo 500 caracteres.',
+    attachmentRequired: 'Este documento es obligatorio.',
   },
 }
