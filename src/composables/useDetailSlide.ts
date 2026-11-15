@@ -26,13 +26,13 @@ export function useDetailSlide<T>(resource: string, fetchDetail: (id: number) =>
   })
 
   function open(id: number) {
-    router.push({ query: { ...route.query, detail: String(id) } })
+    void router.push({ query: { ...route.query, detail: String(id) } })
   }
 
   function close() {
     const rest = { ...route.query }
     delete rest.detail
-    router.push({ query: rest })
+    void router.push({ query: rest })
   }
 
   // Último id abierto: la query lo conserva al cerrar el slide para que no quede en blanco mientras se anima.

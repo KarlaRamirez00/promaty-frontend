@@ -80,7 +80,7 @@ watch(
 )
 
 function goToList() {
-  router.push({ name: ROUTE.REJECTION_REASON_LIST })
+  void router.push({ name: ROUTE.REJECTION_REASON_LIST })
 }
 
 async function saveReason(value: RequestRejectionReasonForm): Promise<void> {
@@ -96,7 +96,7 @@ const saveMutation = useMutation({
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.requestRejectionReason)
     goToList()
-    return queryClient.invalidateQueries({ queryKey: ['requestRejectionReasons'], refetchType: 'none' })
+    void queryClient.invalidateQueries({ queryKey: ['requestRejectionReasons'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.requestRejectionReason)

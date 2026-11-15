@@ -63,7 +63,7 @@ watch(
 )
 
 function goToList() {
-  router.push({ name: ROUTE.PROJECT_TYPE_LIST })
+  void router.push({ name: ROUTE.PROJECT_TYPE_LIST })
 }
 
 async function saveProjectType(value: ProjectTypeForm): Promise<void> {
@@ -79,7 +79,7 @@ const saveMutation = useMutation({
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.projectType)
     goToList()
-    return queryClient.invalidateQueries({ queryKey: ['projectTypes'], refetchType: 'none' })
+    void queryClient.invalidateQueries({ queryKey: ['projectTypes'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.projectType)

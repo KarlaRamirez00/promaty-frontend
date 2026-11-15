@@ -41,7 +41,7 @@ export function useRequestDecision(rejectionSubModule: string = CONTRACT_REJECTI
     onSuccess: (_data, { type }) => {
       dialogRef.value?.close()
       toastDecided(type, messages.request)
-      return queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
       })
     },

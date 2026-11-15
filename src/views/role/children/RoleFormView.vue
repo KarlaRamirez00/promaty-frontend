@@ -110,7 +110,7 @@ watch(
 )
 
 function goToList() {
-  router.push({ name: ROUTE.ROLE_LIST })
+  void router.push({ name: ROUTE.ROLE_LIST })
 }
 
 function validate(): boolean {
@@ -135,7 +135,7 @@ const saveMutation = useMutation({
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.role)
     goToList()
-    return queryClient.invalidateQueries({ queryKey: ['roles'], refetchType: 'none' })
+    void queryClient.invalidateQueries({ queryKey: ['roles'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.role)

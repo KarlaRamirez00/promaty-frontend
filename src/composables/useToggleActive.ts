@@ -31,7 +31,7 @@ export function useToggleActive<TRecord extends ToggleRecord>(options: ToggleAct
       options.closeDetail()
       dialogRef.value?.close()
       toastToggled(target.active, options.messages)
-      return queryClient.invalidateQueries({ queryKey: [options.resource] })
+      void queryClient.invalidateQueries({ queryKey: [options.resource] })
     },
     onError: () => {
       toastFailed(options.messages)

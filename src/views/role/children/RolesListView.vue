@@ -120,7 +120,7 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<RoleQue
 const headers = [
   { title: 'Nombre', key: 'name', sortable: true },
   { title: 'Usuarios', key: 'totalUsers', sortable: true },
-  { title: 'Estado', key: 'active', sortable: false },
+  { title: 'Estado', key: 'active', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -129,11 +129,11 @@ function viewDetail(item: { id: number }) {
 }
 
 function openCreateForm() {
-  router.push({ name: ROUTE.ROLE_NEW })
+  void router.push({ name: ROUTE.ROLE_NEW })
 }
 
 function openEditForm(item: { id: number }) {
-  router.push({ name: ROUTE.ROLE_EDIT, params: { id: String(item.id) } })
+  void router.push({ name: ROUTE.ROLE_EDIT, params: { id: String(item.id) } })
 }
 
 // Desactivar un rol con usuarios asignados exige un rol de reemplazo (backend lo valida server-side,

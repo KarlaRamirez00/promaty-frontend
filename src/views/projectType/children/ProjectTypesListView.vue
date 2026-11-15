@@ -101,11 +101,11 @@ function viewDetail(item: { id: number }) {
 }
 
 function openCreateForm() {
-  router.push({ name: ROUTE.PROJECT_TYPE_NEW })
+  void router.push({ name: ROUTE.PROJECT_TYPE_NEW })
 }
 
 function openEditForm(item: { id: number }) {
-  router.push({ name: ROUTE.PROJECT_TYPE_EDIT, params: { id: String(item.id) } })
+  void router.push({ name: ROUTE.PROJECT_TYPE_EDIT, params: { id: String(item.id) } })
 }
 
 const {

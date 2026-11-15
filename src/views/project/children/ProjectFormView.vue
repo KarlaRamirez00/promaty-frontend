@@ -131,7 +131,7 @@ watch(
 )
 
 function goToList() {
-  router.push({ name: ROUTE.PROJECT_LIST })
+  void router.push({ name: ROUTE.PROJECT_LIST })
 }
 
 function validate(): boolean {
@@ -169,7 +169,7 @@ const saveMutation = useMutation({
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.project)
     goToList()
-    return queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' })
+    void queryClient.invalidateQueries({ queryKey: ['projects'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.project)

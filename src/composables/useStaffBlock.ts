@@ -44,7 +44,7 @@ export function useStaffBlock() {
     onSuccess: (_data, { type }) => {
       dialogRef.value?.close()
       toastBlocked(type, messages.staff)
-      return queryClient.invalidateQueries({ queryKey: ['staff'] })
+      void queryClient.invalidateQueries({ queryKey: ['staff'] })
     },
     onError: (error: unknown) => {
       if (!setFromError(error)) toastFailed(messages.staff)

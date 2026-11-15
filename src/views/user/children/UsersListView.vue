@@ -116,8 +116,8 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<UserQue
 const headers = [
   { title: 'Nombre', key: 'firstName', sortable: true },
   { title: 'Correo', key: 'email', sortable: true },
-  { title: 'Rol', key: 'role', sortable: false },
-  { title: 'Estado', key: 'active', sortable: false },
+  { title: 'Rol', key: 'role', sortable: true },
+  { title: 'Estado', key: 'active', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
@@ -137,11 +137,11 @@ function viewDetail(item: { id: number }) {
 }
 
 function openCreateForm() {
-  router.push({ name: ROUTE.USER_NEW })
+  void router.push({ name: ROUTE.USER_NEW })
 }
 
 function openEditForm(item: { id: number }) {
-  router.push({ name: ROUTE.USER_EDIT, params: { id: String(item.id) } })
+  void router.push({ name: ROUTE.USER_EDIT, params: { id: String(item.id) } })
 }
 
 const {

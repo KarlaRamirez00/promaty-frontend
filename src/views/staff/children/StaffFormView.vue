@@ -254,7 +254,7 @@ watch(
 )
 
 function goToList() {
-  router.push({ name: ROUTE.STAFF_LIST })
+  void router.push({ name: ROUTE.STAFF_LIST })
 }
 
 function validateIdentificationNumber(): string | null {
@@ -395,7 +395,7 @@ const saveMutation = useMutation({
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.staff)
     goToList()
-    return queryClient.invalidateQueries({ queryKey: ['staff'], refetchType: 'none' })
+    void queryClient.invalidateQueries({ queryKey: ['staff'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.staff)

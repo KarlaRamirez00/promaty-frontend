@@ -69,7 +69,7 @@ watch(
 )
 
 function goToList() {
-  router.push({ name: ROUTE.NON_REHIRE_REASON_LIST })
+  void router.push({ name: ROUTE.NON_REHIRE_REASON_LIST })
 }
 
 async function saveReason(value: NonRehireReasonForm): Promise<void> {
@@ -85,7 +85,7 @@ const saveMutation = useMutation({
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.nonRehireReason)
     goToList()
-    return queryClient.invalidateQueries({ queryKey: ['nonRehireReasons'], refetchType: 'none' })
+    void queryClient.invalidateQueries({ queryKey: ['nonRehireReasons'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.nonRehireReason)

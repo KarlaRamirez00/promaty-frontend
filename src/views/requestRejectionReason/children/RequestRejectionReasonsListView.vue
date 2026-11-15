@@ -118,11 +118,11 @@ function viewDetail(item: { id: number }) {
 }
 
 function openCreateForm() {
-  router.push({ name: ROUTE.REJECTION_REASON_NEW })
+  void router.push({ name: ROUTE.REJECTION_REASON_NEW })
 }
 
 function openEditForm(item: { id: number }) {
-  router.push({ name: ROUTE.REJECTION_REASON_EDIT, params: { id: String(item.id) } })
+  void router.push({ name: ROUTE.REJECTION_REASON_EDIT, params: { id: String(item.id) } })
 }
 
 const {

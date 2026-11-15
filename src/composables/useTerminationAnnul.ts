@@ -26,7 +26,7 @@ export function useTerminationAnnul() {
     onSuccess: () => {
       dialogRef.value?.close()
       toastAnnulled(messages.termination)
-      return queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
       })
     },

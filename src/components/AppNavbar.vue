@@ -60,7 +60,7 @@ function toggleTheme() {
 function logout() {
   auth.logout()
   queryClient.clear()
-  router.push({ name: ROUTE.LOGIN })
+  void router.push({ name: ROUTE.LOGIN })
 }
 </script>
 

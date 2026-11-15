@@ -151,10 +151,10 @@ const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<Project
 
 const headers = [
   { title: 'Nombre', key: 'name', sortable: true },
-  { title: 'Centro de costo', key: 'costCenterCode', sortable: false },
-  { title: 'Tipo', key: 'typeName', sortable: false },
-  { title: 'Mandante', key: 'clientName', sortable: false },
-  { title: 'Estado', key: 'statusName', sortable: false },
+  { title: 'Centro de costo', key: 'costCenterCode', sortable: true },
+  { title: 'Tipo', key: 'typeName', sortable: true },
+  { title: 'Mandante', key: 'clientName', sortable: true },
+  { title: 'Estado', key: 'statusName', sortable: true },
   { title: 'Inicio', key: 'startDate', sortable: true },
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
@@ -185,7 +185,7 @@ const updateStatusMutation = useMutation({
   },
   onSuccess: () => {
     snackbar.success(messages.project.toastStatusUpdated)
-    return queryClient.invalidateQueries({ queryKey: ['projects'] })
+    void queryClient.invalidateQueries({ queryKey: ['projects'] })
   },
   onError: () => {
     toastFailed(messages.project)
@@ -197,11 +197,11 @@ function viewDetail(item: { id: number }) {
 }
 
 function openCreateForm() {
-  router.push({ name: ROUTE.PROJECT_NEW })
+  void router.push({ name: ROUTE.PROJECT_NEW })
 }
 
 function openEditForm(item: { id: number }) {
-  router.push({ name: ROUTE.PROJECT_EDIT, params: { id: String(item.id) } })
+  void router.push({ name: ROUTE.PROJECT_EDIT, params: { id: String(item.id) } })
 }
 </script>
 

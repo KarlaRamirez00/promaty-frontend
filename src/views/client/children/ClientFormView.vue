@@ -63,7 +63,7 @@ watch(
 )
 
 function goToList() {
-  router.push({ name: ROUTE.CLIENT_LIST })
+  void router.push({ name: ROUTE.CLIENT_LIST })
 }
 
 async function saveClient(value: ClientForm): Promise<void> {
@@ -79,7 +79,7 @@ const saveMutation = useMutation({
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.client)
     goToList()
-    return queryClient.invalidateQueries({ queryKey: ['clients'], refetchType: 'none' })
+    void queryClient.invalidateQueries({ queryKey: ['clients'], refetchType: 'none' })
   },
   onError: (error: unknown) => {
     if (!setFromError(error)) toastFailed(messages.client)
