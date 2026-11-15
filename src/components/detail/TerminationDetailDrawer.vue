@@ -1,11 +1,25 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { RequestApproval, Termination } from '@/models'
+import { computed, ref } from 'vue'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import {
+  deleteTerminationAttachmentAction,
+  downloadAttachmentAction,
+  uploadTerminationAttachmentAction,
+} from '@/actions'
+import {
+  TERMINATION_ATTACHMENT_RULE,
+  type FileAttachment,
+  type RequestApproval,
+  type Termination,
+} from '@/models'
+import { useMessage } from '@/composables/useMessage'
+import messages from '@/messages'
 import type { DetailSection } from '@/types/detail'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailTabs from '@/components/common/DetailTabs.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApprovalHistory from '@/components/common/ApprovalHistory.vue'
+import AttachmentField from '@/components/common/AttachmentField.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -28,10 +42,56 @@ const emit = defineEmits<{
   annul: [termination: Termination]
 }>()
 
+const queryClient = useQueryClient()
+const { toastSaved, toastFailed } = useMessage()
+
+const canEditAttachments = computed(
+  () => props.termination?.actions.includes('termination.update') ?? false,
+)
+
+const showAttachmentSlot = computed(
+  () => props.termination?.requiredAttachmentLabel !== null && props.termination !== null,
+)
+
+const pendingFile = ref<File[]>([])
+
+function refreshDetail() {
+  if (props.termination) {
+    void queryClient.invalidateQueries({ queryKey: ['terminations', 'detail', props.termination.id] })
+  }
+}
+
+const uploadMutation = useMutation({
+  mutationFn: (file: File) => uploadTerminationAttachmentAction(props.termination!.id, file),
+  onSuccess: () => {
+    toastSaved(null, messages.termination)
+    refreshDetail()
+  },
+  onError: () => toastFailed(messages.termination),
+})
+
+const deleteMutation = useMutation({
+  mutationFn: (attachmentId: number) =>
+    deleteTerminationAttachmentAction(props.termination!.id, attachmentId),
+  onSuccess: refreshDetail,
+  onError: () => toastFailed(messages.termination),
+})
+
+function onPendingChange(files: File[]) {
+  if (files.length === 0) return
+  pendingFile.value = []
+  uploadMutation.mutate(files[0])
+}
+
+function deleteAttachment(attachment: FileAttachment) {
+  deleteMutation.mutate(attachment.id)
+}
+
 const sections = computed<DetailSection[]>(() => {
   const t = props.termination
   if (!t) return []
-  return [
+
+  const baseSections: DetailSection[] = [
     {
       key: 'termination',
       tab: 'Finiquito',
@@ -69,6 +129,17 @@ const sections = computed<DetailSection[]>(() => {
       ],
     },
   ]
+
+  if (showAttachmentSlot.value) {
+    baseSections.unshift({
+      key: 'documents',
+      tab: 'Documentos',
+      title: 'Documento adjunto',
+      fields: [],
+    })
+  }
+
+  return baseSections
 })
 </script>
 
@@ -84,6 +155,7 @@ const sections = computed<DetailSection[]>(() => {
       <ActionsMenu
         :record="termination"
         :show-view="false"
+        :disable-approve="termination.missingRequiredAttachment"
         @edit="emit('edit', termination)"
         @approve="emit('approve', termination)"
         @validate="emit('validate', termination)"
@@ -97,6 +169,28 @@ const sections = computed<DetailSection[]>(() => {
     </div>
 
     <DetailTabs v-else-if="termination" :sections="sections">
+      <template v-if="showAttachmentSlot" #documents>
+        <v-alert
+          v-if="termination.missingRequiredAttachment"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+        >
+          Falta adjuntar el documento requerido para aprobar este finiquito.
+        </v-alert>
+        <AttachmentField
+          :label="termination.requiredAttachmentLabel ?? undefined"
+          :rule="TERMINATION_ATTACHMENT_RULE"
+          :saved="termination.attachments"
+          :model-value="pendingFile"
+          :readonly="!canEditAttachments"
+          @update:model-value="onPendingChange"
+          @remove-saved="deleteAttachment"
+          @download="downloadAttachmentAction"
+        />
+      </template>
+
       <template #traceability>
         <ApprovalHistory :approvals="approvals" />
       </template>

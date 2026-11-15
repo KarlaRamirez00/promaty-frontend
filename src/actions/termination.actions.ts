@@ -1,6 +1,7 @@
 import {
   annulTerminationApi,
   createTerminationRequestApi,
+  deleteTerminationAttachmentApi,
   getTerminationApi,
   listLegalTerminationCauseOptionsApi,
   listNonRehireReasonOptionsApi,
@@ -8,8 +9,10 @@ import {
   listTerminationsApi,
   listTerminationStatusOptionsApi,
   updateTerminationApi,
+  uploadTerminationAttachmentApi,
 } from '@/services'
 import {
+  mapperLegalTerminationCauseOptions,
   mapperTerminationAnnulPayload,
   mapperTerminationCatalogOptions,
   mapperTerminationDetail,
@@ -39,15 +42,28 @@ export async function getTerminableStaffOptionsAction() {
 }
 
 export async function getLegalTerminationCauseOptionsAction() {
-  return mapperTerminationCatalogOptions(await listLegalTerminationCauseOptionsApi())
+  return mapperLegalTerminationCauseOptions(await listLegalTerminationCauseOptionsApi())
 }
 
 export async function getNonRehireReasonOptionsAction() {
   return mapperTerminationCatalogOptions(await listNonRehireReasonOptionsApi())
 }
 
-export function createTerminationRequestAction(form: TerminationForm) {
-  return useMutateForm(createTerminationRequestApi, form, mapperTerminationFormToCreatePayload)
+export async function createTerminationRequestAction(form: TerminationForm): Promise<number> {
+  const payload = mapperTerminationFormToCreatePayload(form)
+  const result = await createTerminationRequestApi(payload)
+  return result.id
+}
+
+export async function uploadTerminationAttachmentAction(id: number, file: File): Promise<void> {
+  return uploadTerminationAttachmentApi(id, file)
+}
+
+export async function deleteTerminationAttachmentAction(
+  id: number,
+  attachmentId: number,
+): Promise<void> {
+  return deleteTerminationAttachmentApi(id, attachmentId)
 }
 
 export function updateTerminationAction(form: TerminationForm) {

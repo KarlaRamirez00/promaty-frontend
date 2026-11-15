@@ -10,6 +10,7 @@ import {
   getTerminableStaffOptionsAction,
   getTerminationEditDataAction,
   updateTerminationAction,
+  uploadTerminationAttachmentAction,
 } from '@/actions'
 import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
@@ -18,7 +19,9 @@ import terminationMessages from '@/messages/termination.messages'
 import { ROUTE } from '@/router/route-names'
 import {
   createTerminationForm,
+  TERMINATION_ATTACHMENT_RULE,
   WORKFLOW_QUERY_KEYS,
+  type TerminationCauseOption,
   type TerminationForm,
   type TerminationOption,
 } from '@/models'
@@ -28,6 +31,7 @@ import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 import DateField from '@/components/common/DateField.vue'
 import BooleanField from '@/components/common/BooleanField.vue'
+import AttachmentField from '@/components/common/AttachmentField.vue'
 
 const props = defineProps<{
   id?: string
@@ -77,7 +81,20 @@ function withCurrent(options: TerminationOption[] | undefined, current: Terminat
   return items
 }
 
-const causeItems = computed(() => withCurrent(causeOptions.value, editData.value?.currentCause))
+function withCurrentCause(
+  options: TerminationCauseOption[] | undefined,
+  current: TerminationCauseOption | null | undefined,
+) {
+  const items: (TerminationCauseOption & { props?: { disabled: boolean } })[] = [...(options ?? [])]
+  if (current && !items.some((item) => item.id === current.id)) {
+    items.push({ ...current, props: { disabled: true } })
+  }
+  return items
+}
+
+const causeItems = computed(() =>
+  withCurrentCause(causeOptions.value, editData.value?.currentCause),
+)
 const nonRehireReasonItems = computed(() =>
   withCurrent(nonRehireReasonOptions.value, editData.value?.currentNonRehireReason),
 )
@@ -85,6 +102,7 @@ const nonRehireReasonItems = computed(() =>
 const form = ref<TerminationForm>(createTerminationForm())
 const fieldErrors = ref<Record<string, string>>({})
 const hasSubmitted = ref(false)
+const pendingFile = ref<File[]>([])
 
 watch(
   editData,
@@ -114,6 +132,17 @@ watch(
   },
 )
 
+const selectedCause = computed<TerminationCauseOption | undefined>(() =>
+  causeItems.value.find((c) => c.id === form.value.legalTerminationCauseId),
+)
+
+const showAttachment = computed(() => selectedCause.value?.requiresAttachment ?? false)
+const attachmentLabel = computed(() => selectedCause.value?.attachmentLabel ?? 'Documento adjunto')
+
+watch(showAttachment, (show) => {
+  if (!show) pendingFile.value = []
+})
+
 function hasError(field: string): boolean {
   return !!fieldErrors.value[field] || hasBackendError(field)
 }
@@ -125,7 +154,7 @@ const alert = computed(() => {
 })
 
 function goToTerminations() {
-  router.push({ name: ROUTE.TERMINATION_LIST })
+  void router.push({ name: ROUTE.TERMINATION_LIST })
 }
 
 function validate(): boolean {
@@ -147,10 +176,16 @@ function validate(): boolean {
 }
 
 async function saveTermination(value: TerminationForm): Promise<void> {
+  let terminationId: number | undefined
   if (value.id) {
     await updateTerminationAction(value)
+    terminationId = value.id
   } else {
-    await createTerminationRequestAction(value)
+    terminationId = await createTerminationRequestAction(value)
+  }
+  const file = pendingFile.value[0]
+  if (file && terminationId) {
+    await uploadTerminationAttachmentAction(terminationId, file)
   }
 }
 
@@ -159,7 +194,7 @@ const saveMutation = useMutation({
   onSuccess: (_data, value) => {
     toastSaved(value.id, messages.termination)
     goToTerminations()
-    return queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
       refetchType: 'none',
     })
@@ -299,6 +334,26 @@ function submit() {
       <FieldErrorComponent :message="fieldErrors.notes" />
     </v-col>
   </v-row>
+
+  <v-expansion-panels v-if="showAttachment" :model-value="isEditing ? [] : [0]" class="mt-6">
+    <v-expansion-panel>
+      <v-expansion-panel-title>
+        <span class="text-subtitle-1 font-weight-bold text-primary">Documento adjunto</span>
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
+        <div class="pt-2">
+          <AttachmentField
+            :label="attachmentLabel"
+            :rule="TERMINATION_ATTACHMENT_RULE"
+            :saved="[]"
+            :model-value="pendingFile"
+            @update:model-value="(files) => (pendingFile = files)"
+            @download="() => {}"
+          />
+        </div>
+      </v-expansion-panel-text>
+    </v-expansion-panel>
+  </v-expansion-panels>
 
   <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 

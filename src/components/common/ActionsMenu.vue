@@ -21,11 +21,14 @@ const props = withDefaults(
     // El estado del registro (no solo el permiso) decide si se puede bloquear.
     blockable?: boolean
     unblockable?: boolean
+    // Deshabilita Aprobar aunque esté en actions[] (ej. adjunto obligatorio faltante).
+    disableApprove?: boolean
   }>(),
   {
     showView: true,
     blockable: false,
     unblockable: false,
+    disableApprove: false,
   },
 )
 
@@ -98,6 +101,7 @@ const hasAnyAction = computed(
         :prepend-icon="mdiCheck"
         base-color="success"
         title="Aprobar"
+        :disabled="disableApprove"
         data-testid="action-approve"
         @click="emit('approve')"
       />

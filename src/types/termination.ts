@@ -30,6 +30,20 @@ export interface TerminationStaffOptionRaw {
 export interface TerminationCatalogOptionRaw {
   id: number
   name: string
+  requiresAttachment?: boolean
+  attachmentLabel?: string
+}
+
+export interface TerminationAttachmentRaw {
+  id: number
+  fileName: string
+  fileSize: number
+  mediaFileId: string
+  uploadedAt: string
+}
+
+export interface TerminationRequestResponse {
+  id: number
 }
 
 export interface TerminationUpdatePayload {
@@ -76,6 +90,9 @@ export interface TerminationRaw {
   status: TerminationStatusRaw
   rexTerminationNumber: string | null
   annulmentReason: string | null
+  attachments: TerminationAttachmentRaw[]
+  requiredAttachmentLabel: string | null
+  missingRequiredAttachment: boolean
   createdAt: string
   updatedAt: string
   createdBy: string

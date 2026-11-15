@@ -1,5 +1,6 @@
 import type {
   TerminationAnnulPayload,
+  TerminationAttachmentRaw,
   TerminationCatalogOptionRaw,
   TerminationListRaw,
   TerminationRaw,
@@ -10,6 +11,8 @@ import type {
 import type {
   Termination,
   TerminationAnnulForm,
+  TerminationAttachment,
+  TerminationCauseOption,
   TerminationEditData,
   TerminationForm,
   TerminationListItem,
@@ -17,7 +20,7 @@ import type {
   TerminationStaffOption,
 } from '@/models'
 import { createTerminationForm, terminationStatusColor } from '@/models'
-import { formatDate, formatDateTime, NO_DATA } from '@/utils'
+import { formatDate, formatDateTime, formatFileSize, NO_DATA } from '@/utils'
 import { toDisplayIdentification } from './contract.mapper'
 
 function toYesNo(value: boolean): string {
@@ -57,6 +60,28 @@ export function mapperTerminationCatalogOptions(
   return items.map((item) => ({ id: item.id, name: item.name }))
 }
 
+export function mapperLegalTerminationCauseOptions(
+  items: TerminationCatalogOptionRaw[],
+): TerminationCauseOption[] {
+  return items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    requiresAttachment: item.requiresAttachment ?? false,
+    attachmentLabel: item.attachmentLabel ?? '',
+  }))
+}
+
+function mapTerminationAttachment(raw: TerminationAttachmentRaw): TerminationAttachment {
+  return {
+    id: raw.id,
+    name: raw.fileName,
+    fileType: raw.fileName.split('.').pop()?.toLowerCase() ?? '',
+    fileSizeLabel: formatFileSize(raw.fileSize),
+    mediaFileId: raw.mediaFileId,
+    updatedAt: formatDateTime(raw.uploadedAt),
+  }
+}
+
 function toUpdatePayload(form: TerminationForm): TerminationUpdatePayload {
   const notes = form.notes.trim()
   return {
@@ -92,7 +117,11 @@ export function mapperTerminationEditData(raw: TerminationRaw): TerminationEditD
       nonRehireReasonId: raw.nonRehireReason?.id ?? null,
       notes: raw.notes ?? '',
     }),
-    currentCause: raw.legalTerminationCause,
+    currentCause: {
+      ...raw.legalTerminationCause,
+      requiresAttachment: false,
+      attachmentLabel: '',
+    },
     currentNonRehireReason: raw.nonRehireReason,
   }
 }
@@ -118,6 +147,9 @@ export function mapperTerminationDetail(raw: TerminationRaw): Termination {
     notes: raw.notes || NO_DATA,
     rexTerminationNumber: raw.rexTerminationNumber,
     annulmentReason: raw.annulmentReason,
+    attachments: (raw.attachments ?? []).map(mapTerminationAttachment),
+    requiredAttachmentLabel: raw.requiredAttachmentLabel ?? null,
+    missingRequiredAttachment: raw.missingRequiredAttachment ?? false,
     status: raw.status,
     statusColor: terminationStatusColor(raw.status.code),
     createdAt: formatDateTime(raw.createdAt),

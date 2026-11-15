@@ -18,9 +18,11 @@ import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 
 const props = defineProps<{
   rule: AttachmentRule
+  label?: string
   // Adjuntos ya guardados en backend.
   saved: FileAttachment[]
   readonly?: boolean
+  externalError?: string
 }>()
 
 // Archivos elegidos que se suben al guardar el formulario, con el nombre que el usuario les dejó.
@@ -157,7 +159,7 @@ function commitEdit() {
 
 <template>
   <div class="attachment-field">
-    <div :id="`${inputId}-label`" class="text-body-2 mb-2">Archivo adjunto</div>
+    <div :id="`${inputId}-label`" class="text-body-2 mb-2">{{ label ?? 'Archivo adjunto' }}</div>
 
     <template v-if="!readonly">
       <input
@@ -176,6 +178,7 @@ function commitEdit() {
         :class="{
           'attachment-field__dropzone--active': dragging,
           'attachment-field__dropzone--disabled': isFull,
+          'attachment-field__dropzone--error': !!externalError,
         }"
         :aria-disabled="isFull"
         @click="openPicker"
@@ -193,7 +196,7 @@ function commitEdit() {
       </button>
     </template>
 
-    <FieldErrorComponent :message="error" />
+    <FieldErrorComponent :message="error || externalError" />
 
     <div v-if="total > 0" class="d-flex flex-column ga-2 mt-3">
       <v-sheet v-for="item in saved" :key="`saved-${item.id}`" class="attachment-field__item">
@@ -298,6 +301,10 @@ function commitEdit() {
   cursor: not-allowed;
   border-color: rgba(var(--v-theme-on-surface), 0.38);
   background-color: transparent;
+}
+
+.attachment-field__dropzone--error {
+  border-color: rgb(var(--v-theme-error));
 }
 
 .attachment-field__item {
