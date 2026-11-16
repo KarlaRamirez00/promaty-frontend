@@ -1,12 +1,19 @@
 import { rrhhApi, userApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
 import type {
+  CreatedRequestRaw,
   RequestCountersRaw,
   RequestDecidePayload,
   RequestDetailRaw,
   RequestRaw,
 } from '@/types/request'
-import type { RequestQueryParams, RequestRelationOption, RequestStatusOption } from '@/models'
+import type {
+  AttachmentSubmitItem,
+  RequestQueryParams,
+  RequestRelationOption,
+  RequestStatusOption,
+} from '@/models'
+import { buildMultipartBody } from '@/utils/attachments'
 import { toSortParam } from '@/utils/sort'
 
 const REQUEST_SORT_FIELDS: Record<string, string> = {
@@ -35,6 +42,17 @@ export async function listRequestsApi(
 
 export async function getRequestApi(id: number): Promise<RequestDetailRaw> {
   const response = await rrhhApi.get<ApiResponse<RequestDetailRaw>>(`/requests/${id}`)
+  return unwrap(response)
+}
+
+export async function createRequestApi(
+  payload: object,
+  attachments: AttachmentSubmitItem[],
+): Promise<CreatedRequestRaw> {
+  const response = await rrhhApi.post<ApiResponse<CreatedRequestRaw>>(
+    '/requests',
+    buildMultipartBody(payload, attachments),
+  )
   return unwrap(response)
 }
 

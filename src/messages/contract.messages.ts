@@ -15,6 +15,10 @@ export default {
     title: 'Nuevo contrato',
     message: 'Completa la información del contrato. Se enviará como solicitud para su <strong>aprobación</strong>.',
   },
+  alertEdit: {
+    title: 'Editar contrato',
+    message: 'Modifica la información del contrato. El colaborador no se puede cambiar. Al guardar, la solicitud vuelve a la jefatura para su <strong>aprobación</strong>.',
+  },
   alertError: {
     title: 'Nuevo contrato',
     message: 'Debes <strong>llenar la información</strong> del contrato.',

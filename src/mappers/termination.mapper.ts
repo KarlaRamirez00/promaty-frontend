@@ -74,11 +74,11 @@ export function mapperLegalTerminationCauseOptions(
 function mapTerminationAttachment(raw: TerminationAttachmentRaw): TerminationAttachment {
   return {
     id: raw.id,
-    name: raw.fileName,
-    fileType: raw.fileName.split('.').pop()?.toLowerCase() ?? '',
+    name: raw.name,
+    fileType: raw.name.split('.').pop()?.toLowerCase() ?? '',
     fileSizeLabel: formatFileSize(raw.fileSize),
     mediaFileId: raw.mediaFileId,
-    updatedAt: formatDateTime(raw.uploadedAt),
+    updatedAt: formatDateTime(raw.updatedAt),
   }
 }
 
@@ -106,6 +106,7 @@ export function mapperTerminationFormToUpdatePayload(form: TerminationForm): Ter
 }
 
 export function mapperTerminationEditData(raw: TerminationRaw): TerminationEditData {
+  const requirement = raw.attachmentRequirements?.find((item) => item.required)
   return {
     form: createTerminationForm({
       id: raw.id,
@@ -119,9 +120,10 @@ export function mapperTerminationEditData(raw: TerminationRaw): TerminationEditD
     }),
     currentCause: {
       ...raw.legalTerminationCause,
-      requiresAttachment: false,
-      attachmentLabel: '',
+      requiresAttachment: requirement !== undefined,
+      attachmentLabel: requirement?.label ?? '',
     },
+    attachments: (raw.attachments ?? []).map(mapTerminationAttachment),
     currentNonRehireReason: raw.nonRehireReason,
   }
 }
@@ -148,8 +150,7 @@ export function mapperTerminationDetail(raw: TerminationRaw): Termination {
     rexTerminationNumber: raw.rexTerminationNumber,
     annulmentReason: raw.annulmentReason,
     attachments: (raw.attachments ?? []).map(mapTerminationAttachment),
-    requiredAttachmentLabel: raw.requiredAttachmentLabel ?? null,
-    missingRequiredAttachment: raw.missingRequiredAttachment ?? false,
+    attachmentRequirements: raw.attachmentRequirements ?? [],
     status: raw.status,
     statusColor: terminationStatusColor(raw.status.code),
     createdAt: formatDateTime(raw.createdAt),

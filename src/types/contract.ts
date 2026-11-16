@@ -1,3 +1,5 @@
+import type { AttachmentRequirementRaw } from '@/types/attachment'
+
 export interface ContractCatalogOptionRaw {
   id: number
   name: string
@@ -38,6 +40,8 @@ export interface ContractRequestPayload {
   projectId: number
   contractData: ContractRequestData
 }
+
+export type ContractUpdateData = Omit<ContractRequestData, 'staffId'> & { projectId: number }
 
 export interface ContractStatusRaw {
   id: number
@@ -84,10 +88,10 @@ interface ContractNamedRaw {
 export interface ContractAttachmentRaw {
   id: number
   attachmentType: string
-  fileName: string
+  name: string
   fileSize: number
   mediaFileId: string
-  uploadedAt: string
+  updatedAt: string
 }
 
 export interface ContractRaw {
@@ -98,6 +102,7 @@ export interface ContractRaw {
   contractType: ContractNamedRaw
   jobTitle: ContractNamedRaw
   site: ContractNamedRaw
+  project: ContractNamedRaw
   costCenterCode: string
   startDate: string
   endDate: string | null
@@ -111,14 +116,10 @@ export interface ContractRaw {
   status: ContractStatusRaw
   rexContractNumber: string | null
   attachments: ContractAttachmentRaw[]
-  missingAttachmentTypes: string[]
+  attachmentRequirements: AttachmentRequirementRaw[]
   createdAt: string
   updatedAt: string
   createdBy: string
   updatedBy: string
   actions: string[]
-}
-
-export interface ContractRequestResponse {
-  id: number
 }

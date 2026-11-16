@@ -1,7 +1,6 @@
 import {
   annulTerminationApi,
   createTerminationRequestApi,
-  deleteTerminationAttachmentApi,
   getTerminationApi,
   listLegalTerminationCauseOptionsApi,
   listNonRehireReasonOptionsApi,
@@ -9,7 +8,6 @@ import {
   listTerminationsApi,
   listTerminationStatusOptionsApi,
   updateTerminationApi,
-  uploadTerminationAttachmentApi,
 } from '@/services'
 import {
   mapperLegalTerminationCauseOptions,
@@ -23,7 +21,12 @@ import {
   mapperTerminationStaffOptions,
 } from '@/mappers'
 import { useGetDetail, useGetTable, useMutateForm } from '@/utils'
-import type { TerminationAnnulForm, TerminationForm, TerminationQueryParams } from '@/models'
+import type {
+  AttachmentSubmitItem,
+  TerminationAnnulForm,
+  TerminationForm,
+  TerminationQueryParams,
+} from '@/models'
 
 export function getTerminationListAction(params: TerminationQueryParams) {
   return useGetTable(listTerminationsApi, params, mapperTerminationList)
@@ -49,26 +52,23 @@ export async function getNonRehireReasonOptionsAction() {
   return mapperTerminationCatalogOptions(await listNonRehireReasonOptionsApi())
 }
 
-export async function createTerminationRequestAction(form: TerminationForm): Promise<number> {
-  const payload = mapperTerminationFormToCreatePayload(form)
-  const result = await createTerminationRequestApi(payload)
-  return result.id
-}
-
-export async function uploadTerminationAttachmentAction(id: number, file: File): Promise<void> {
-  return uploadTerminationAttachmentApi(id, file)
-}
-
-export async function deleteTerminationAttachmentAction(
-  id: number,
-  attachmentId: number,
-): Promise<void> {
-  return deleteTerminationAttachmentApi(id, attachmentId)
-}
-
-export function updateTerminationAction(form: TerminationForm) {
+export function createTerminationRequestAction(
+  form: TerminationForm,
+  attachments: AttachmentSubmitItem[],
+) {
   return useMutateForm(
-    (payload) => updateTerminationApi(form.id as number, payload),
+    (payload) => createTerminationRequestApi(payload, attachments),
+    form,
+    mapperTerminationFormToCreatePayload,
+  )
+}
+
+export function updateTerminationAction(
+  form: TerminationForm,
+  attachments: AttachmentSubmitItem[] | null,
+) {
+  return useMutateForm(
+    (payload) => updateTerminationApi(form.id as number, payload, attachments),
     form,
     mapperTerminationFormToUpdatePayload,
   )

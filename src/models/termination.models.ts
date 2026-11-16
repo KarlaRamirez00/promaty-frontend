@@ -1,6 +1,8 @@
+import type { AttachmentRequirement } from './attachment.models'
+
 const TERMINATION_STATUS_COLORS: Record<string, string> = {
   PENDING_APPROVAL: 'warning',
-  PENDING_VALIDATION: 'warning',
+  PENDING_VALIDATION: 'info',
   APPROVED: 'success',
   REJECTED: 'primary',
   SYNC_ERROR: 'secondary',
@@ -48,8 +50,7 @@ export interface Termination {
   rexTerminationNumber: string | null
   annulmentReason: string | null
   attachments: TerminationAttachment[]
-  requiredAttachmentLabel: string | null
-  missingRequiredAttachment: boolean
+  attachmentRequirements: AttachmentRequirement[]
   status: TerminationStatusOption
   statusColor: string
   createdAt: string
@@ -113,6 +114,7 @@ export const createTerminationForm = (overrides: Partial<TerminationForm> = {}):
 export interface TerminationEditData {
   form: TerminationForm
   currentCause: TerminationCauseOption
+  attachments: TerminationAttachment[]
   currentNonRehireReason: TerminationOption | null
 }
 

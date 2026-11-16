@@ -35,6 +35,7 @@ export default {
     causeRequired: 'Selecciona una causal.',
     nonRehireReasonRequired: 'Selecciona un motivo de no recontratación.',
     notesMaxLength: 'Máximo 500 caracteres.',
+    attachmentRequired: 'Adjunta el documento requerido.',
     annulReasonRequired: 'Indica el motivo de la anulación.',
     annulReasonMaxLength: 'El motivo no puede superar los 250 caracteres.',
   },

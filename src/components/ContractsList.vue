@@ -199,6 +199,10 @@ function viewDetail(item: { id: number }) {
 }
 
 
+function openEditForm(id: number) {
+  void router.push({ name: ROUTE.CONTRACT_EDIT, params: { id } })
+}
+
 function openRequestForm() {
   void router.push({ name: ROUTE.CONTRACT_NEW })
 }
@@ -287,6 +291,7 @@ function openRequestForm() {
       <ActionsMenu
         :record="item"
         @view="viewDetail(item)"
+        @edit="openEditForm(item.id)"
         @approve="askDecision(item.requestId, 'APPROVE')"
         @validate="askDecision(item.requestId, 'VALIDATE')"
         @reject="askDecision(item.requestId, 'REJECT')"
@@ -315,6 +320,7 @@ function openRequestForm() {
     :contract="selectedContract ?? null"
     :approvals="selectedRequest?.approvals"
     :loading="detailLoading"
+    @edit="openEditForm($event.id)"
     @approve="askDecision($event.requestId, 'APPROVE')"
     @validate="askDecision($event.requestId, 'VALIDATE')"
     @reject="askDecision($event.requestId, 'REJECT')"

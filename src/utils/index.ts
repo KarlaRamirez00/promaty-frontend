@@ -1,3 +1,4 @@
+export * from './attachments'
 export * from './formats'
 export * from './masks'
 export * from './redirect'

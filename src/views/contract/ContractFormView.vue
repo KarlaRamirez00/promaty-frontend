@@ -5,7 +5,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { mdiArrowDownCircleOutline, mdiContentSave } from '@mdi/js'
 import {
   createContractRequestAction,
+  downloadAttachmentAction,
   getCompanyOptionsAction,
+  getContractEditDataAction,
   getContractProjectOptionsAction,
   getContractStaffOptionsAction,
   getContractTypeOptionsAction,
@@ -13,7 +15,7 @@ import {
   getMealTypeOptionsAction,
   getSiteOptionsAction,
   getTransportTypeOptionsAction,
-  uploadContractAttachmentAction,
+  updateContractAction,
 } from '@/actions'
 import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
@@ -30,6 +32,8 @@ import {
   WEEKLY_WORK_HOURS_OPTIONS,
   WORK_DAYS_OPTIONS,
   WORKFLOW_QUERY_KEYS,
+  type AttachmentSubmitItem,
+  type ContractAttachment,
   type ContractAttachmentType,
   type ContractForm,
 } from '@/models'
@@ -39,6 +43,10 @@ import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 import AttachmentField from '@/components/common/AttachmentField.vue'
 import DateField from '@/components/common/DateField.vue'
+
+const props = defineProps<{
+  id?: string
+}>()
 
 const router = useRouter()
 const queryClient = useQueryClient()
@@ -50,13 +58,35 @@ const {
   hasBackendError,
 } = useBackendFieldErrors()
 
-const { data: projectOptions } = useQuery({
+const contractId = computed(() => (props.id ? Number(props.id) : null))
+const isEditing = computed(() => contractId.value !== null)
+
+const { data: editData } = useQuery({
+  queryKey: computed(() => ['contracts', 'editData', contractId.value]),
+  queryFn: () => {
+    const id = contractId.value
+    if (id === null) throw new Error('Falta el id para cargar los datos')
+    return getContractEditDataAction(id)
+  },
+  enabled: isEditing,
+})
+const { data: rawProjectOptions } = useQuery({
   queryKey: ['projects', 'contractOptions'],
   queryFn: getContractProjectOptionsAction,
 })
 const { data: staffOptions } = useQuery({
   queryKey: ['staff', 'contractOptions'],
   queryFn: getContractStaffOptionsAction,
+  enabled: computed(() => !isEditing.value),
+})
+
+const projectOptions = computed(() => {
+  const items: { id: number; name: string; props?: { disabled: boolean } }[] = [...(rawProjectOptions.value ?? [])]
+  const current = editData.value?.currentProject
+  if (current && !items.some((item) => item.id === current.id)) {
+    items.push({ ...current, props: { disabled: true } })
+  }
+  return items
 })
 const { data: companyOptions } = useQuery({
   queryKey: ['companies', 'options'],
@@ -86,6 +116,17 @@ const { data: transportTypeOptions } = useQuery({
 const form = ref<ContractForm>(createContractForm())
 const fieldErrors = ref<Record<string, string>>({})
 const hasSubmitted = ref(false)
+const savedAttachments = ref<ContractAttachment[]>([])
+
+watch(
+  editData,
+  (data) => {
+    if (!data) return
+    form.value = { ...data.form }
+    savedAttachments.value = [...data.attachments]
+  },
+  { immediate: true },
+)
 
 const isFixedTerm = computed(
   () =>
@@ -113,9 +154,8 @@ function hasError(field: string): boolean {
 }
 
 const hasValidationError = computed(() => hasSubmitted.value && Object.keys(fieldErrors.value).length > 0)
-const alert = computed(() =>
-  hasValidationError.value ? contractMessages.alertError : contractMessages.alertInfo,
-)
+const infoAlert = computed(() => (isEditing.value ? contractMessages.alertEdit : contractMessages.alertInfo))
+const alert = computed(() => (hasValidationError.value ? contractMessages.alertError : infoAlert.value))
 
 function goToContracts() {
   void router.push({ name: ROUTE.CONTRACT_LIST })
@@ -125,14 +165,17 @@ function validateRequiredSelects(): Record<string, string> {
   const rules = contractMessages.rules
   const required: [keyof ContractForm, string][] = [
     ['projectId', rules.projectRequired],
-    ['staffId', rules.staffRequired],
     ['companyId', rules.companyRequired],
     ['contractTypeId', rules.contractTypeRequired],
     ['jobTitleId', rules.jobTitleRequired],
     ['siteId', rules.siteRequired],
     ['workDays', rules.workDaysRequired],
   ]
-  return Object.fromEntries(required.filter(([key]) => !form.value[key]).map(([key, message]) => [key, message]))
+  const errors = Object.fromEntries(
+    required.filter(([key]) => !form.value[key]).map(([key, message]) => [key, message]),
+  )
+  if (!isEditing.value && !form.value.staffId) errors.staffId = rules.staffRequired
+  return errors
 }
 
 function validateDates(): Record<string, string> {
@@ -141,7 +184,9 @@ function validateDates(): Record<string, string> {
   const { startDate, endDate } = form.value
 
   if (!startDate) errors.startDate = rules.startDateRequired
-  else if (isBeforeToday(startDate)) errors.startDate = rules.startDatePast
+  else if (startDate !== editData.value?.form.startDate && isBeforeToday(startDate)) {
+    errors.startDate = rules.startDatePast
+  }
 
   if (isFixedTerm.value && !endDate) errors.endDate = rules.endDateRequired
   else if (endDate && startDate && endDate < startDate) errors.endDate = rules.endDateBeforeStart
@@ -175,7 +220,7 @@ function validate(): boolean {
   if (detailError) errors.contractDetail = detailError
 
   for (const type of CONTRACT_ATTACHMENT_TYPES) {
-    if (pendingByType.value[type].length === 0) {
+    if (savedByType(type).length + pendingByType.value[type].length === 0) {
       errors[type] = contractMessages.rules.attachmentRequired
     }
   }
@@ -197,20 +242,35 @@ for (const type of CONTRACT_ATTACHMENT_TYPES) {
   )
 }
 
-async function uploadPendingAttachments(contractId: number) {
-  const uploads = CONTRACT_ATTACHMENT_TYPES.flatMap((type) =>
-    pendingByType.value[type].map((file) => uploadContractAttachmentAction(contractId, type, file)),
-  )
-  await Promise.all(uploads)
+function savedByType(type: ContractAttachmentType): ContractAttachment[] {
+  return savedAttachments.value.filter((a) => a.attachmentType === type)
+}
+
+function removeSavedAttachment(attachment: { id: number }) {
+  savedAttachments.value = savedAttachments.value.filter((a) => a.id !== attachment.id)
+}
+
+function attachmentItems(): AttachmentSubmitItem[] {
+  return [
+    ...savedAttachments.value.map(({ id, name }) => ({ id, name })),
+    ...CONTRACT_ATTACHMENT_TYPES.flatMap((type) =>
+      pendingByType.value[type].map((file) => ({ file, type })),
+    ),
+  ]
+}
+
+async function saveContract(formValue: ContractForm): Promise<void> {
+  if (formValue.id) {
+    await updateContractAction(formValue, attachmentItems())
+  } else {
+    await createContractRequestAction(formValue, attachmentItems())
+  }
 }
 
 const saveMutation = useMutation({
-  mutationFn: async (formValue: ContractForm) => {
-    const result = await createContractRequestAction(formValue)
-    await uploadPendingAttachments(result.id)
-  },
-  onSuccess: () => {
-    toastSaved(null, messages.contract)
+  mutationFn: saveContract,
+  onSuccess: (_data, formValue) => {
+    toastSaved(formValue.id, messages.contract)
     goToContracts()
     void queryClient.invalidateQueries({
       predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
@@ -231,7 +291,7 @@ function submit() {
 </script>
 
 <template>
-  <h1 class="text-h5 font-weight-bold mb-4">Nuevo contrato</h1>
+  <h1 class="text-h5 font-weight-bold mb-4">{{ isEditing ? 'Editar contrato' : 'Nuevo contrato' }}</h1>
 
   <AlertComponent
     :type="hasValidationError ? 'error' : 'info'"
@@ -243,7 +303,20 @@ function submit() {
 
   <v-row>
     <v-col cols="12">
+      <div v-if="isEditing" class="field-locked">
+        <v-text-field
+          v-model="form.staffLabel"
+          v-input-mask="'freeText'"
+          label="Colaborador"
+          variant="outlined"
+          density="comfortable"
+          :loading="!editData"
+          disabled
+          hide-details
+        />
+      </div>
       <v-autocomplete
+        v-else
         v-model="form.staffId"
         data-testid="contract-staff"
         :items="staffOptions ?? []"
@@ -258,7 +331,7 @@ function submit() {
         persistent-placeholder
         autofocus
       />
-      <FieldErrorComponent :message="fieldErrors.staffId" />
+      <FieldErrorComponent v-if="!isEditing" :message="fieldErrors.staffId" />
     </v-col>
   </v-row>
 
@@ -288,7 +361,7 @@ function submit() {
         v-model="form.startDate"
         data-testid="contract-start-date"
         label="Fecha de inicio"
-        :min-date="todayIso()"
+        :min-date="isEditing ? undefined : todayIso()"
         :error="hasError('startDate')"
         hide-details
       />
@@ -332,7 +405,7 @@ function submit() {
       <v-autocomplete
         v-model="form.projectId"
         data-testid="contract-cost-center"
-        :items="projectOptions ?? []"
+        :items="projectOptions"
         item-title="name"
         item-value="id"
         label="Centro de costo"
@@ -531,8 +604,10 @@ function submit() {
             v-model="pendingByType[type]"
             :label="CONTRACT_ATTACHMENT_TYPE_LABELS[type]"
             :rule="CONTRACT_ATTACHMENT_RULE"
-            :saved="[]"
+            :saved="savedByType(type)"
             :external-error="fieldErrors[type]"
+            @remove-saved="removeSavedAttachment"
+            @download="downloadAttachmentAction"
           />
         </div>
       </v-expansion-panel-text>
@@ -551,7 +626,7 @@ function submit() {
       data-testid="contract-submit"
       @click="submit"
     >
-      Enviar
+      {{ isEditing ? 'Guardar' : 'Enviar' }}
     </v-btn>
   </div>
 </template>

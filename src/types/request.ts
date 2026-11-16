@@ -57,3 +57,8 @@ export interface RequestDecidePayload {
   rejectionReasonId?: number
   comment?: string
 }
+
+export interface CreatedRequestRaw {
+  requestId: number
+  entityId: number
+}

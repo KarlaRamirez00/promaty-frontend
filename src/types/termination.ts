@@ -1,3 +1,5 @@
+import type { AttachmentRequirementRaw } from '@/types/attachment'
+
 export interface TerminationStaffRaw {
   id: number
   fullName: string
@@ -36,14 +38,10 @@ export interface TerminationCatalogOptionRaw {
 
 export interface TerminationAttachmentRaw {
   id: number
-  fileName: string
+  name: string
   fileSize: number
   mediaFileId: string
-  uploadedAt: string
-}
-
-export interface TerminationRequestResponse {
-  id: number
+  updatedAt: string
 }
 
 export interface TerminationUpdatePayload {
@@ -91,8 +89,7 @@ export interface TerminationRaw {
   rexTerminationNumber: string | null
   annulmentReason: string | null
   attachments: TerminationAttachmentRaw[]
-  requiredAttachmentLabel: string | null
-  missingRequiredAttachment: boolean
+  attachmentRequirements: AttachmentRequirementRaw[]
   createdAt: string
   updatedAt: string
   createdBy: string

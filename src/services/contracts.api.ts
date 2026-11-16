@@ -7,11 +7,14 @@ import type {
   ContractProjectOptionRaw,
   ContractRaw,
   ContractRequestPayload,
-  ContractRequestResponse,
   ContractStaffOptionRaw,
+  ContractUpdateData,
 } from '@/types/contract'
-import type { ContractQueryParams, ContractStatusOption } from '@/models'
+import type { CreatedRequestRaw } from '@/types/request'
+import type { AttachmentSubmitItem, ContractQueryParams, ContractStatusOption } from '@/models'
+import { buildMultipartBody } from '@/utils/attachments'
 import { toSortParam } from '@/utils/sort'
+import { createRequestApi } from '@/services/requests.api'
 
 const CONTRACT_SORT_FIELDS: Record<string, string> = {
   fullName: 'staffName',
@@ -68,29 +71,17 @@ export async function listContractStaffOptionsApi(): Promise<ContractStaffOption
 
 export async function createContractRequestApi(
   payload: ContractRequestPayload,
-): Promise<ContractRequestResponse> {
-  const response = await rrhhApi.post<ApiResponse<ContractRequestResponse>>('/requests', payload)
-  return unwrap(response)
+  attachments: AttachmentSubmitItem[],
+): Promise<CreatedRequestRaw> {
+  return createRequestApi(payload, attachments)
 }
 
-export async function uploadContractAttachmentApi(
+export async function updateContractApi(
   id: number,
-  type: string,
-  file: File,
+  payload: ContractUpdateData,
+  attachments: AttachmentSubmitItem[],
 ): Promise<void> {
-  const formData = new FormData()
-  formData.append('file', file)
-  await rrhhApi.post(`/contracts/${id}/attachments`, formData, {
-    params: { type },
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-}
-
-export async function deleteContractAttachmentApi(
-  id: number,
-  attachmentId: number,
-): Promise<void> {
-  await rrhhApi.delete(`/contracts/${id}/attachments/${attachmentId}`)
+  await rrhhApi.put(`/contracts/${id}`, buildMultipartBody(payload, attachments))
 }
 
 export async function listContractsApi(

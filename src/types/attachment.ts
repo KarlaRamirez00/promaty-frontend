@@ -11,3 +11,11 @@ export interface FileAttachmentRaw {
   mediaFileId: string
   updatedAt: string
 }
+
+export interface AttachmentRequirementRaw {
+  type: string | null
+  label: string
+  required: boolean
+  maxFiles: number
+  fulfilled: boolean
+}

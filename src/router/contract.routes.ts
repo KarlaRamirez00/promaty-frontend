@@ -28,4 +28,18 @@ export const contractRoutes: RouteRecordRaw[] = [
       ],
     },
   },
+  {
+    path: '/contracts/:id/edit',
+    name: ROUTE.CONTRACT_EDIT,
+    component: () => import('@/views/contract/ContractFormView.vue'),
+    props: true,
+    meta: {
+      module: 'contract',
+      permission: 'update',
+      breadcrumbs: [
+        { title: 'Contratos', to: { name: ROUTE.CONTRACT_LIST } },
+        { title: 'Editar contrato', disabled: true },
+      ],
+    },
+  },
 ]

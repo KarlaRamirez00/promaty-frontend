@@ -5,12 +5,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { mdiArrowDownCircleOutline, mdiContentSave } from '@mdi/js'
 import {
   createTerminationRequestAction,
+  downloadAttachmentAction,
   getLegalTerminationCauseOptionsAction,
   getNonRehireReasonOptionsAction,
   getTerminableStaffOptionsAction,
   getTerminationEditDataAction,
   updateTerminationAction,
-  uploadTerminationAttachmentAction,
 } from '@/actions'
 import { useBackendFieldErrors } from '@/composables/useBackendFieldErrors'
 import { useMessage } from '@/composables/useMessage'
@@ -21,6 +21,8 @@ import {
   createTerminationForm,
   TERMINATION_ATTACHMENT_RULE,
   WORKFLOW_QUERY_KEYS,
+  type AttachmentSubmitItem,
+  type FileAttachment,
   type TerminationCauseOption,
   type TerminationForm,
   type TerminationOption,
@@ -103,11 +105,14 @@ const form = ref<TerminationForm>(createTerminationForm())
 const fieldErrors = ref<Record<string, string>>({})
 const hasSubmitted = ref(false)
 const pendingFile = ref<File[]>([])
+const savedAttachments = ref<FileAttachment[]>([])
 
 watch(
   editData,
   (data) => {
-    if (data) form.value = { ...data.form }
+    if (!data) return
+    form.value = { ...data.form }
+    savedAttachments.value = [...data.attachments]
   },
   { immediate: true },
 )
@@ -136,12 +141,28 @@ const selectedCause = computed<TerminationCauseOption | undefined>(() =>
   causeItems.value.find((c) => c.id === form.value.legalTerminationCauseId),
 )
 
-const showAttachment = computed(() => selectedCause.value?.requiresAttachment ?? false)
-const attachmentLabel = computed(() => selectedCause.value?.attachmentLabel ?? 'Documento adjunto')
+const attachmentRequired = computed(() => selectedCause.value?.requiresAttachment ?? false)
+const attachmentLabel = computed(() =>
+  attachmentRequired.value
+    ? (selectedCause.value?.attachmentLabel ?? 'Documento adjunto')
+    : 'Documento adjunto (opcional)',
+)
 
-watch(showAttachment, (show) => {
-  if (!show) pendingFile.value = []
-})
+function onAttachmentChange(files: File[]) {
+  pendingFile.value = files
+  if (files.length > 0) delete fieldErrors.value.attachment
+}
+
+function removeSavedAttachment(attachment: FileAttachment) {
+  savedAttachments.value = savedAttachments.value.filter((item) => item.id !== attachment.id)
+}
+
+function attachmentItems(): AttachmentSubmitItem[] {
+  return [
+    ...savedAttachments.value.map(({ id, name }) => ({ id, name })),
+    ...pendingFile.value.map((file) => ({ file })),
+  ]
+}
 
 function hasError(field: string): boolean {
   return !!fieldErrors.value[field] || hasBackendError(field)
@@ -170,22 +191,20 @@ function validate(): boolean {
   }
   const notesError = firstError(value.notes, terminationNotesRules)
   if (notesError) errors.notes = notesError
+  if (attachmentRequired.value && savedAttachments.value.length + pendingFile.value.length === 0) {
+    errors.attachment = rules.attachmentRequired
+  }
 
   fieldErrors.value = errors
   return Object.keys(errors).length === 0
 }
 
 async function saveTermination(value: TerminationForm): Promise<void> {
-  let terminationId: number | undefined
+  const attachments = attachmentItems()
   if (value.id) {
-    await updateTerminationAction(value)
-    terminationId = value.id
+    await updateTerminationAction(value, attachments)
   } else {
-    terminationId = await createTerminationRequestAction(value)
-  }
-  const file = pendingFile.value[0]
-  if (file && terminationId) {
-    await uploadTerminationAttachmentAction(terminationId, file)
+    await createTerminationRequestAction(value, attachments)
   }
 }
 
@@ -234,6 +253,7 @@ function submit() {
           label="Colaborador"
           variant="outlined"
           density="comfortable"
+          :loading="!editData"
           disabled
           hide-details
         />
@@ -335,25 +355,18 @@ function submit() {
     </v-col>
   </v-row>
 
-  <v-expansion-panels v-if="showAttachment" :model-value="isEditing ? [] : [0]" class="mt-6">
-    <v-expansion-panel>
-      <v-expansion-panel-title>
-        <span class="text-subtitle-1 font-weight-bold text-primary">Documento adjunto</span>
-      </v-expansion-panel-title>
-      <v-expansion-panel-text>
-        <div class="pt-2">
-          <AttachmentField
-            :label="attachmentLabel"
-            :rule="TERMINATION_ATTACHMENT_RULE"
-            :saved="[]"
-            :model-value="pendingFile"
-            @update:model-value="(files) => (pendingFile = files)"
-            @download="() => {}"
-          />
-        </div>
-      </v-expansion-panel-text>
-    </v-expansion-panel>
-  </v-expansion-panels>
+  <h2 class="text-subtitle-1 font-weight-bold text-primary mt-6 mb-4">Documento adjunto</h2>
+
+  <AttachmentField
+    :label="attachmentLabel"
+    :rule="TERMINATION_ATTACHMENT_RULE"
+    :saved="savedAttachments"
+    :model-value="pendingFile"
+    :external-error="fieldErrors.attachment"
+    @update:model-value="onAttachmentChange"
+    @remove-saved="removeSavedAttachment"
+    @download="downloadAttachmentAction"
+  />
 
   <ErrorComponent :error-fields="backendErrorFields" class="mt-6" />
 

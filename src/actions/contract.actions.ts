@@ -1,6 +1,5 @@
 import {
   createContractRequestApi,
-  deleteContractAttachmentApi,
   getContractApi,
   listCompanyOptionsApi,
   listContractsApi,
@@ -12,17 +11,19 @@ import {
   listMealTypeOptionsApi,
   listSiteOptionsApi,
   listTransportTypeOptionsApi,
-  uploadContractAttachmentApi,
+  updateContractApi,
 } from '@/services'
 import {
   mapperContractCatalogOptions,
   mapperContractDetail,
+  mapperContractEditData,
   mapperContractFormToPayload,
+  mapperContractFormToUpdatePayload,
   mapperContractList,
   mapperContractStaffOptions,
 } from '@/mappers'
 import { useGetDetail, useGetTable, useMutateForm } from '@/utils'
-import type { ContractForm, ContractQueryParams } from '@/models'
+import type { AttachmentSubmitItem, ContractForm, ContractQueryParams } from '@/models'
 
 export function getContractListAction(params: ContractQueryParams) {
   return useGetTable(listContractsApi, params, mapperContractList)
@@ -32,20 +33,28 @@ export function getContractDetailAction(id: number) {
   return useGetDetail(getContractApi, id, mapperContractDetail)
 }
 
+export function getContractEditDataAction(id: number) {
+  return useGetDetail(getContractApi, id, mapperContractEditData)
+}
+
 export function getContractStatusOptionsAction() {
   return listContractStatusOptionsApi()
 }
 
-export function createContractRequestAction(form: ContractForm) {
-  return useMutateForm(createContractRequestApi, form, mapperContractFormToPayload)
+export function createContractRequestAction(form: ContractForm, attachments: AttachmentSubmitItem[]) {
+  return useMutateForm(
+    (payload) => createContractRequestApi(payload, attachments),
+    form,
+    mapperContractFormToPayload,
+  )
 }
 
-export function uploadContractAttachmentAction(id: number, type: string, file: File) {
-  return uploadContractAttachmentApi(id, type, file)
-}
-
-export function deleteContractAttachmentAction(id: number, attachmentId: number) {
-  return deleteContractAttachmentApi(id, attachmentId)
+export function updateContractAction(form: ContractForm, attachments: AttachmentSubmitItem[]) {
+  return useMutateForm(
+    (payload) => updateContractApi(form.id as number, payload, attachments),
+    form,
+    mapperContractFormToUpdatePayload,
+  )
 }
 
 export function getContractProjectOptionsAction() {

@@ -6,12 +6,18 @@ import type {
   TerminationListRaw,
   TerminationRaw,
   TerminationRequestPayload,
-  TerminationRequestResponse,
   TerminationStaffOptionRaw,
   TerminationUpdatePayload,
 } from '@/types/termination'
-import type { TerminationQueryParams, TerminationStatusOption } from '@/models'
+import type { CreatedRequestRaw } from '@/types/request'
+import type {
+  AttachmentSubmitItem,
+  TerminationQueryParams,
+  TerminationStatusOption,
+} from '@/models'
+import { buildMultipartBody } from '@/utils/attachments'
 import { toSortParam } from '@/utils/sort'
+import { createRequestApi } from '@/services/requests.api'
 
 const TERMINATION_SORT_FIELDS: Record<string, string> = {
   fullName: 'staffName',
@@ -70,28 +76,17 @@ export async function listNonRehireReasonOptionsApi(): Promise<TerminationCatalo
 
 export async function createTerminationRequestApi(
   payload: TerminationRequestPayload,
-): Promise<TerminationRequestResponse> {
-  const response = await rrhhApi.post<ApiResponse<TerminationRequestResponse>>('/requests', payload)
-  return unwrap(response)
-}
-
-export async function uploadTerminationAttachmentApi(id: number, file: File): Promise<void> {
-  const formData = new FormData()
-  formData.append('file', file)
-  await rrhhApi.post(`/terminations/${id}/attachments`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
-}
-
-export async function deleteTerminationAttachmentApi(id: number, attachmentId: number): Promise<void> {
-  await rrhhApi.delete(`/terminations/${id}/attachments/${attachmentId}`)
+  attachments: AttachmentSubmitItem[],
+): Promise<CreatedRequestRaw> {
+  return createRequestApi(payload, attachments)
 }
 
 export async function updateTerminationApi(
   id: number,
   payload: TerminationUpdatePayload,
+  attachments: AttachmentSubmitItem[] | null,
 ): Promise<void> {
-  await rrhhApi.put(`/terminations/${id}`, payload)
+  await rrhhApi.put(`/terminations/${id}`, buildMultipartBody(payload, attachments))
 }
 
 export async function annulTerminationApi(id: number, payload: TerminationAnnulPayload): Promise<void> {

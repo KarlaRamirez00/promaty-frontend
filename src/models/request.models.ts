@@ -15,11 +15,11 @@ export interface RequestRelationOption {
 }
 
 // Cachés que cambian juntas: una solicitud de contrato o finiquito aparece en Solicitudes y en su lista.
-export const WORKFLOW_QUERY_KEYS = new Set<unknown>(['requests', 'contracts', 'terminations'])
+export const WORKFLOW_QUERY_KEYS = new Set<unknown>(['requests', 'contracts', 'terminations', 'annexes'])
 
 export const REQUEST_STATUS_COLORS: Record<string, string> = {
   PENDING_APPROVAL: 'warning',
-  PENDING_VALIDATION: 'warning',
+  PENDING_VALIDATION: 'info',
   APPROVED: 'success',
   REJECTED: 'primary',
   ANNULLED: 'grey',

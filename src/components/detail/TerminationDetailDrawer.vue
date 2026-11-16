@@ -1,19 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useMutation, useQueryClient } from '@tanstack/vue-query'
-import {
-  deleteTerminationAttachmentAction,
-  downloadAttachmentAction,
-  uploadTerminationAttachmentAction,
-} from '@/actions'
-import {
-  TERMINATION_ATTACHMENT_RULE,
-  type FileAttachment,
-  type RequestApproval,
-  type Termination,
-} from '@/models'
-import { useMessage } from '@/composables/useMessage'
-import messages from '@/messages'
+import { computed } from 'vue'
+import { downloadAttachmentAction } from '@/actions'
+import { TERMINATION_ATTACHMENT_RULE, type RequestApproval, type Termination } from '@/models'
 import type { DetailSection } from '@/types/detail'
 import DetailDrawer from '@/components/common/DetailDrawer.vue'
 import DetailTabs from '@/components/common/DetailTabs.vue'
@@ -42,50 +30,16 @@ const emit = defineEmits<{
   annul: [termination: Termination]
 }>()
 
-const queryClient = useQueryClient()
-const { toastSaved, toastFailed } = useMessage()
+// Los adjuntos del finiquito se editan desde su formulario; el detalle solo los muestra y descarga.
+const attachmentRequirement = computed(() => props.termination?.attachmentRequirements[0] ?? null)
 
-const canEditAttachments = computed(
-  () => props.termination?.actions.includes('termination.update') ?? false,
+const missingRequiredAttachment = computed(
+  () => props.termination?.attachmentRequirements.some((item) => item.required && !item.fulfilled) ?? false,
 )
 
 const showAttachmentSlot = computed(
-  () => props.termination?.requiredAttachmentLabel !== null && props.termination !== null,
+  () => attachmentRequirement.value !== null || (props.termination?.attachments.length ?? 0) > 0,
 )
-
-const pendingFile = ref<File[]>([])
-
-function refreshDetail() {
-  if (props.termination) {
-    void queryClient.invalidateQueries({ queryKey: ['terminations', 'detail', props.termination.id] })
-  }
-}
-
-const uploadMutation = useMutation({
-  mutationFn: (file: File) => uploadTerminationAttachmentAction(props.termination!.id, file),
-  onSuccess: () => {
-    toastSaved(null, messages.termination)
-    refreshDetail()
-  },
-  onError: () => toastFailed(messages.termination),
-})
-
-const deleteMutation = useMutation({
-  mutationFn: (attachmentId: number) =>
-    deleteTerminationAttachmentAction(props.termination!.id, attachmentId),
-  onSuccess: refreshDetail,
-  onError: () => toastFailed(messages.termination),
-})
-
-function onPendingChange(files: File[]) {
-  if (files.length === 0) return
-  pendingFile.value = []
-  uploadMutation.mutate(files[0])
-}
-
-function deleteAttachment(attachment: FileAttachment) {
-  deleteMutation.mutate(attachment.id)
-}
 
 const sections = computed<DetailSection[]>(() => {
   const t = props.termination
@@ -131,7 +85,7 @@ const sections = computed<DetailSection[]>(() => {
   ]
 
   if (showAttachmentSlot.value) {
-    baseSections.unshift({
+    baseSections.splice(1, 0, {
       key: 'documents',
       tab: 'Documentos',
       title: 'Documento adjunto',
@@ -155,7 +109,7 @@ const sections = computed<DetailSection[]>(() => {
       <ActionsMenu
         :record="termination"
         :show-view="false"
-        :disable-approve="termination.missingRequiredAttachment"
+        :disable-approve="missingRequiredAttachment"
         @edit="emit('edit', termination)"
         @approve="emit('approve', termination)"
         @validate="emit('validate', termination)"
@@ -171,22 +125,19 @@ const sections = computed<DetailSection[]>(() => {
     <DetailTabs v-else-if="termination" :sections="sections">
       <template v-if="showAttachmentSlot" #documents>
         <v-alert
-          v-if="termination.missingRequiredAttachment"
+          v-if="missingRequiredAttachment"
           type="warning"
           variant="tonal"
           density="compact"
           class="mb-4"
         >
-          Falta adjuntar el documento requerido para aprobar este finiquito.
+          Falta adjuntar el documento requerido para aprobar este finiquito. Edítalo para agregarlo.
         </v-alert>
         <AttachmentField
-          :label="termination.requiredAttachmentLabel ?? undefined"
+          :label="attachmentRequirement?.label"
           :rule="TERMINATION_ATTACHMENT_RULE"
           :saved="termination.attachments"
-          :model-value="pendingFile"
-          :readonly="!canEditAttachments"
-          @update:model-value="onPendingChange"
-          @remove-saved="deleteAttachment"
+          readonly
           @download="downloadAttachmentAction"
         />
       </template>

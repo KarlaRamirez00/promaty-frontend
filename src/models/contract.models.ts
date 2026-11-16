@@ -1,3 +1,5 @@
+import type { AttachmentRequirement } from './attachment.models'
+
 export interface ContractCatalogOption {
   id: number
   name: string
@@ -23,6 +25,8 @@ export const WEEKLY_WORK_HOURS_OPTIONS: { title: string; value: number }[] = [
 ]
 
 export interface ContractForm {
+  id: number | null
+  staffLabel: string
   projectId: number | null
   staffId: number | null
   companyId: number | null
@@ -41,6 +45,8 @@ export interface ContractForm {
 }
 
 export const createContractForm = (overrides: Partial<ContractForm> = {}): ContractForm => ({
+  id: null,
+  staffLabel: '',
   projectId: null,
   staffId: null,
   companyId: null,
@@ -67,8 +73,8 @@ export interface ContractStatusOption {
 
 const CONTRACT_STATUS_COLORS: Record<string, string> = {
   PENDING_APPROVAL: 'warning',
-  PENDING_VALIDATION: 'warning',
-  ACTIVE: 'info',
+  PENDING_VALIDATION: 'info',
+  ACTIVE: 'success',
   REJECTED: 'primary',
   SYNC_ERROR: 'secondary',
   LATE_REGISTRATION: 'grey',
@@ -127,6 +133,12 @@ export interface ContractAttachment {
   updatedAt: string
 }
 
+export interface ContractEditData {
+  form: ContractForm
+  attachments: ContractAttachment[]
+  currentProject: { id: number; name: string }
+}
+
 export interface Contract {
   id: number
   requestId: number
@@ -148,7 +160,7 @@ export interface Contract {
   transportTypeName: string
   rexContractNumber: string | null
   attachments: ContractAttachment[]
-  missingAttachmentTypes: ContractAttachmentType[]
+  attachmentRequirements: AttachmentRequirement[]
   status: ContractStatusOption
   statusColor: string
   createdAt: string
