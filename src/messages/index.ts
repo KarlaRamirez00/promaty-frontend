@@ -10,6 +10,7 @@ import contract from './contract.messages'
 import requestRejectionReason from './requestRejectionReason.messages'
 import nonRehireReason from './nonRehireReason.messages'
 import termination from './termination.messages'
+import annex from './annex.messages'
 import setting from './setting.messages'
 
 export default {
@@ -25,5 +26,6 @@ export default {
   requestRejectionReason,
   nonRehireReason,
   termination,
+  annex,
   setting,
 }

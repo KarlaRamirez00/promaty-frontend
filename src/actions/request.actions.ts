@@ -17,6 +17,7 @@ import type { RequestDecisionForm, RequestQueryParams } from '@/models'
 
 export const CONTRACT_REJECTION_SUBMODULE = 'contracts'
 export const TERMINATION_REJECTION_SUBMODULE = 'terminations'
+export const ANNEX_REJECTION_SUBMODULE = 'annexes'
 
 export function getRequestListAction(params: RequestQueryParams) {
   return useGetTable(listRequestsApi, params, mapperRequestList)

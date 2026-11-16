@@ -22,7 +22,7 @@ export const hrMenu: MenuItem = {
   icon: mdiAccountGroupOutline,
   submenu: [
     { title: 'Solicitudes', icon: mdiClipboardTextOutline, to: '/requests', module: 'contract', permission: 'read' },
-    { title: 'Anexos', icon: mdiFilePlusOutline },
+    { title: 'Anexos', icon: mdiFilePlusOutline, to: '/annexes', module: 'annex', permission: 'read' },
     { title: 'Anticipos', icon: mdiCashClock },
     { title: 'Colaboradores', icon: mdiAccountMultipleOutline, to: '/staff', module: 'staff', permission: 'read' },
     { title: 'Contratos', icon: mdiFileSign, to: '/contracts', module: 'contract', permission: 'read' },

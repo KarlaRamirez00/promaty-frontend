@@ -13,6 +13,7 @@ import { contractRoutes } from '@/router/contract.routes'
 import { requestRejectionReasonRoutes } from '@/router/requestRejectionReason.routes'
 import { nonRehireReasonRoutes } from '@/router/nonRehireReason.routes'
 import { terminationRoutes } from '@/router/termination.routes'
+import { annexRoutes } from '@/router/annex.routes'
 import { settingRoutes } from '@/router/setting.routes'
 import { authRoutes } from '@/router/auth.routes'
 import { authMiddleware } from '@/middlewares/auth.middleware'
@@ -48,6 +49,7 @@ const routes: RouteRecordRaw[] = [
   ...requestRoutes,
   ...contractRoutes,
   ...terminationRoutes,
+  ...annexRoutes,
   ...clientRoutes,
   ...projectTypeRoutes,
   ...projectSpecialtyRoutes,
