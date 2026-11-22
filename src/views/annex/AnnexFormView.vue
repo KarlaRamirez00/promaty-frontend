@@ -392,6 +392,7 @@ function submit() {
       <v-text-field
         v-model="form.newBaseSalary"
         v-input-mask="'currency'"
+        data-testid="annex-new-base-salary"
         label="Nuevo sueldo base"
         prefix="$"
         placeholder="Ingresa el nuevo sueldo base"

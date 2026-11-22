@@ -30,16 +30,20 @@ export async function selectOption(
   await (option ? options.filter({ hasText: option }) : options).first().click();
 }
 
-/** Abre el calendario y elige el primer día habilitado, avanzando de mes si hace falta. */
-export async function pickDate(page: Page, testId: string): Promise<void> {
+/**
+ * Abre el calendario y elige un día habilitado, avanzando de mes si hace falta. Por defecto el
+ * primero; con `position: 'last'` el último del mes mostrado (útil cuando la fecha debe ser
+ * posterior a otra ya elegida, como la vigencia de un anexo respecto del inicio del contrato).
+ */
+export async function pickDate(page: Page, testId: string, position: 'first' | 'last' = 'first'): Promise<void> {
   await page.getByTestId(testId).locator('input').click();
   await page.locator('.v-date-picker-month').waitFor();
 
-  const day = page
-    .locator('.v-date-picker-month__day:not(.v-date-picker-month__day--adjacent) button:not([disabled])')
-    .first();
-  for (let month = 0; month < MAX_MONTHS_AHEAD && (await day.count()) === 0; month++) {
+  const days = page.locator(
+    '.v-date-picker-month__day:not(.v-date-picker-month__day--adjacent) button:not([disabled])',
+  );
+  for (let month = 0; month < MAX_MONTHS_AHEAD && (await days.count()) === 0; month++) {
     await page.locator('.v-date-picker-controls__month button').last().click();
   }
-  await day.click();
+  await (position === 'last' ? days.last() : days.first()).click();
 }

@@ -16,6 +16,8 @@
     "test:report": "playwright show-report",
     "demo:colaborador": "playwright test --config=playwright.demo.config.ts 01-staff",
     "demo:contrato": "playwright test --config=playwright.demo.config.ts 02-contract-request",
+    "demo:anexo": "playwright test --config=playwright.demo.config.ts 03-annex-request",
+    "demo:finiquito": "playwright test --config=playwright.demo.config.ts 04-termination-request",
     "sonar": "dotenv -e .env -- node sonar.mjs"
   },
   "lint-staged": {

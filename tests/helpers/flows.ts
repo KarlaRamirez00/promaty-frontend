@@ -3,6 +3,12 @@ import { buildDemoStaff, rutPattern, type DemoStaff } from './demo-data';
 import { pickDate, selectOption, typeInto } from './vuetify';
 
 const FORM_REDIRECT_TIMEOUT_MS = 20_000;
+const CONTRACT_ATTACHMENT_COUNT = 5;
+const SAMPLE_DOCUMENT = {
+  name: 'documento-demo.pdf',
+  mimeType: 'application/pdf',
+  buffer: Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n'),
+};
 
 /** Crea un colaborador con RUT nuevo desde el formulario y vuelve a la lista. */
 export async function createStaff(page: Page): Promise<DemoStaff> {
@@ -63,6 +69,47 @@ export async function requestContract(page: Page, staff: DemoStaff): Promise<voi
   await selectOption(page, 'contract-weekly-hours', '45 horas');
   await selectOption(page, 'contract-work-days', '5 días');
 
+  // Los cinco documentos del contrato son obligatorios; se adjunta el mismo archivo de muestra a cada uno.
+  const fileInputs = page.locator('input[type="file"]');
+  await expect(fileInputs).toHaveCount(CONTRACT_ATTACHMENT_COUNT);
+  for (let index = 0; index < CONTRACT_ATTACHMENT_COUNT; index++) {
+    await fileInputs.nth(index).setInputFiles(SAMPLE_DOCUMENT);
+  }
+
   await page.getByTestId('contract-submit').click();
   await expect(page).toHaveURL(/\/contracts$/, { timeout: FORM_REDIRECT_TIMEOUT_MS });
+}
+
+/** Solicita un anexo de aumento de sueldo para el colaborador (su contrato demo es indefinido). */
+export async function requestAnnex(page: Page, staff: DemoStaff): Promise<void> {
+  await page.goto('/annexes');
+  await page.getByTestId('list-new').click();
+  await expect(page.getByRole('heading', { name: 'Nuevo anexo' })).toBeVisible();
+
+  await selectOption(page, 'annex-staff', rutPattern(staff.rut), staff.firstName);
+  await selectOption(page, 'annex-type', /sueldo/i);
+  await pickDate(page, 'annex-effective-date', 'last');
+  await typeInto(page, 'annex-new-base-salary', '900000');
+  await typeInto(page, 'annex-description', 'Aumento de sueldo por buen desempeño');
+
+  await page.getByTestId('annex-submit').click();
+  await expect(page).toHaveURL(/\/annexes$/, { timeout: FORM_REDIRECT_TIMEOUT_MS });
+}
+
+/** Solicita el finiquito (no definitivo) del colaborador. */
+export async function requestTermination(page: Page, staff: DemoStaff): Promise<void> {
+  await page.goto('/terminations');
+  await page.getByTestId('list-new').click();
+  await expect(page.getByRole('heading', { name: 'Nuevo finiquito' })).toBeVisible();
+
+  await selectOption(page, 'termination-staff', rutPattern(staff.rut), staff.firstName);
+  await pickDate(page, 'termination-date');
+  await selectOption(page, 'termination-cause');
+  await typeInto(page, 'termination-notes', 'Finiquito de demostración');
+
+  // Algunas causales exigen documento; el adjunto es inofensivo cuando es opcional.
+  await page.locator('input[type="file"]').first().setInputFiles(SAMPLE_DOCUMENT);
+
+  await page.getByTestId('termination-submit').click();
+  await expect(page).toHaveURL(/\/terminations$/, { timeout: FORM_REDIRECT_TIMEOUT_MS });
 }

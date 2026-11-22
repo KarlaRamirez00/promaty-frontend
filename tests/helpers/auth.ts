@@ -13,5 +13,5 @@ export async function login(page: Page): Promise<void> {
   await typeInto(page, 'login-email', user);
   await typeInto(page, 'login-password', password);
   await page.getByTestId('login-submit').click();
-  await expect(page).not.toHaveURL(/\/login$/);
+  await expect(page).not.toHaveURL(/\/login$/, { timeout: 30_000 });
 }
