@@ -167,10 +167,16 @@ const headers = [
   { title: 'Acciones', key: 'actions', sortable: false, align: 'end' as const },
 ]
 
-// El detalle vive en la lista de la entidad (Contratos o Finiquitos) y se abre con ?detail={id}.
+const ENTITY_LIST_ROUTE: Record<string, string> = {
+  CONTRACT: ROUTE.CONTRACT_LIST,
+  TERMINATION: ROUTE.TERMINATION_LIST,
+  ANNEX: ROUTE.ANNEX_LIST,
+}
+
+// El detalle vive en la lista de la entidad (Contratos, Finiquitos o Anexos) y se abre con ?detail={id}.
 function viewDetail(item: { entityType: string; entityId: number | null }) {
-  if (item.entityId === null) return
-  const name = item.entityType === 'TERMINATION' ? ROUTE.TERMINATION_LIST : ROUTE.CONTRACT_LIST
+  const name = ENTITY_LIST_ROUTE[item.entityType]
+  if (item.entityId === null || !name) return
   void router.push({ name, query: { detail: String(item.entityId) } })
 }
 </script>
