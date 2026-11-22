@@ -3,6 +3,7 @@ import router from '@/router'
 import ContractFormView from '@/views/contract/ContractFormView.vue'
 import { $, $$, click, clickText, go, mountApp, pick, settle, text, type MountedApp } from '../helpers/app'
 import { installBackend } from '../helpers/backend'
+import * as fx from '../helpers/fixtures'
 
 let app: MountedApp | null = null
 afterEach(() => {
@@ -101,6 +102,64 @@ describe.each(LISTS.filter((l) => l.decisions))('Decisiones: $name', (l) => {
   })
 })
 
+
+const SYNC_LISTS = [
+  { name: 'Contratos', path: '/contracts', detail: /^\/contracts\/1$/, entity: fx.contract },
+  { name: 'Finiquitos', path: '/terminations', detail: /^\/terminations\/1$/, entity: fx.termination },
+  { name: 'Anexos', path: '/annexes', detail: /^\/annexes\/1$/, entity: fx.annex },
+]
+
+describe.each(SYNC_LISTS)('Sincronización con Rex+ al decidir: $name', (l) => {
+  const withStatus = (code: string) => ({
+    data: { ...l.entity(1), status: { id: 9, code, name: code } },
+    error: null,
+    meta: {},
+  })
+
+  async function decide(kind: 'approve' | 'validate' | 'reject') {
+    await click(rowMenu())
+    await click($(`[data-testid="action-${kind}"]`))
+    if (kind === 'reject') {
+      const field = $('[data-testid="decision-reason"] .v-field') as HTMLElement
+      field.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+      await click(field)
+      await click($$('.v-overlay--active .v-list-item')[0] ?? null)
+    }
+    await click($('[data-testid="decision-confirm"]'))
+  }
+
+  it('avisa con una advertencia si la entidad queda en error de sincronización', async () => {
+    app = await mountApp(l.path)
+    app.backend.on('GET', l.detail, withStatus('SYNC_ERROR'))
+    await decide('validate')
+    await vi.waitFor(() => expect(text()).toContain('falló la sincronización con Rex+'))
+    expect(text()).not.toContain('Solicitud validada')
+  })
+
+  it('muestra el éxito normal si la sincronización salió bien', async () => {
+    app = await mountApp(l.path)
+    app.backend.on('GET', l.detail, withStatus('ACTIVE'))
+    await decide('validate')
+    await vi.waitFor(() => expect(text()).toContain('Solicitud validada'))
+    expect(text()).not.toContain('falló la sincronización')
+  })
+
+  it('al rechazar no consulta el estado ni avisa de sincronización', async () => {
+    app = await mountApp(l.path)
+    app.backend.on('GET', l.detail, withStatus('SYNC_ERROR'))
+    const before = app.backend.find('GET', l.detail).length
+    await decide('reject')
+    await vi.waitFor(() => expect(text()).toContain('Solicitud rechazada'))
+    expect(app.backend.find('GET', l.detail)).toHaveLength(before)
+  })
+
+  it('si no puede consultar el estado, muestra el éxito de la decisión', async () => {
+    app = await mountApp(l.path)
+    app.backend.on('GET', l.detail, { failure: { status: 500 } })
+    await decide('approve')
+    await vi.waitFor(() => expect(text()).toContain('Solicitud aprobada'))
+  })
+})
 
 describe('Solicitudes', () => {
   it('muestra los contadores pendientes y filtra con los chips de la URL', async () => {

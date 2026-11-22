@@ -11,6 +11,10 @@ export default {
     title: 'Solicitud rechazada',
     message: 'La solicitud fue rechazada con éxito.',
   },
+  toastSyncError: {
+    title: 'Error de sincronización',
+    message: 'La decisión se registró, pero falló la sincronización con Rex+.',
+  },
   toastError: {
     title: 'Hubo un error',
     message: 'Revisa tu conexión a internet o contacta con un administrador.',

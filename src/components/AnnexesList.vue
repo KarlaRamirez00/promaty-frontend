@@ -72,7 +72,10 @@ const {
   isPending: decisionPending,
   askDecision,
   confirmDecision,
-} = useRequestDecision(ANNEX_REJECTION_SUBMODULE)
+} = useRequestDecision(
+  ANNEX_REJECTION_SUBMODULE,
+  async (id) => (await getAnnexDetailAction(id)).status.code,
+)
 
 const filtersOpen = ref(false)
 
@@ -228,9 +231,9 @@ function openEditForm(id: number) {
         :record="item"
         @view="viewDetail(item)"
         @edit="openEditForm(item.id)"
-        @approve="askDecision(item.requestId, 'APPROVE')"
-        @validate="askDecision(item.requestId, 'VALIDATE')"
-        @reject="askDecision(item.requestId, 'REJECT')"
+        @approve="askDecision(item.requestId, 'APPROVE', item.id)"
+        @validate="askDecision(item.requestId, 'VALIDATE', item.id)"
+        @reject="askDecision(item.requestId, 'REJECT', item.id)"
       />
     </template>
 
@@ -257,9 +260,9 @@ function openEditForm(id: number) {
     :approvals="selectedRequest?.approvals"
     :loading="detailLoading"
     @edit="openEditForm($event.id)"
-    @approve="askDecision($event.requestId, 'APPROVE')"
-    @validate="askDecision($event.requestId, 'VALIDATE')"
-    @reject="askDecision($event.requestId, 'REJECT')"
+    @approve="askDecision($event.requestId, 'APPROVE', $event.id)"
+    @validate="askDecision($event.requestId, 'VALIDATE', $event.id)"
+    @reject="askDecision($event.requestId, 'REJECT', $event.id)"
   />
 
   <ApproveRejectDialog

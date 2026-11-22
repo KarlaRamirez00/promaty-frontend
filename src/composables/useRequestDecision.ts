@@ -12,6 +12,8 @@ import messages from '@/messages'
 import { WORKFLOW_QUERY_KEYS, type RequestDecisionForm } from '@/models'
 import ApproveRejectDialog, { type DecisionType } from '@/components/common/ApproveRejectDialog.vue'
 
+const SYNC_ERROR_STATUS = 'SYNC_ERROR'
+
 interface DecisionVariables {
   type: DecisionType
   id: number
@@ -19,15 +21,21 @@ interface DecisionVariables {
 }
 
 // Aprobar, validar o rechazar una solicitud: compartido por Solicitudes, Contratos y Finiquitos.
-// El submódulo define de qué catálogo salen los motivos de rechazo.
-export function useRequestDecision(rejectionSubModule: string = CONTRACT_REJECTION_SUBMODULE) {
+// El submódulo define de qué catálogo salen los motivos de rechazo. `fetchStatusCode` consulta el
+// estado actual de la entidad (contrato, finiquito o anexo): el PATCH solo confirma que la decisión
+// quedó guardada, y si la sincronización con Rex+ falla la entidad queda en SYNC_ERROR.
+export function useRequestDecision(
+  rejectionSubModule: string = CONTRACT_REJECTION_SUBMODULE,
+  fetchStatusCode?: (entityId: number) => Promise<string>,
+) {
   const queryClient = useQueryClient()
-  const { toastDecided, toastFailed } = useMessage()
+  const { toastDecided, toastSyncError, toastFailed } = useMessage()
   const { backendErrorFields, setFromError, clear: clearBackendErrors } = useBackendFieldErrors()
 
   const dialogRef = ref<InstanceType<typeof ApproveRejectDialog> | null>(null)
   const type = ref<DecisionType>('APPROVE')
   const requestId = ref<number | null>(null)
+  const entityId = ref<number | null>(null)
 
   const { data: rejectionReasons } = useQuery({
     queryKey: ['requestRejectionReasons', 'selector', rejectionSubModule],
@@ -38,21 +46,36 @@ export function useRequestDecision(rejectionSubModule: string = CONTRACT_REJECTI
   const mutation = useMutation({
     mutationFn: ({ type, id, form }: DecisionVariables) =>
       type === 'REJECT' ? rejectRequestAction(id, form) : approveRequestAction(id),
-    onSuccess: (_data, { type }) => {
+    onSuccess: async (_data, { type }) => {
       dialogRef.value?.close()
-      toastDecided(type, messages.request)
       void queryClient.invalidateQueries({
         predicate: ({ queryKey }) => WORKFLOW_QUERY_KEYS.has(queryKey[0]),
       })
+      if (type !== 'REJECT' && (await hasSyncError())) {
+        toastSyncError(messages.request)
+        return
+      }
+      toastDecided(type, messages.request)
     },
     onError: (error: unknown) => {
       if (!setFromError(error)) toastFailed(messages.request)
     },
   })
 
-  function askDecision(id: number, decisionType: DecisionType) {
+  // Si la consulta falla no se asume un error de sincronización: la decisión sí quedó guardada.
+  async function hasSyncError(): Promise<boolean> {
+    if (!fetchStatusCode || entityId.value === null) return false
+    try {
+      return (await fetchStatusCode(entityId.value)) === SYNC_ERROR_STATUS
+    } catch {
+      return false
+    }
+  }
+
+  function askDecision(id: number, decisionType: DecisionType, targetEntityId: number | null = null) {
     type.value = decisionType
     requestId.value = id
+    entityId.value = targetEntityId
     clearBackendErrors()
     dialogRef.value?.open()
   }

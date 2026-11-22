@@ -21,6 +21,10 @@ interface DecisionMessages {
   toastReject: ToastText
 }
 
+interface SyncErrorMessages {
+  toastSyncError: ToastText
+}
+
 interface BlockMessages {
   toastBlock: ToastText
   toastUnblock: ToastText
@@ -58,6 +62,10 @@ export function useMessage() {
     snackbar.success(text)
   }
 
+  function toastSyncError(messages: SyncErrorMessages) {
+    snackbar.warning(messages.toastSyncError)
+  }
+
   function toastBlocked(type: 'BLOCK' | 'UNBLOCK', messages: BlockMessages) {
     snackbar.success(type === 'BLOCK' ? messages.toastBlock : messages.toastUnblock)
   }
@@ -78,6 +86,7 @@ export function useMessage() {
     toastSaved,
     toastToggled,
     toastDecided,
+    toastSyncError,
     toastBlocked,
     toastAnnulled,
     toastUpdated,
