@@ -15,6 +15,14 @@ export default {
     title: 'Error de sincronización',
     message: 'La decisión se registró, pero falló la sincronización con Rex+.',
   },
+  toastRetrySync: {
+    title: 'Sincronización exitosa',
+    message: 'El registro quedó sincronizado con Rex+.',
+  },
+  toastRetrySyncFailed: {
+    title: 'La sincronización sigue fallando',
+    message: 'Rex+ no aceptó el registro. Revisa el motivo en el detalle.',
+  },
   toastError: {
     title: 'Hubo un error',
     message: 'Revisa tu conexión a internet o contacta con un administrador.',

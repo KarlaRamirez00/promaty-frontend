@@ -78,6 +78,7 @@ const CONTRACT_STATUS_COLORS: Record<string, string> = {
   REJECTED: 'primary',
   SYNC_ERROR: 'secondary',
   LATE_REGISTRATION: 'grey',
+  ANNULLED: 'grey',
 }
 
 export function contractStatusColor(code: string): string {
@@ -159,6 +160,8 @@ export interface Contract {
   mealTypeName: string
   transportTypeName: string
   rexContractNumber: string | null
+  annulmentReason: string | null
+  syncErrorMessage: string | null
   attachments: ContractAttachment[]
   attachmentRequirements: AttachmentRequirement[]
   status: ContractStatusOption

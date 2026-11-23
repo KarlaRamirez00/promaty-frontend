@@ -8,6 +8,7 @@ import DetailTabs from '@/components/common/DetailTabs.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApprovalHistory from '@/components/common/ApprovalHistory.vue'
 import AttachmentField from '@/components/common/AttachmentField.vue'
+import SyncErrorAlert from '@/components/common/SyncErrorAlert.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -27,6 +28,7 @@ const emit = defineEmits<{
   approve: [annex: Annex]
   validate: [annex: Annex]
   reject: [annex: Annex]
+  retrySync: [annex: Annex]
 }>()
 
 const sections = computed<DetailSection[]>(() => {
@@ -96,8 +98,11 @@ const sections = computed<DetailSection[]>(() => {
         @approve="emit('approve', annex)"
         @validate="emit('validate', annex)"
         @reject="emit('reject', annex)"
+        @retry-sync="emit('retrySync', annex)"
       />
     </template>
+
+    <SyncErrorAlert v-if="annex" :status-code="annex.status.code" :message="annex.syncErrorMessage" />
 
     <div v-if="loading && !annex" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />

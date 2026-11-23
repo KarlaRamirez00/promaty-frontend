@@ -273,6 +273,7 @@ export function mapperAnnexDetail(raw: AnnexRaw): Annex {
     description: raw.description,
     changes: buildChanges(raw),
     rexAnnexNumber: raw.rexAnnexNumber,
+    syncErrorMessage: raw.syncErrorMessage ?? null,
     attachments: (raw.attachments ?? []).map(mapAttachment),
     attachmentRequirements: raw.attachmentRequirements ?? [],
     status: raw.status,

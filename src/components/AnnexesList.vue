@@ -16,6 +16,7 @@ import { useDetailSlide } from '@/composables/useDetailSlide'
 import { useListQuery } from '@/composables/useListQuery'
 import { usePermissions } from '@/composables/usePermissions'
 import { useRequestDecision } from '@/composables/useRequestDecision'
+import { useRetrySync } from '@/composables/useRetrySync'
 import {
   annexQueryToRoute,
   parseAnnexQuery,
@@ -76,6 +77,8 @@ const {
   ANNEX_REJECTION_SUBMODULE,
   async (id) => (await getAnnexDetailAction(id)).status.code,
 )
+
+const { retrySync } = useRetrySync()
 
 const filtersOpen = ref(false)
 
@@ -234,6 +237,7 @@ function openEditForm(id: number) {
         @approve="askDecision(item.requestId, 'APPROVE', item.id)"
         @validate="askDecision(item.requestId, 'VALIDATE', item.id)"
         @reject="askDecision(item.requestId, 'REJECT', item.id)"
+        @retry-sync="retrySync(item.requestId)"
       />
     </template>
 
@@ -263,6 +267,7 @@ function openEditForm(id: number) {
     @approve="askDecision($event.requestId, 'APPROVE', $event.id)"
     @validate="askDecision($event.requestId, 'VALIDATE', $event.id)"
     @reject="askDecision($event.requestId, 'REJECT', $event.id)"
+    @retry-sync="retrySync($event.requestId)"
   />
 
   <ApproveRejectDialog

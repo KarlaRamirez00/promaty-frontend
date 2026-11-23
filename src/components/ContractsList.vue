@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { mdiCalendarClockOutline, mdiCalendarRemoveOutline } from '@mdi/js'
 import {
+  annulContractAction,
   CONTRACT_REJECTION_SUBMODULE,
   getContractDetailAction,
   getContractListAction,
@@ -12,7 +13,10 @@ import {
   getCostCenterOptionsAction,
   getRequestDetailAction,
 } from '@/actions'
+import messages from '@/messages'
 import { useActiveFilters } from '@/composables/useActiveFilters'
+import { useAnnul } from '@/composables/useAnnul'
+import { useRetrySync } from '@/composables/useRetrySync'
 import { useDetailSlide } from '@/composables/useDetailSlide'
 import { useListQuery } from '@/composables/useListQuery'
 import { usePermissions } from '@/composables/usePermissions'
@@ -33,6 +37,7 @@ import IndicatorCard from '@/components/common/IndicatorCard.vue'
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApproveRejectDialog from '@/components/common/ApproveRejectDialog.vue'
+import AnnulDialog from '@/components/common/AnnulDialog.vue'
 
 const router = useRouter()
 const { hasPermission } = usePermissions()
@@ -47,6 +52,16 @@ const {
   askDecision,
   confirmDecision,
 } = useRequestDecision(CONTRACT_REJECTION_SUBMODULE, async (id) => (await getContractDetailAction(id)).status.code)
+
+const {
+  setDialogRef: setAnnulDialogRef,
+  backendErrorFields: annulErrorFields,
+  isPending: isAnnulling,
+  askAnnul,
+  confirmAnnul,
+} = useAnnul(annulContractAction, messages.contract)
+
+const { retrySync } = useRetrySync()
 
 const {
   detailQueryParam,
@@ -296,6 +311,8 @@ function openRequestForm() {
         @approve="askDecision(item.requestId, 'APPROVE', item.id)"
         @validate="askDecision(item.requestId, 'VALIDATE', item.id)"
         @reject="askDecision(item.requestId, 'REJECT', item.id)"
+        @annul="askAnnul(item.id)"
+        @retry-sync="retrySync(item.requestId)"
       />
     </template>
 
@@ -325,6 +342,8 @@ function openRequestForm() {
     @approve="askDecision($event.requestId, 'APPROVE', $event.id)"
     @validate="askDecision($event.requestId, 'VALIDATE', $event.id)"
     @reject="askDecision($event.requestId, 'REJECT', $event.id)"
+    @annul="askAnnul($event.id)"
+    @retry-sync="retrySync($event.requestId)"
   />
 
   <ApproveRejectDialog
@@ -334,6 +353,14 @@ function openRequestForm() {
     :reason-options="rejectionReasons ?? []"
     :error-fields="backendErrorFields"
     @confirm="confirmDecision"
+  />
+
+  <AnnulDialog
+    :ref="setAnnulDialogRef"
+    entity="contrato"
+    :loading="isAnnulling"
+    :error-fields="annulErrorFields"
+    @confirm="confirmAnnul"
   />
 </template>
 

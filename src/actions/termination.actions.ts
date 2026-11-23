@@ -10,8 +10,8 @@ import {
   updateTerminationApi,
 } from '@/services'
 import {
+  mapperAnnulPayload,
   mapperLegalTerminationCauseOptions,
-  mapperTerminationAnnulPayload,
   mapperTerminationCatalogOptions,
   mapperTerminationDetail,
   mapperTerminationEditData,
@@ -22,8 +22,8 @@ import {
 } from '@/mappers'
 import { useGetDetail, useGetTable, useMutateForm } from '@/utils'
 import type {
+  AnnulForm,
   AttachmentSubmitItem,
-  TerminationAnnulForm,
   TerminationForm,
   TerminationQueryParams,
 } from '@/models'
@@ -74,12 +74,8 @@ export function updateTerminationAction(
   )
 }
 
-export function annulTerminationAction(id: number, form: TerminationAnnulForm) {
-  return useMutateForm(
-    (payload) => annulTerminationApi(id, payload),
-    form,
-    mapperTerminationAnnulPayload,
-  )
+export function annulTerminationAction(id: number, form: AnnulForm) {
+  return useMutateForm((payload) => annulTerminationApi(id, payload), form, mapperAnnulPayload)
 }
 
 export function getTerminationStatusOptionsAction() {

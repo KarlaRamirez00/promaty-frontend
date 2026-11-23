@@ -115,7 +115,7 @@ describe('Proyectos', () => {
 
   it('edita un proyecto existente, incluso con un tipo inactivo', async () => {
     const backend = installBackend()
-    backend.on('GET', /^\/projectTypes$/, { data: [{ id: 5, name: 'Otro tipo' }], meta: {} })
+    backend.on('GET', /^\/projectTypes\/selector$/, { data: [{ id: 5, name: 'Otro tipo' }], meta: {} })
     app = await mountApp('/projects/1/edit', { backend })
     const vm = app.vm<{ form: Record<string, unknown>; typeItems: { id: number; props?: { disabled: boolean } }[] }>(ProjectFormView)
     expect(vm.form).toMatchObject({ id: 1, name: 'Proyecto 1', typeId: 1 })

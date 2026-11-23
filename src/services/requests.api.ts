@@ -1,4 +1,4 @@
-import { rrhhApi, userApi, unwrap, unwrapPage } from '@/lib/http'
+import { rrhhApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
 import type {
   CreatedRequestRaw,
@@ -6,6 +6,7 @@ import type {
   RequestDecidePayload,
   RequestDetailRaw,
   RequestRaw,
+  RetrySyncResultRaw,
 } from '@/types/request'
 import type {
   AttachmentSubmitItem,
@@ -60,6 +61,12 @@ export async function decideRequestApi(id: number, payload: RequestDecidePayload
   await rrhhApi.patch(`/requests/${id}/decide`, payload)
 }
 
+// Sin body. Responde 200 aunque la sincronización siga fallando: el resultado dice qué pasó.
+export async function retryRequestSyncApi(requestId: number): Promise<RetrySyncResultRaw> {
+  const response = await rrhhApi.patch<ApiResponse<RetrySyncResultRaw>>(`/requests/${requestId}/retrySync`)
+  return unwrap(response)
+}
+
 export async function listRequestStatusOptionsApi(): Promise<RequestStatusOption[]> {
   const response = await rrhhApi.get<ApiListResponse<RequestStatusOption>>('/platformStatuses', {
     params: { subModule: 'request' },
@@ -79,16 +86,11 @@ export async function listRejectionReasonOptionsApi(
 
 interface RequesterRaw {
   id: number
-  firstName: string
-  lastName: string
+  name: string
 }
 
+// Solo quienes crearon solicitudes visibles para el usuario, sin exigir el permiso de leer usuarios.
 export async function listRequesterOptionsApi(): Promise<RequestRelationOption[]> {
-  const response = await userApi.get<ApiListResponse<RequesterRaw>>('/users', {
-    params: { size: 200, sort: 'firstName,asc', page: 0 },
-  })
-  return response.data.data.map((item) => ({
-    id: item.id,
-    name: `${item.firstName} ${item.lastName}`.trim(),
-  }))
+  const response = await rrhhApi.get<ApiListResponse<RequesterRaw>>('/requests/requesters')
+  return response.data.data.map((item) => ({ id: item.id, name: item.name }))
 }

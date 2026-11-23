@@ -132,7 +132,7 @@ describe('formularios y filtros', () => {
       expect(first).toEqual(second)
       expect(first).not.toBe(second)
       const [key] = Object.keys(first)
-      if (key && name !== 'createStaffBlockForm' && name !== 'createRequestDecisionForm' && name !== 'createTerminationAnnulForm') {
+      if (key && name !== 'createStaffBlockForm' && name !== 'createRequestDecisionForm' && name !== 'createAnnulForm') {
         expect((factory({ [key]: 'override' }) as Record<string, unknown>)[key]).toBe('override')
       }
     })

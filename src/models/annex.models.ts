@@ -161,6 +161,7 @@ export interface Annex {
   description: string
   changes: AnnexChange[]
   rexAnnexNumber: string | null
+  syncErrorMessage: string | null
   attachments: AnnexAttachment[]
   attachmentRequirements: AttachmentRequirement[]
   status: AnnexStatusOption

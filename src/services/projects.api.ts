@@ -58,33 +58,37 @@ interface RelationRaw {
   name: string
 }
 
+// Los selectores de backend entregan solo registros activos y no exigen el permiso de leer ese módulo.
 async function listRelationOptions(path: string): Promise<ProjectRelationOption[]> {
-  const response = await rrhhApi.get<ApiListResponse<RelationRaw>>(path, {
-    params: { active: true, size: 200, sort: 'name,asc', page: 0 },
-  })
+  const response = await rrhhApi.get<ApiListResponse<RelationRaw>>(path)
   return response.data.data.map((item) => ({ id: item.id, name: item.name }))
 }
 
 export function listClientOptionsApi(): Promise<ProjectRelationOption[]> {
-  return listRelationOptions('/clients')
+  return listRelationOptions('/clients/selector')
 }
 
 export function listProjectTypeOptionsApi(): Promise<ProjectRelationOption[]> {
-  return listRelationOptions('/projectTypes')
+  return listRelationOptions('/projectTypes/selector')
 }
 
 export function listProjectSpecialtyOptionsApi(): Promise<ProjectRelationOption[]> {
-  return listRelationOptions('/projectSpecialties')
+  return listRelationOptions('/projectSpecialties/selector')
 }
 
+interface CostCenterOptionRaw {
+  id: number
+  name: string
+  code: string
+}
+
+// Opciones limitadas a los centros de costo del usuario y sin exigir project.read.
 export async function listCostCenterOptionsApi(): Promise<CostCenterOption[]> {
-  const response = await rrhhApi.get<ApiListResponse<ProjectListRaw>>('/projects', {
-    params: { size: 200, sort: 'costCenterCode,asc', page: 0 },
-  })
+  const response = await rrhhApi.get<ApiListResponse<CostCenterOptionRaw>>('/projects/options')
   return response.data.data.map((item) => ({
     id: item.id,
-    code: item.costCenterCode,
-    title: `${item.costCenterCode} — ${item.name}`,
+    code: item.code,
+    title: `${item.code} — ${item.name}`,
   }))
 }
 

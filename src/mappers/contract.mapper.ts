@@ -123,6 +123,8 @@ export function mapperContractDetail(raw: ContractRaw): Contract {
     mealTypeName: raw.mealType?.name ?? NO_DATA,
     transportTypeName: raw.transportType?.name ?? NO_DATA,
     rexContractNumber: raw.rexContractNumber,
+    annulmentReason: raw.annulmentReason ?? null,
+    syncErrorMessage: raw.syncErrorMessage ?? null,
     attachments: (raw.attachments ?? []).map(mapAttachment),
     attachmentRequirements: raw.attachmentRequirements ?? [],
     status: raw.status,

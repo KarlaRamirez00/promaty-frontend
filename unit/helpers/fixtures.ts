@@ -216,6 +216,8 @@ export const contract = (id = 1) => ({
   mealType: named(1, 'Almuerzo'),
   transportType: null,
   rexContractNumber: 'REX-1',
+  annulmentReason: null,
+  syncErrorMessage: null,
   attachments: [attachmentRaw(1)],
   attachmentRequirements: [requirement('CEDULA_FRONTAL')],
   status: STATUSES.contract[1],
@@ -239,6 +241,7 @@ export const termination = (id = 1) => ({
   notes: 'Observaciones',
   rexTerminationNumber: 'REX-9',
   annulmentReason: null,
+  syncErrorMessage: null,
   attachments: [attachmentRaw(1)],
   attachmentRequirements: [requirement('CARTA')],
   status: status('APPROVED', 'Aprobado', 3),
@@ -285,6 +288,7 @@ export const annex = (id = 1, code = 'CONTRACT_EXTENSION') => ({
   statusCode: 'PENDING_APPROVAL',
   status: status('PENDING_APPROVAL', 'Pendiente de aprobación'),
   rexAnnexNumber: null,
+  syncErrorMessage: null,
   attachments: [attachmentRaw(1)],
   attachmentRequirements: [requirement('ANEXO', false)],
   ...STAMPS,
@@ -296,6 +300,51 @@ export const annexableStaff = (id = 1) => ({
   identificationNumber: '12345678-5',
   activeContract: contractSummary,
 })
+
+export const dashboardSummary = (overrides: object = {}) => ({
+  pendingRequests: {
+    contract: 2,
+    termination: 1,
+    annex: 1,
+    toApprove: { contract: 1, termination: 1, annex: 0 },
+    toValidate: { contract: 1, termination: 0, annex: 1 },
+  },
+  activeStaff: 6,
+  blockedStaff: 1,
+  expiringContracts: 3,
+  expiringContractsDays: 30,
+  hiresThisMonth: 2,
+  hiresNextMonth: 1,
+  terminationsThisMonth: 1,
+  ...overrides,
+})
+
+// Resumen de un usuario sin ningún permiso de lectura: backend entrega todo en null.
+export const EMPTY_DASHBOARD_SUMMARY = dashboardSummary({
+  pendingRequests: null,
+  activeStaff: null,
+  blockedStaff: null,
+  expiringContracts: null,
+  expiringContractsDays: null,
+  hiresThisMonth: null,
+  hiresNextMonth: null,
+  terminationsThisMonth: null,
+})
+
+export const birthday = (staffId: number, fullName: string, day: number, month = 11, costCenterCode: string | null = 'CC-1') => ({
+  staffId,
+  fullName,
+  day,
+  month,
+  costCenterCode,
+})
+
+export const BIRTHDAYS = [
+  birthday(1, 'Valentina Rojas Rojas', 7),
+  birthday(2, 'Ángel Contreras Hernández', 13, 11, null),
+  birthday(3, 'Camila Contreras Contreras', 22),
+  birthday(4, 'Pedro Soto Soto', 3, 12),
+]
 
 export const setting = (key: string, type: 'INTEGER' | 'DECIMAL' | 'BOOLEAN', group = 'contracts') => ({
   key,

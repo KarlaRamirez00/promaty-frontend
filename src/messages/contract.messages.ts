@@ -6,6 +6,10 @@ export default {
   toastUpdate: {
     title: 'Solicitud de contrato actualizada',
   },
+  toastAnnul: {
+    title: 'Contrato anulado',
+    message: 'El contrato fue anulado con éxito.',
+  },
   toastError: {
     title: 'Hubo un error',
     message: 'Revisa tu conexión a internet o contacta con un administrador.',

@@ -14,8 +14,9 @@ export interface RequestRelationOption {
   name: string
 }
 
-// Cachés que cambian juntas: una solicitud de contrato o finiquito aparece en Solicitudes y en su lista.
-export const WORKFLOW_QUERY_KEYS = new Set<unknown>(['requests', 'contracts', 'terminations', 'annexes'])
+// Cachés que cambian juntas: una solicitud de contrato o finiquito aparece en Solicitudes y en su lista,
+// y también en los pendientes del dashboard y de la campana.
+export const WORKFLOW_QUERY_KEYS = new Set<unknown>(['requests', 'contracts', 'terminations', 'annexes', 'dashboard'])
 
 export const REQUEST_STATUS_COLORS: Record<string, string> = {
   PENDING_APPROVAL: 'warning',
@@ -68,6 +69,12 @@ export interface Request {
   updatedAt: string
   approvals: RequestApproval[]
   actions: string[]
+}
+
+// Resultado de reintentar la sincronización con Rex+: con synced en false el motivo trae el error nuevo.
+export interface RetrySyncResult {
+  synced: boolean
+  syncErrorMessage: string | null
 }
 
 export interface RequestDecisionForm {

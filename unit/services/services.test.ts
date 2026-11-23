@@ -112,8 +112,10 @@ describe('contratos de red específicos', () => {
   })
 
   it('mapea nombres de solicitantes y motivos', async () => {
-    calls = recordHttp({ data: [{ id: 1, firstName: 'Ana', lastName: 'Paz ', name: 'M' }], meta: {} })
+    calls = recordHttp({ data: [{ id: 1, name: 'Ana Paz' }], meta: {} })
     await expect(listRequesterOptionsApi()).resolves.toEqual([{ id: 1, name: 'Ana Paz' }])
+    expect(calls[0].url).toBe('/requests/requesters')
+    calls = recordHttp({ data: [{ id: 1, name: 'M' }], meta: {} })
     await expect(listRejectionReasonOptionsApi('contract')).resolves.toEqual([{ id: 1, name: 'M' }])
   })
 })

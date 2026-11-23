@@ -40,7 +40,7 @@ describe('Inicio de sesión', () => {
     app = await mountApp('/login', { authenticated: false, backend })
     await fillLogin()
     await submit()
-    expect(router.currentRoute.value.path).toBe('/')
+    await vi.waitFor(() => expect(router.currentRoute.value.path).toBe('/'))
     expect(sessionStorage.getItem('promaty.auth.token')).not.toBeNull()
   })
 
@@ -144,8 +144,10 @@ describe('Inicio de sesión', () => {
 })
 
 describe('Acceso y navegación', () => {
-  it('muestra la pantalla de bienvenida y el menú', async () => {
-    app = await mountApp('/')
+  it('sin nada que mostrar en el dashboard, muestra la pantalla de bienvenida', async () => {
+    const backend = installBackend()
+    backend.on('GET', /^\/dashboard\/summary$/, singleOf(fx.EMPTY_DASHBOARD_SUMMARY))
+    app = await mountApp('/', { backend, claims: { permissions: [], isSystemRole: false } })
     expect(text()).toContain('Te damos la bienvenida a Promaty')
     expect(text()).toContain('Ana Pérez')
   })

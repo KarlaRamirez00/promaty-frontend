@@ -179,13 +179,13 @@ export const createStaffForm = (overrides: Partial<StaffForm> = {}): StaffForm =
 export interface StaffFilters {
   search: string
   statusCode: string | null
-  costCenterCode: string | null
+  projectId: number | null
 }
 
 export const createStaffFilters = (overrides: Partial<StaffFilters> = {}): StaffFilters => ({
   search: '',
   statusCode: null,
-  costCenterCode: null,
+  projectId: null,
   ...overrides,
 })
 
@@ -209,6 +209,11 @@ function toFilterCode(raw: unknown): string | null {
   return typeof raw === 'string' && FILTER_CODE_PATTERN.test(raw) ? raw : null
 }
 
+function toPositiveInt(raw: unknown): number | null {
+  const n = Number(raw)
+  return typeof raw === 'string' && Number.isInteger(n) && n > 0 ? n : null
+}
+
 function toPage(raw: unknown): number {
   const n = Number(raw)
   return Number.isInteger(n) && n >= 1 ? n : DEFAULT_STAFF_QUERY.page
@@ -230,7 +235,7 @@ export function parseStaffQuery(query: Record<string, unknown>): StaffQueryParam
   return {
     search: typeof query.search === 'string' ? query.search : '',
     statusCode: toFilterCode(query.statusCode),
-    costCenterCode: toFilterCode(query.costCenterCode),
+    projectId: toPositiveInt(query.projectId),
     page: toPage(query.page),
     size: toPageSize(query.size),
     sort: toSort(query.sort),
@@ -242,7 +247,7 @@ export function staffQueryToRoute(params: StaffQueryParams): Record<string, stri
   const search = params.search.trim()
   if (search) query.search = search
   if (params.statusCode) query.statusCode = params.statusCode
-  if (params.costCenterCode) query.costCenterCode = params.costCenterCode
+  if (params.projectId !== null) query.projectId = String(params.projectId)
   if (params.page !== DEFAULT_STAFF_QUERY.page) query.page = String(params.page)
   if (params.size !== DEFAULT_STAFF_QUERY.size) query.size = String(params.size)
   if (params.sort) query.sort = `${params.sort.key},${params.sort.order}`

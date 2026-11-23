@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import router from '@/router'
 import ContractFormView from '@/views/contract/ContractFormView.vue'
-import { $, $$, click, clickText, go, mountApp, pick, settle, text, type MountedApp } from '../helpers/app'
-import { installBackend } from '../helpers/backend'
+import { $, $$, click, clickText, go, mountApp, pick, settle, text, type, type MountedApp } from '../helpers/app'
+import { installBackend, singleOf } from '../helpers/backend'
 import * as fx from '../helpers/fixtures'
 
 let app: MountedApp | null = null
@@ -169,6 +169,13 @@ describe('Solicitudes', () => {
     await go('/requests')
   })
 
+  it('arma el filtro de solicitante con los solicitantes de backend, sin pedir la lista de usuarios', async () => {
+    app = await mountApp('/requests?requesterUserId=2')
+    expect(text()).toContain('Solicitante: Luis Soto')
+    expect(app.backend.find('GET', /^\/requests\/requesters$/).length).toBeGreaterThan(0)
+    expect(app.backend.find('GET', /^\/users$/)).toHaveLength(0)
+  })
+
   it('"Ver" redirige al detalle del contrato', async () => {
     app = await mountApp('/requests')
     await click(rowMenu())
@@ -279,6 +286,99 @@ describe('Contratos', () => {
     app = await mountApp('/contracts')
     await click($('[data-testid="list-new"]'))
     expect(router.currentRoute.value.path).toBe('/contracts/new')
+  })
+})
+
+const annulReasonInput = () =>
+  $('[data-testid="annul-reason"] textarea, [data-testid="annul-reason"] input') as HTMLInputElement
+
+async function openAnnulDialog() {
+  await click($$('[data-testid="row-actions"]').at(-1) ?? null)
+  await click($('[data-testid="action-annul"]'))
+}
+
+describe('Contratos: anular', () => {
+  it('anula un contrato exigiendo un motivo', async () => {
+    app = await mountApp('/contracts?detail=1')
+    await openAnnulDialog()
+    expect(text()).toContain('Anular contrato')
+    await click($('[data-testid="annul-confirm"]'))
+    expect(text()).toContain('Indica el motivo de la anulación.')
+    expect(app.backend.find('PATCH', /annul$/)).toHaveLength(0)
+    await type(annulReasonInput(), '  Error de digitación  ')
+    await click($('[data-testid="annul-confirm"]'))
+    const [patch] = app.backend.find('PATCH', /^\/contracts\/1\/annul$/)
+    expect(JSON.parse(patch.data as string)).toEqual({ reason: 'Error de digitación' })
+  })
+
+  it('no acepta un motivo de más de 250 caracteres', async () => {
+    app = await mountApp('/contracts?detail=1')
+    await openAnnulDialog()
+    await type(annulReasonInput(), 'x'.repeat(251))
+    await click($('[data-testid="annul-confirm"]'))
+    expect(text()).toContain('El motivo no puede superar los 250 caracteres.')
+    expect(app.backend.find('PATCH', /annul$/)).toHaveLength(0)
+  })
+
+  it('muestra los errores de validación de backend dentro del diálogo', async () => {
+    app = await mountApp('/contracts?detail=1')
+    app.backend.on('PATCH', /annul$/, {
+      failure: {
+        status: 400,
+        errorFields: {
+          status: 'El plazo de 5 días hábiles para anular ya venció.',
+          terminations: 'El contrato tiene un finiquito en curso.',
+          annexes: 'El contrato tiene un anexo en curso.',
+        },
+      },
+    })
+    await openAnnulDialog()
+    await type(annulReasonInput(), 'Error')
+    await click($('[data-testid="annul-confirm"]'))
+    expect(text()).toContain('El plazo de 5 días hábiles para anular ya venció.')
+    expect(text()).toContain('El contrato tiene un finiquito en curso.')
+    expect(text()).toContain('El contrato tiene un anexo en curso.')
+    expect($('[data-testid="annul-confirm"]')).not.toBeNull()
+  })
+
+  it('avisa si anular falla sin detalle', async () => {
+    app = await mountApp('/contracts?detail=1')
+    app.backend.on('PATCH', /annul$/, { failure: { status: 500 } })
+    await openAnnulDialog()
+    await type(annulReasonInput(), 'Error')
+    await click($('[data-testid="annul-confirm"]'))
+    expect(app.backend.find('PATCH', /annul$/)).toHaveLength(1)
+  })
+
+  it('tras anular refresca el detalle y la lista', async () => {
+    app = await mountApp('/contracts?detail=1')
+    const detailCalls = () => app!.backend.find('GET', /^\/contracts\/1$/).length
+    const before = detailCalls()
+    await openAnnulDialog()
+    await type(annulReasonInput(), 'Error')
+    await click($('[data-testid="annul-confirm"]'))
+    expect(detailCalls()).toBeGreaterThan(before)
+  })
+
+  it('el detalle muestra el motivo de la anulación solo cuando existe', async () => {
+    app = await mountApp('/contracts?detail=1')
+    expect(text()).not.toContain('Motivo de la anulación')
+    app.unmount()
+
+    const backend = installBackend()
+    backend.on('GET', /^\/contracts\/1$/, singleOf({ ...fx.contract(1), annulmentReason: 'Se firmó por error' }))
+    app = await mountApp('/contracts?detail=1', { backend })
+    expect(text()).toContain('Motivo de la anulación')
+    expect(text()).toContain('Se firmó por error')
+  })
+
+  it('sin la acción ANNUL en actions[] no se ofrece anular', async () => {
+    const backend = installBackend()
+    backend.on('GET', /^\/contracts\/1$/, singleOf({ ...fx.contract(1), actions: ['APPROVE'] }))
+    app = await mountApp('/contracts?detail=1', { backend })
+    await click($$('[data-testid="row-actions"]').at(-1) ?? null)
+    expect($('[data-testid="action-approve"]')).not.toBeNull()
+    expect($('[data-testid="action-annul"]')).toBeNull()
   })
 })
 

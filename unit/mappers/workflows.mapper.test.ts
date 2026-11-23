@@ -13,6 +13,23 @@ const STATUS = { id: 1, code: 'APPROVED', name: 'Aprobado' }
 const STAFF = { id: 7, fullName: 'Ana Paz', identificationNumber: '12345678-5' }
 const FILE = { id: 1, name: 'doc.PDF', fileSize: 2048, mediaFileId: 'm', updatedAt: '2026-03-06T11:30:00' }
 
+describe('retry sync mapper', () => {
+  it('normaliza el resultado del reintento', () => {
+    expect(m.mapperRetrySyncResult({ synced: true, syncErrorMessage: null })).toEqual({ synced: true, syncErrorMessage: null })
+    expect(m.mapperRetrySyncResult({ synced: false, syncErrorMessage: 'Rex+ caído' })).toEqual({ synced: false, syncErrorMessage: 'Rex+ caído' })
+  })
+
+  it('un resultado sin synced o sin motivo no se toma como sincronizado', () => {
+    expect(m.mapperRetrySyncResult({} as never)).toEqual({ synced: false, syncErrorMessage: null })
+  })
+})
+
+describe('annul mapper', () => {
+  it('recorta el motivo de la anulación', () => {
+    expect(m.mapperAnnulPayload({ reason: '  Error de digitación ' })).toEqual({ reason: 'Error de digitación' })
+  })
+})
+
 describe('contract mapper', () => {
   const raw = {
     id: 1,
@@ -345,7 +362,7 @@ describe('termination mapper', () => {
       nonRehireReasonId: null,
       notes: null,
     })
-    expect(m.mapperTerminationAnnulPayload({ reason: ' r ' })).toEqual({ reason: 'r' })
+    expect(m.mapperAnnulPayload({ reason: ' r ' })).toEqual({ reason: 'r' })
   })
 })
 

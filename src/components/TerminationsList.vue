@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import {
+  annulTerminationAction,
   getCostCenterOptionsAction,
   getRequestDetailAction,
   getTerminationDetailAction,
@@ -10,12 +11,14 @@ import {
   getTerminationStatusOptionsAction,
   TERMINATION_REJECTION_SUBMODULE,
 } from '@/actions'
+import messages from '@/messages'
 import { useActiveFilters } from '@/composables/useActiveFilters'
+import { useAnnul } from '@/composables/useAnnul'
+import { useRetrySync } from '@/composables/useRetrySync'
 import { useDetailSlide } from '@/composables/useDetailSlide'
 import { useListQuery } from '@/composables/useListQuery'
 import { usePermissions } from '@/composables/usePermissions'
 import { useRequestDecision } from '@/composables/useRequestDecision'
-import { useTerminationAnnul } from '@/composables/useTerminationAnnul'
 import {
   parseTerminationQuery,
   terminationQueryToRoute,
@@ -31,7 +34,7 @@ import TerminationDetailDrawer from '@/components/detail/TerminationDetailDrawer
 import ListFooter from '@/components/common/ListFooter.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApproveRejectDialog from '@/components/common/ApproveRejectDialog.vue'
-import AnnulTerminationDialog from '@/components/common/AnnulTerminationDialog.vue'
+import AnnulDialog from '@/components/common/AnnulDialog.vue'
 
 const router = useRouter()
 const { hasPermission } = usePermissions()
@@ -85,7 +88,9 @@ const {
   isPending: isAnnulling,
   askAnnul,
   confirmAnnul,
-} = useTerminationAnnul()
+} = useAnnul(annulTerminationAction, messages.termination)
+
+const { retrySync } = useRetrySync()
 
 const filtersOpen = ref(false)
 
@@ -260,6 +265,7 @@ function openEditForm(id: number) {
         @validate="askDecision(item.requestId, 'VALIDATE', item.id)"
         @reject="askDecision(item.requestId, 'REJECT', item.id)"
         @annul="askAnnul(item.id)"
+        @retry-sync="retrySync(item.requestId)"
       />
     </template>
 
@@ -290,6 +296,7 @@ function openEditForm(id: number) {
     @validate="askDecision($event.requestId, 'VALIDATE', $event.id)"
     @reject="askDecision($event.requestId, 'REJECT', $event.id)"
     @annul="askAnnul($event.id)"
+    @retry-sync="retrySync($event.requestId)"
   />
 
   <ApproveRejectDialog
@@ -301,8 +308,9 @@ function openEditForm(id: number) {
     @confirm="confirmDecision"
   />
 
-  <AnnulTerminationDialog
+  <AnnulDialog
     :ref="setAnnulDialogRef"
+    entity="finiquito"
     :loading="isAnnulling"
     :error-fields="annulErrorFields"
     @confirm="confirmAnnul"

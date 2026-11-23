@@ -91,35 +91,35 @@ const filterFields = computed<FilterField[]>(() => [
     options: (statusOptions.value ?? []).map((o) => ({ title: o.name, value: o.code })),
   },
   {
-    key: 'costCenterCode',
+    key: 'projectId',
     type: 'autocomplete',
     label: 'Centro de costo',
-    options: (costCenterOptions.value ?? []).map((o) => ({ title: o.title, value: o.code })),
+    options: (costCenterOptions.value ?? []).map((o) => ({ title: o.title, value: o.id })),
   },
 ])
 
 const filterValues = computed<Record<string, unknown>>({
   get: () => ({
     statusCode: query.value.statusCode,
-    costCenterCode: query.value.costCenterCode,
+    projectId: query.value.projectId,
   }),
   set: (value) => {
     patchQuery({
       statusCode: (value.statusCode as string | null) ?? null,
-      costCenterCode: (value.costCenterCode as string | null) ?? null,
+      projectId: (value.projectId as number | null) ?? null,
     })
   },
 })
 
 const { activeFilters, clearFilter, clearAllFilters } = useActiveFilters<StaffQueryParams>({
   patchQuery,
-  resetAll: { statusCode: null, costCenterCode: null },
+  resetAll: { statusCode: null, projectId: null },
   chips: () => {
     const chips = []
     const statusName = statusOptions.value?.find((o) => o.code === query.value.statusCode)?.name
-    const costCenter = costCenterOptions.value?.find((o) => o.code === query.value.costCenterCode)?.title
+    const costCenter = costCenterOptions.value?.find((o) => o.id === query.value.projectId)?.title
     if (statusName) chips.push({ key: 'statusCode', label: `Estado: ${statusName}` })
-    if (costCenter) chips.push({ key: 'costCenterCode', label: `Centro de costo: ${costCenter}` })
+    if (costCenter) chips.push({ key: 'projectId', label: `Centro de costo: ${costCenter}` })
     return chips
   },
 })

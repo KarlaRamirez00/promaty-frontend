@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useDisplay, useTheme } from 'vuetify'
 import { useQueryClient } from '@tanstack/vue-query'
 import {
-  mdiBellOutline,
   mdiCogOutline,
   mdiHomeOutline,
   mdiLogoutVariant,
@@ -14,6 +13,7 @@ import {
   mdiWeatherNight,
   mdiWeatherSunny,
 } from '@mdi/js'
+import NotificationBell from '@/components/NotificationBell.vue'
 import { usePermissions } from '@/composables/usePermissions'
 import { useSidebarRail } from '@/composables/useSidebarRail'
 import { useAuthStore } from '@/stores'
@@ -103,6 +103,8 @@ function logout() {
         {{ currentTitle }}
       </span>
 
+      <NotificationBell />
+
       <v-menu location="bottom end">
         <template #activator="{ props: menuProps }">
           <v-btn
@@ -131,7 +133,6 @@ function logout() {
             </v-chip>
           </v-list-item>
           <v-divider class="my-1" />
-          <v-list-item :prepend-icon="mdiBellOutline" title="Notificaciones" />
           <v-list-item
             v-if="canViewSettings"
             :prepend-icon="mdiCogOutline"
@@ -162,9 +163,7 @@ function logout() {
 
       <v-spacer />
 
-      <v-btn icon variant="text" aria-label="Notificaciones">
-        <v-icon :icon="mdiBellOutline" size="20" color="grey-darken-1" />
-      </v-btn>
+      <NotificationBell />
 
       <v-btn
         v-if="canViewSettings"

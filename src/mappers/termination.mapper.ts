@@ -1,5 +1,4 @@
 import type {
-  TerminationAnnulPayload,
   TerminationAttachmentRaw,
   TerminationCatalogOptionRaw,
   TerminationListRaw,
@@ -10,7 +9,6 @@ import type {
 } from '@/types/termination'
 import type {
   Termination,
-  TerminationAnnulForm,
   TerminationAttachment,
   TerminationCauseOption,
   TerminationEditData,
@@ -128,10 +126,6 @@ export function mapperTerminationEditData(raw: TerminationRaw): TerminationEditD
   }
 }
 
-export function mapperTerminationAnnulPayload(form: TerminationAnnulForm): TerminationAnnulPayload {
-  return { reason: form.reason.trim() }
-}
-
 export function mapperTerminationDetail(raw: TerminationRaw): Termination {
   return {
     id: raw.id,
@@ -149,6 +143,7 @@ export function mapperTerminationDetail(raw: TerminationRaw): Termination {
     notes: raw.notes || NO_DATA,
     rexTerminationNumber: raw.rexTerminationNumber,
     annulmentReason: raw.annulmentReason,
+    syncErrorMessage: raw.syncErrorMessage ?? null,
     attachments: (raw.attachments ?? []).map(mapTerminationAttachment),
     attachmentRequirements: raw.attachmentRequirements ?? [],
     status: raw.status,

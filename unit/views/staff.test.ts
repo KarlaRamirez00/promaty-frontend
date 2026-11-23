@@ -55,9 +55,9 @@ describe('Colaboradores: lista', () => {
   })
 
   it('filtra por estado y centro de costo desde la URL', async () => {
-    app = await mountApp('/staff?statusCode=ACTIVE&costCenterCode=CC-1')
+    app = await mountApp('/staff?statusCode=ACTIVE&projectId=1')
     expect(text()).toContain('Estado: Activo')
-    expect(app.backend.find('GET', /^\/staff$/)[0].params).toMatchObject({ statusCode: 'ACTIVE', costCenterCode: 'CC-1' })
+    expect(app.backend.find('GET', /^\/staff$/)[0].params).toMatchObject({ statusCode: 'ACTIVE', projectId: 1 })
     await clickText('button', 'Filtrar')
     await go('/staff')
     expect(router.currentRoute.value.query.statusCode).toBeUndefined()
