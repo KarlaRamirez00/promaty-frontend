@@ -2,16 +2,16 @@
 import { ref } from 'vue'
 import { mdiArrowDownCircleOutline, mdiCancel } from '@mdi/js'
 import messages from '@/messages'
-import { createTerminationAnnulForm, type TerminationAnnulForm } from '@/models'
+import { ANNUL_REASON_MAX_LENGTH, createAnnulForm, type AnnulForm } from '@/models'
 import type { ApiErrorFields } from '@/types/api'
 import AlertComponent from '@/components/common/AlertComponent.vue'
 import ErrorComponent from '@/components/common/ErrorComponent.vue'
 import FieldErrorComponent from '@/components/common/FieldErrorComponent.vue'
 
-const REASON_MAX_LENGTH = 250
-
 withDefaults(
   defineProps<{
+    // Nombre de lo que se anula, en minúscula y singular: "finiquito", "contrato".
+    entity: string
     loading: boolean
     errorFields?: ApiErrorFields | null
   }>(),
@@ -19,15 +19,15 @@ withDefaults(
 )
 
 const emit = defineEmits<{
-  confirm: [form: TerminationAnnulForm]
+  confirm: [form: AnnulForm]
 }>()
 
 const isOpen = ref(false)
-const form = ref<TerminationAnnulForm>(createTerminationAnnulForm())
+const form = ref<AnnulForm>(createAnnulForm())
 const reasonError = ref('')
 
 function open() {
-  form.value = createTerminationAnnulForm()
+  form.value = createAnnulForm()
   reasonError.value = ''
   isOpen.value = true
 }
@@ -42,11 +42,11 @@ function submit() {
   reasonError.value = ''
   const reason = form.value.reason.trim()
   if (!reason) {
-    reasonError.value = messages.termination.rules.annulReasonRequired
+    reasonError.value = messages.annul.rules.reasonRequired
     return
   }
-  if (reason.length > REASON_MAX_LENGTH) {
-    reasonError.value = messages.termination.rules.annulReasonMaxLength
+  if (reason.length > ANNUL_REASON_MAX_LENGTH) {
+    reasonError.value = messages.annul.rules.reasonMaxLength
     return
   }
   emit('confirm', form.value)
@@ -58,13 +58,13 @@ function submit() {
     <v-card>
       <v-card-title class="d-flex align-center ga-2 px-6 pt-6 text-h6">
         <v-icon :icon="mdiCancel" color="error" size="24" />
-        Anular finiquito
+        Anular {{ entity }}
       </v-card-title>
 
       <v-card-text class="px-6">
         <AlertComponent
           type="error"
-          message="¿Seguro que quieres <strong>anular</strong> este finiquito?"
+          :message="`¿Seguro que quieres <strong>anular</strong> este ${entity}?`"
           :icon="mdiArrowDownCircleOutline"
         />
 

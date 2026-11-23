@@ -1,4 +1,5 @@
 import {
+  annulContractApi,
   createContractRequestApi,
   getContractApi,
   listCompanyOptionsApi,
@@ -14,6 +15,7 @@ import {
   updateContractApi,
 } from '@/services'
 import {
+  mapperAnnulPayload,
   mapperContractCatalogOptions,
   mapperContractDetail,
   mapperContractEditData,
@@ -23,7 +25,11 @@ import {
   mapperContractStaffOptions,
 } from '@/mappers'
 import { useGetDetail, useGetTable, useMutateForm } from '@/utils'
-import type { AttachmentSubmitItem, ContractForm, ContractQueryParams } from '@/models'
+import type { AnnulForm, AttachmentSubmitItem, ContractForm, ContractQueryParams } from '@/models'
+
+export function annulContractAction(id: number, form: AnnulForm) {
+  return useMutateForm((payload) => annulContractApi(id, payload), form, mapperAnnulPayload)
+}
 
 export function getContractListAction(params: ContractQueryParams) {
   return useGetTable(listContractsApi, params, mapperContractList)

@@ -4,12 +4,14 @@ import type {
   RequestDecidePayload,
   RequestDetailRaw,
   RequestRaw,
+  RetrySyncResultRaw,
 } from '@/types/request'
 import type {
   Request,
   RequestApproval,
   RequestDecisionForm,
   RequestListItem,
+  RetrySyncResult,
 } from '@/models'
 import { requestStatusColor } from '@/models'
 
@@ -77,6 +79,10 @@ export function mapperRequestDetail(raw: RequestDetailRaw): Request {
     approvals: raw.approvals.map(mapperApproval),
     actions: raw.actions,
   }
+}
+
+export function mapperRetrySyncResult(raw: RetrySyncResultRaw): RetrySyncResult {
+  return { synced: raw.synced === true, syncErrorMessage: raw.syncErrorMessage ?? null }
 }
 
 export function mapperRequestApprovePayload(): RequestDecidePayload {

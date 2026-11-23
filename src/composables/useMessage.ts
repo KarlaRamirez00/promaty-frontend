@@ -34,6 +34,11 @@ interface AnnulMessages {
   toastAnnul: ToastText
 }
 
+interface RetrySyncMessages {
+  toastRetrySync: ToastText
+  toastRetrySyncFailed: ToastText
+}
+
 interface UpdateMessages {
   toastUpdate: ToastText
 }
@@ -74,6 +79,15 @@ export function useMessage() {
     snackbar.success(messages.toastAnnul)
   }
 
+  // Con la sincronización aún fallando se avisa con advertencia y se muestra el motivo nuevo.
+  function toastRetried(synced: boolean, messages: RetrySyncMessages, detail?: string | null) {
+    if (synced) {
+      snackbar.success(messages.toastRetrySync)
+      return
+    }
+    snackbar.warning(detail ? { ...messages.toastRetrySyncFailed, message: detail } : messages.toastRetrySyncFailed)
+  }
+
   function toastUpdated(messages: UpdateMessages, detail?: string) {
     snackbar.success(detail ? { ...messages.toastUpdate, message: detail } : messages.toastUpdate)
   }
@@ -89,6 +103,7 @@ export function useMessage() {
     toastSyncError,
     toastBlocked,
     toastAnnulled,
+    toastRetried,
     toastUpdated,
     toastFailed,
   }

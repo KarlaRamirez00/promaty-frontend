@@ -10,6 +10,7 @@ import {
   mdiEyeOutline,
   mdiPencilOutline,
   mdiPower,
+  mdiSync,
 } from '@mdi/js'
 import { ACTION } from '@/constants/actions.constants'
 
@@ -40,6 +41,7 @@ const emit = defineEmits<{
   validate: []
   reject: []
   annul: []
+  retrySync: []
   block: []
   unblock: []
 }>()
@@ -55,6 +57,7 @@ const showApprove = computed(() => props.record.actions.includes(ACTION.APPROVE)
 const showValidate = computed(() => props.record.actions.includes(ACTION.VALIDATE))
 const showReject = computed(() => showApprove.value || showValidate.value)
 const showAnnul = computed(() => props.record.actions.includes(ACTION.ANNUL))
+const showRetrySync = computed(() => props.record.actions.includes(ACTION.RETRY_SYNC))
 const showBlock = computed(() => props.blockable && props.record.actions.includes(ACTION.STATUS))
 const showUnblock = computed(() => props.unblockable && props.record.actions.includes(ACTION.STATUS))
 const toggleLabel = computed(() => (props.record.active ? 'Desactivar' : 'Activar'))
@@ -71,7 +74,8 @@ const hasAnyAction = computed(
     showUnblock.value ||
     showApprove.value ||
     showValidate.value ||
-    showAnnul.value,
+    showAnnul.value ||
+    showRetrySync.value,
 )
 </script>
 
@@ -120,6 +124,14 @@ const hasAnyAction = computed(
         title="Rechazar"
         data-testid="action-reject"
         @click="emit('reject')"
+      />
+      <v-list-item
+        v-if="showRetrySync"
+        :prepend-icon="mdiSync"
+        base-color="info"
+        title="Reintentar"
+        data-testid="action-retry-sync"
+        @click="emit('retrySync')"
       />
       <v-list-item
         v-if="showAnnul"

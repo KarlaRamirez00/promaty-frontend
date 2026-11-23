@@ -17,10 +17,6 @@ export interface TerminationStatusRaw {
   name: string
 }
 
-export interface TerminationAnnulPayload {
-  reason: string
-}
-
 export interface TerminationStaffOptionRaw {
   id: number
   name: string
@@ -88,6 +84,7 @@ export interface TerminationRaw {
   status: TerminationStatusRaw
   rexTerminationNumber: string | null
   annulmentReason: string | null
+  syncErrorMessage: string | null
   attachments: TerminationAttachmentRaw[]
   attachmentRequirements: AttachmentRequirementRaw[]
   createdAt: string

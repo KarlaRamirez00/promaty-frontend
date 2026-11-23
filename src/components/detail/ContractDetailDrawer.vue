@@ -13,6 +13,7 @@ import DetailTabs from '@/components/common/DetailTabs.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApprovalHistory from '@/components/common/ApprovalHistory.vue'
 import AttachmentField from '@/components/common/AttachmentField.vue'
+import SyncErrorAlert from '@/components/common/SyncErrorAlert.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -32,6 +33,8 @@ const emit = defineEmits<{
   approve: [contract: Contract]
   validate: [contract: Contract]
   reject: [contract: Contract]
+  annul: [contract: Contract]
+  retrySync: [contract: Contract]
 }>()
 
 function attachmentsForType(type: string | null): ContractAttachment[] {
@@ -60,6 +63,9 @@ const sections = computed<DetailSection[]>(() => {
         { key: 'startDate', label: 'Fecha de inicio', value: c.startDate },
         { key: 'endDate', label: 'Fecha de término', value: c.endDate },
         { key: 'contractDetail', label: 'Detalle', value: c.contractDetail },
+        ...(c.annulmentReason
+          ? [{ key: 'annulmentReason', label: 'Motivo de la anulación', value: c.annulmentReason }]
+          : []),
       ],
     },
     {
@@ -112,8 +118,12 @@ const sections = computed<DetailSection[]>(() => {
         @approve="emit('approve', contract)"
         @validate="emit('validate', contract)"
         @reject="emit('reject', contract)"
+        @annul="emit('annul', contract)"
+        @retry-sync="emit('retrySync', contract)"
       />
     </template>
+
+    <SyncErrorAlert v-if="contract" :status-code="contract.status.code" :message="contract.syncErrorMessage" />
 
     <div v-if="loading && !contract" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />

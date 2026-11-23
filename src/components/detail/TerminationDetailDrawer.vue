@@ -8,6 +8,7 @@ import DetailTabs from '@/components/common/DetailTabs.vue'
 import ActionsMenu from '@/components/common/ActionsMenu.vue'
 import ApprovalHistory from '@/components/common/ApprovalHistory.vue'
 import AttachmentField from '@/components/common/AttachmentField.vue'
+import SyncErrorAlert from '@/components/common/SyncErrorAlert.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -28,6 +29,7 @@ const emit = defineEmits<{
   validate: [termination: Termination]
   reject: [termination: Termination]
   annul: [termination: Termination]
+  retrySync: [termination: Termination]
 }>()
 
 // Los adjuntos del finiquito se editan desde su formulario; el detalle solo los muestra y descarga.
@@ -115,8 +117,15 @@ const sections = computed<DetailSection[]>(() => {
         @validate="emit('validate', termination)"
         @reject="emit('reject', termination)"
         @annul="emit('annul', termination)"
+        @retry-sync="emit('retrySync', termination)"
       />
     </template>
+
+    <SyncErrorAlert
+      v-if="termination"
+      :status-code="termination.status.code"
+      :message="termination.syncErrorMessage"
+    />
 
     <div v-if="loading && !termination" class="d-flex justify-center pa-8">
       <v-progress-circular indeterminate color="primary" />

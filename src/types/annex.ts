@@ -90,6 +90,7 @@ export interface AnnexRaw {
   previousSite: AnnexNamedRaw | null
   status: AnnexStatusRaw
   rexAnnexNumber: string | null
+  syncErrorMessage: string | null
   attachments: AnnexAttachmentRaw[]
   attachmentRequirements: AttachmentRequirementRaw[]
   createdAt: string

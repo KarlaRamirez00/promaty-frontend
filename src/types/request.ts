@@ -58,6 +58,11 @@ export interface RequestDecidePayload {
   comment?: string
 }
 
+export interface RetrySyncResultRaw {
+  synced: boolean
+  syncErrorMessage: string | null
+}
+
 export interface CreatedRequestRaw {
   requestId: number
   entityId: number

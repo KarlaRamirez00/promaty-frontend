@@ -1,7 +1,7 @@
 import { rrhhApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
+import type { AnnulPayload } from '@/types/annul'
 import type {
-  TerminationAnnulPayload,
   TerminationCatalogOptionRaw,
   TerminationListRaw,
   TerminationRaw,
@@ -66,11 +66,9 @@ export async function listLegalTerminationCauseOptionsApi(): Promise<Termination
   return response.data.data
 }
 
+// Selector de backend: solo motivos activos y sin exigir el permiso del mantenedor de motivos.
 export async function listNonRehireReasonOptionsApi(): Promise<TerminationCatalogOptionRaw[]> {
-  const response = await rrhhApi.get<ApiListResponse<TerminationCatalogOptionRaw>>(
-    '/nonRehireReasons',
-    { params: { ...OPTIONS_PARAMS, active: true } },
-  )
+  const response = await rrhhApi.get<ApiListResponse<TerminationCatalogOptionRaw>>('/nonRehireReasons/selector')
   return response.data.data
 }
 
@@ -89,7 +87,7 @@ export async function updateTerminationApi(
   await rrhhApi.put(`/terminations/${id}`, buildMultipartBody(payload, attachments))
 }
 
-export async function annulTerminationApi(id: number, payload: TerminationAnnulPayload): Promise<void> {
+export async function annulTerminationApi(id: number, payload: AnnulPayload): Promise<void> {
   await rrhhApi.patch(`/terminations/${id}/annul`, payload)
 }
 

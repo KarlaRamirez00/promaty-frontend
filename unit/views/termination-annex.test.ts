@@ -177,7 +177,7 @@ describe('Finiquitos: formulario', () => {
   it('edita conservando causa y motivo inactivos como opciones deshabilitadas', async () => {
     const backend = installBackend()
     backend.on('GET', /^\/legalTerminationCauses$/, { data: [{ id: 7, name: 'Otra', code: 'O' }], meta: {} })
-    backend.on('GET', /^\/nonRehireReasons$/, { data: [{ id: 8, name: 'Otro motivo' }], meta: {} })
+    backend.on('GET', /^\/nonRehireReasons\/selector$/, { data: [{ id: 8, name: 'Otro motivo', code: 'OTRO' }], meta: {} })
     app = await mountApp('/terminations/1/edit', { backend })
     const vm = app.vm<TerminationVm>(TerminationFormView)
     expect(text()).toContain('Editar finiquito')

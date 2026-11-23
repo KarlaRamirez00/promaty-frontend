@@ -22,7 +22,7 @@ describe('Barra superior en escritorio', () => {
     app = await mountApp('/clients/new')
     expect($$('.v-breadcrumbs-item').map((i) => i.textContent?.trim()).join('|')).toContain('Mandantes')
     expect(text()).toContain('Nuevo mandante')
-    expect(byLabel('Notificaciones')).not.toBeNull()
+    expect(byLabel(/^Notificaciones/)).not.toBeNull()
     expect(byLabel('Cuenta')).not.toBeNull()
   })
 

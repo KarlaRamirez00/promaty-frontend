@@ -49,6 +49,7 @@ export interface Termination {
   notes: string
   rexTerminationNumber: string | null
   annulmentReason: string | null
+  syncErrorMessage: string | null
   attachments: TerminationAttachment[]
   attachmentRequirements: AttachmentRequirement[]
   status: TerminationStatusOption
@@ -117,12 +118,6 @@ export interface TerminationEditData {
   attachments: TerminationAttachment[]
   currentNonRehireReason: TerminationOption | null
 }
-
-export interface TerminationAnnulForm {
-  reason: string
-}
-
-export const createTerminationAnnulForm = (): TerminationAnnulForm => ({ reason: '' })
 
 export interface TerminationFilters {
   search: string

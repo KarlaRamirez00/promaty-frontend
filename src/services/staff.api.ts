@@ -21,7 +21,7 @@ export async function listStaffApi(params: StaffQueryParams): Promise<PageResult
     params: {
       search: params.search || undefined,
       statusCode: params.statusCode ?? undefined,
-      costCenterCode: params.costCenterCode ?? undefined,
+      projectId: params.projectId ?? undefined,
       page: params.page - 1,
       size: params.size,
       sort: toSortParam(params.sort, STAFF_SORT_FIELDS),

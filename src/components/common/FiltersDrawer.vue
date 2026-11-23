@@ -95,7 +95,7 @@ function clear() {
           :items="field.options"
           item-title="title"
           item-value="value"
-          :placeholder="field.placeholder ?? 'Buscar'"
+          :placeholder="field.placeholder ?? 'Seleccionar'"
           variant="outlined"
           density="compact"
           clearable

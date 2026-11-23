@@ -1,5 +1,6 @@
 import { rrhhApi, unwrap, unwrapPage } from '@/lib/http'
 import type { ApiListResponse, ApiResponse, PageResult } from '@/types/api'
+import type { AnnulPayload } from '@/types/annul'
 import type {
   ContractCatalogOptionRaw,
   ContractCountersRaw,
@@ -82,6 +83,11 @@ export async function updateContractApi(
   attachments: AttachmentSubmitItem[],
 ): Promise<void> {
   await rrhhApi.put(`/contracts/${id}`, buildMultipartBody(payload, attachments))
+}
+
+// Backend responde el detalle actualizado; el cliente lo vuelve a pedir al invalidar la caché.
+export async function annulContractApi(id: number, payload: AnnulPayload): Promise<void> {
+  await rrhhApi.patch(`/contracts/${id}/annul`, payload)
 }
 
 export async function listContractsApi(

@@ -57,6 +57,10 @@ function defaultRoutes(): [string, RegExp, Handler][] {
     detail(/^\/staff\/(\d+)$/, (id) => fx.staff(id)),
     ['GET', /^\/banks$/, () => page([{ ...fx.named(1, 'Banco Estado'), code: 'BANCO_ESTADO', supportsRutAccount: true }, { ...fx.named(2, 'Otro'), supportsRutAccount: false }])],
 
+    ['GET', /^\/clients\/selector$/, () => page(many(3, fx.client))],
+    ['GET', /^\/projectTypes\/selector$/, () => page(many(3, fx.projectType))],
+    ['GET', /^\/projectSpecialties\/selector$/, () => page(many(3, fx.projectSpecialty))],
+    ['GET', /^\/nonRehireReasons\/selector$/, () => page(many(3, fx.nonRehireReason))],
     list(/^\/clients$/, fx.client),
     detail(/^\/clients\/(\d+)$/, (id) => fx.client(id)),
     list(/^\/projectTypes$/, fx.projectType),
@@ -64,6 +68,7 @@ function defaultRoutes(): [string, RegExp, Handler][] {
     list(/^\/projectSpecialties$/, fx.projectSpecialty),
     detail(/^\/projectSpecialties\/(\d+)$/, (id) => fx.projectSpecialty(id)),
     ['GET', /^\/projects\/selector$/, () => page([{ id: 1, name: 'Proyecto 1', costCenterCode: 'CC-1' }, { id: 2, name: 'Proyecto 2', costCenterCode: 'CC-2' }])],
+    ['GET', /^\/projects\/options$/, () => page([{ id: 1, name: 'Proyecto 1', code: 'CC-1' }, { id: 2, name: 'Proyecto 2', code: 'CC-2' }])],
     list(/^\/projects$/, fx.project),
     detail(/^\/projects\/(\d+)$/, fx.project),
     list(/^\/nonRehireReasons$/, fx.nonRehireReason),
@@ -80,8 +85,10 @@ function defaultRoutes(): [string, RegExp, Handler][] {
     list(/^\/users$/, fx.user),
     detail(/^\/users\/(\d+)$/, (id) => fx.user(id)),
 
+    ['GET', /^\/requests\/requesters$/, () => page([{ id: 1, name: 'Ana Paz' }, { id: 2, name: 'Luis Soto' }])],
     list(/^\/requests$/, fx.request, { otherData: { pendingApproval: 2, pendingValidation: 1 } }),
     detail(/^\/requests\/(\d+)$/, fx.requestDetail),
+    ['PATCH', /^\/requests\/\d+\/retrySync$/, () => single({ synced: true, syncErrorMessage: null })],
     ['GET', /^\/contractTypes$/, () => page([{ id: 1, name: 'Plazo fijo', code: 'F' }, { id: 2, name: 'Indefinido', code: 'I' }])],
     list(/^\/contracts$/, fx.contractList, { otherData: { expiringSoon: 2, expired: 1, expiringSoonDays: 30 } }),
     detail(/^\/contracts\/(\d+)$/, fx.contract),
@@ -106,6 +113,11 @@ function defaultRoutes(): [string, RegExp, Handler][] {
     ['GET', /^\/settings$/, () =>
       page([fx.setting('expiringDays', 'INTEGER'), fx.setting('ratio', 'DECIMAL'), fx.setting('enabled', 'BOOLEAN', 'general')])],
     ['PUT', /^\/settings\/(\w+)$/, (req, match) => single({ ...fx.setting(match[1], 'INTEGER'), value: (req.data as { value: string }).value })],
+    ['GET', /^\/dashboard\/summary$/, () => single(fx.dashboardSummary())],
+    ['GET', /^\/dashboard\/birthdays$/, (req) => {
+      const month = Number(req.params.month ?? 11)
+      return page(fx.BIRTHDAYS.filter((item) => item.month === month))
+    }],
     ['GET', /^\/files\//, () => new Blob(['contenido'])],
 
     ['GET', /^\/(banks|companies|contractTypes|jobTitles|sites|mealTypes|transportTypes|registeredSexes|maritalStatuses|nationalities|educationLevels|afps|healthSystems|regions|provincias|comunas)$/, () => catalog()],

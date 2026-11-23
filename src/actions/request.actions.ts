@@ -5,12 +5,14 @@ import {
   listRequesterOptionsApi,
   listRequestsApi,
   listRequestStatusOptionsApi,
+  retryRequestSyncApi,
 } from '@/services'
 import {
   mapperRequestApprovePayload,
   mapperRequestDetail,
   mapperRequestList,
   mapperRequestRejectPayload,
+  mapperRetrySyncResult,
 } from '@/mappers'
 import { useGetDetail, useGetTable, useMutateAction, useMutateForm } from '@/utils'
 import type { RequestDecisionForm, RequestQueryParams } from '@/models'
@@ -40,6 +42,10 @@ export function rejectRequestAction(id: number, form: RequestDecisionForm) {
     form,
     mapperRequestRejectPayload,
   )
+}
+
+export async function retryRequestSyncAction(requestId: number) {
+  return mapperRetrySyncResult(await useMutateAction(retryRequestSyncApi, requestId))
 }
 
 export function getRequestStatusOptionsAction() {

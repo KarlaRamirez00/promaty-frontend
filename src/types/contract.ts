@@ -115,6 +115,8 @@ export interface ContractRaw {
   transportType: ContractNamedRaw | null
   status: ContractStatusRaw
   rexContractNumber: string | null
+  annulmentReason: string | null
+  syncErrorMessage: string | null
   attachments: ContractAttachmentRaw[]
   attachmentRequirements: AttachmentRequirementRaw[]
   createdAt: string

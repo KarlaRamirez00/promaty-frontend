@@ -12,6 +12,7 @@ import nonRehireReason from './nonRehireReason.messages'
 import termination from './termination.messages'
 import annex from './annex.messages'
 import setting from './setting.messages'
+import annul from './annul.messages'
 
 export default {
   client,
@@ -28,4 +29,5 @@ export default {
   termination,
   annex,
   setting,
+  annul,
 }
